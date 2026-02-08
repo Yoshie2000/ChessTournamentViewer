@@ -28,8 +28,6 @@ function App() {
 
     const [_, setCccEventList] = useState<CCCEventsListUpdate>()
     const [cccEvent, setCccEvent] = useState<CCCEventUpdate>()
-    const [white, setWhite] = useState<CCCEngine>()
-    const [black, setBlack] = useState<CCCEngine>()
     const [clocks, setClocks] = useState<CCCClocks>()
 
     const [liveInfosWhite, setLiveInfosWhite] = useState<(CCCLiveInfo | undefined)[]>([])
@@ -100,20 +98,57 @@ function App() {
 
             case "eventUpdate":
                 setCccEvent(msg)
-
-                const currentGame = msg.tournamentDetails.schedule.present
-                setWhite(msg.tournamentDetails.engines.find(engine => engine.id === currentGame.whiteId))
-                setBlack(msg.tournamentDetails.engines.find(engine => engine.id === currentGame.blackId))
-
-                break;
+                break
 
             case "gameUpdate":
-                setLiveInfosWhite([])
-                setLiveInfosBlack([])
+                whiteArrow.current = null
+                blackArrow.current = null
 
                 game.current.loadPgn(msg.gameDetails.pgn)
                 lastMove = game.current.history({ verbose: true }).at(-1)!!
                 updateBoard([lastMove.from, lastMove.to])
+
+                const liveInfosWhite: (CCCLiveInfo | undefined)[] = []
+                const liveInfosBlack: (CCCLiveInfo | undefined)[] = []
+                game.current.getComments().forEach((value, i) => {
+                    const data = value.comment.split(", ")
+
+                    if (data[0] === "book") return
+
+                    let score = data[0].split("/")[0]
+                    if (i % 2 === 1) {
+                        if (score.includes("+"))
+                            score = score.replace("+", "-")
+                        else
+                            score = score.replace("-", "+")
+                    }
+
+                    const liveInfo: CCCLiveInfo = {
+                        type: "liveInfo",
+                        info: {
+                            color: i % 2 === 0 ? "w" : "b",
+                            depth: data[0].split("/")[1].split(" ")[0],
+                            multipv: "1",
+                            hashfull: data[6].split("=")[1],
+                            name: "",
+                            nodes: data[3].split("=")[1],
+                            ply: i + 1,
+                            pv: "",
+                            score,
+                            seldepth: data[4].split("=")[1],
+                            speed: data[5].split("=")[1],
+                            tbhits: data[7].split("=")[1],
+                            time: data[0].split(" ")[1].split("s")[0].replace(".", ""),
+                        }
+                    }
+                    if (i % 2 === 0)
+                        liveInfosWhite[liveInfo.info.ply] = liveInfo
+                    else
+                        liveInfosBlack[liveInfo.info.ply] = liveInfo
+                })
+
+                setLiveInfosWhite(liveInfosWhite)
+                setLiveInfosBlack(liveInfosBlack)
 
                 break;
 
@@ -174,6 +209,14 @@ function App() {
         }
     }
 
+    function requestEvent(gameNr?: string, eventNr?: string) {
+        let message: any = { type: "requestEvent" }
+        if (gameNr) message["gameNr"] = gameNr
+        if (eventNr) message["enr"] = eventNr
+
+        ws.current.send(message)
+    }
+
     useEffect(() => {
         if (boardRef.current || !boardElementRef.current) return;
 
@@ -197,6 +240,8 @@ function App() {
     const latestLiveInfoWhite = liveInfosWhite.at(-1)
 
     const engines = cccEvent?.tournamentDetails.engines ?? []
+    const white = engines.find(engine => engine.name === game.current.getHeaders()["White"])
+    const black = engines.find(engine => engine.name === game.current.getHeaders()["Black"])
 
     return (
         <div className="app">
@@ -217,7 +262,7 @@ function App() {
 
             {cccEvent && <div className="scheduleWindow">
                 <h2>Schedule</h2>
-                <ScheduleComponent event={cccEvent} engines={engines}/>
+                <ScheduleComponent event={cccEvent} engines={engines} requestEvent={requestEvent} />
             </div>}
 
         </div>

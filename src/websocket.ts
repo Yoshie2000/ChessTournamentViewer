@@ -14,8 +14,8 @@ export class CCCWebSocket {
         this.ws = new WebSocket(this.url)
 
         this.ws.onopen = () => {
-            this.send({ "type": "requestEvent" })
-            this.send({ "type": "requestEventsListUpdate" })
+            this.send({ type: "requestEvent" })
+            this.send({ type: "requestEventsListUpdate" })
         }
 
         this.ws.onmessage = e => {
@@ -40,6 +40,7 @@ export class CCCWebSocket {
     }
 
     send(msg: unknown) {
+        console.log(msg)
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
         this.ws.send(typeof msg === 'string' ? msg : JSON.stringify(msg))
     }

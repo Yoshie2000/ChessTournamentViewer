@@ -6,9 +6,10 @@ import "./ScheduleComponent.css"
 type ScheduleComponentProps = {
     engines: CCCEngine[]
     event: CCCEventUpdate
+    requestEvent: (gameNr: string) => void
 }
 
-export function ScheduleComponent({ engines, event }: ScheduleComponentProps) {
+export function ScheduleComponent({ engines, event, requestEvent }: ScheduleComponentProps) {
 
     const scheduleRef = useRef<HTMLDivElement>(null)
     const currentGameRef = useRef<HTMLDivElement>(null)
@@ -27,7 +28,7 @@ export function ScheduleComponent({ engines, event }: ScheduleComponentProps) {
                 const whiteClass = game.outcome === "1-0" ? "winner" : game.outcome === "0-1" ? "loser" : "draw";
                 const blackClass = game.outcome === "1-0" ? "loser" : game.outcome === "0-1" ? "winner" : "draw";
                 return (
-                    <div className="game" key={game.gameNr}>
+                    <div className="game" key={game.gameNr} onClick={() => requestEvent(game.gameNr)}>
                         <span className="round">#{i + 1}</span>
                         <EngineLogo engine={gameWhite} />
                         <span className={"engineName " + whiteClass}>{gameWhite.name}</span>
@@ -41,7 +42,7 @@ export function ScheduleComponent({ engines, event }: ScheduleComponentProps) {
                 const gameWhite = engines.find(engine => engine.id === game.whiteId)!!
                 const gameBlack = engines.find(engine => engine.id === game.blackId)!!
                 return (
-                    <div className="game active" key={game.gameNr} ref={currentGameRef}>
+                    <div className="game active" key={game.gameNr} ref={currentGameRef} onClick={() => requestEvent(game.gameNr)}>
                         <span className="round">#{event.tournamentDetails.schedule.past.length + i + 1}</span>
                         <EngineLogo engine={gameWhite} />
                         <span className={"engineName"}>{gameWhite.name}</span>
@@ -55,7 +56,7 @@ export function ScheduleComponent({ engines, event }: ScheduleComponentProps) {
                 const gameWhite = engines.find(engine => engine.id === game.whiteId)!!
                 const gameBlack = engines.find(engine => engine.id === game.blackId)!!
                 return (
-                    <div className="game" key={game.gameNr}>
+                    <div className="game" key={game.gameNr} onClick={() => requestEvent(game.gameNr)}>
                         <span className="round">#{event.tournamentDetails.schedule.past.length + i + 2}</span>
                         <EngineLogo engine={gameWhite} />
                         <span className={"engineName"}>{gameWhite.name}</span>
