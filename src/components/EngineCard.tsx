@@ -50,7 +50,7 @@ export function EngineCard({ engine, info, time }: EngineCardProps) {
                 <span className="engineField">Hashfull <span>{info.info.hashfull ?? "-"}</span></span>
             </div>
 
-            <hr/>
+            <hr className="enginePvDivider"/>
 
             <div className="enginePv">
                 PV: {info.info.pv}

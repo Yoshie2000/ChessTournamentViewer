@@ -1,6 +1,8 @@
 .standingsWrapper {
   height: 100%;
   overflow: auto;
+
+  --placement-width: 2rem;
 }
 
 .standings {
@@ -18,13 +20,11 @@
   padding: 0 0.5rem;
 }
 
-.standingsEntry td:has(.engineLogo) {
-  width: 50px;
-  padding: 0;
-}
-
 .standingsEntry .engineLogo {
-  margin-bottom: 0;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .standings tr:nth-child(2n) td {
@@ -32,9 +32,20 @@
 }
 
 td.placement {
-  width: 2rem;
+  width: var(--placement-width);
   text-align: center;
   color: #A1A1A1;
+}
+
+td.logo {
+  position: relative;
+  height: 50px;
+  width: 50px;
+  padding-right: 0;
+}
+
+td.name {
+  padding-left: 0;
 }
 
 td.score,
@@ -53,4 +64,24 @@ td.perf {
 
 td.rating {
   width: 70px;
+}
+
+@media (max-width: 1550px) {
+  .standingsWrapper {
+    font-size: 0.9rem;
+
+    --placement-width: 1rem;
+  }
+
+  td.score {
+    width: 90px;
+  }
+
+  td.perf {
+    width: 50px;
+  }
+
+  td.rating {
+    display: none;
+  }
 }

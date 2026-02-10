@@ -5,6 +5,12 @@
     gap: 1rem; 
 }
 
+@media (max-width: 1920px) {
+    .gameGraph {
+        grid-template-columns: 75px 1fr;
+    }
+}
+
 .modeSelectorList {
     display: flex;
     flex-direction: column;
