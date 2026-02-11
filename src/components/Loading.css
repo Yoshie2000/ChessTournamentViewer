@@ -1,0 +1,37 @@
+@keyframes sk-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.sk-block{
+  vertical-align: middle;
+  background-color: #2a2a2a;
+  border-radius: 6px;
+  animation: sk-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes sk-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sk-spinner {
+  border-radius: 50%;
+  border-style: solid;
+
+  border-color: #2a2a2a;
+  border-top-color: #3a3a3a; 
+
+  animation:
+    sk-spin 0.9s linear infinite,
+    sk-pulse 1.8s ease-in-out infinite;
+
+  display: inline-block;
+}
+
+.sectionSpinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

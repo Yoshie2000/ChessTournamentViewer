@@ -1,9 +1,15 @@
 .engineComponent {
+  display: flex;
+  flex-direction: column;
   border-radius: 8px;
   background: #343434;
   border: 1px solid #1A1A1A;
   max-width: 100%;
   overflow: hidden;
+}
+
+.engineComponent > :last-child {
+  flex-grow: 1;
 }
 
 .engineComponent hr {
@@ -54,10 +60,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.enginePvWrapper {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
 .enginePv {
   color: #A1A1A1;
   font-size: 0.9rem;
-  padding: 0.5rem 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
