@@ -96,7 +96,14 @@ export function EngineCard({
         {loading ? (
           <SkeletonText width="100%" />
         ) : (
-          <div className="enginePv">PV: {data.pv}</div>
+          <div className="enginePv">
+            PV:
+            {data.pv.split(" ").map((move, i) => (
+              <span className="pvMove" key={i}>
+                {move}
+              </span>
+            ))}
+          </div>
         )}
       </div>
     </div>
