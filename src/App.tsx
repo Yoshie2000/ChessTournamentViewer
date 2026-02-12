@@ -87,6 +87,18 @@ function App() {
     const currentTime = new Date().getTime();
     if (currentTime - lastBoardUpdateRef.current <= 50) return;
 
+    const history = game.current.history({ verbose: true });
+
+    let fen = game.current.fen();
+    let turn = game.current.turn();
+    if (currentMoveNumber.current !== -1) {
+      const gameCopy = new Chess();
+      for (let i = 0; i < currentMoveNumber.current; i++)
+        gameCopy.move(history[i]);
+      fen = gameCopy.fen();
+      turn = gameCopy.turn();
+    }
+
     const arrows: DrawShape[] = [];
 
     const latestLiveInfoBlack = liveInfosRef.current.black.at(
@@ -101,7 +113,7 @@ function App() {
 
     if (latestLiveInfoBlack) {
       const pv = latestLiveInfoBlack.info.pv.split(" ");
-      const nextMove = game.current.turn() == "b" ? pv[0] : pv[1];
+      const nextMove = turn == "b" ? pv[0] : pv[1];
       if (nextMove && nextMove.length >= 4)
         arrows.push({
           orig: (nextMove.slice(0, 2) as Square) || "a1",
@@ -111,7 +123,7 @@ function App() {
     }
     if (latestLiveInfoWhite) {
       const pv = latestLiveInfoWhite.info.pv.split(" ");
-      const nextMove = game.current.turn() == "w" ? pv[0] : pv[1];
+      const nextMove = turn == "w" ? pv[0] : pv[1];
       if (nextMove && nextMove.length >= 4)
         arrows.push({
           orig: (nextMove.slice(0, 2) as Square) || "a1",
@@ -147,17 +159,8 @@ function App() {
         eraseOnMovablePieceClick: false,
         shapes: arrows,
       },
+      fen,
     };
-
-    const history = game.current.history({ verbose: true });
-
-    config.fen = game.current.fen();
-    if (currentMoveNumber.current !== -1) {
-      const gameCopy = new Chess();
-      for (let i = 0; i < currentMoveNumber.current; i++)
-        gameCopy.move(history[i]);
-      config.fen = gameCopy.fen();
-    }
 
     const lastMove =
       currentMoveNumber.current === -1
@@ -191,8 +194,6 @@ function App() {
         break;
 
       case "gameUpdate":
-        setCccGame(msg);
-
         game.current.loadPgn(msg.gameDetails.pgn);
         setFen(game.current.fen());
         updateBoard();
@@ -214,6 +215,8 @@ function App() {
           if (data) liveInfosStockfish[i] = JSON.parse(data);
         }
         liveInfosRef.current.stockfish = liveInfosStockfish;
+
+        setCccGame(msg);
 
         break;
 
