@@ -7,7 +7,7 @@ import type { LiveInfoEntry } from "./LiveInfo";
 type GameGraphProps = {
   liveInfosWhite: LiveInfoEntry[];
   liveInfosBlack: LiveInfoEntry[];
-  liveInfosStockfish: LiveInfoEntry[];
+  liveInfosKibitzer: LiveInfoEntry[];
   white: CCCEngine;
   black: CCCEngine;
 };
@@ -65,7 +65,7 @@ export function GameGraph({
   liveInfosWhite,
   white,
   black,
-  liveInfosStockfish,
+  liveInfosKibitzer,
 }: GameGraphProps) {
   const [mode, setMode] = useState(0);
 
@@ -77,7 +77,7 @@ export function GameGraph({
         Math.max(
           liveInfosWhite.length,
           liveInfosBlack.length,
-          liveInfosStockfish.length
+          liveInfosKibitzer.length
         ) - bookPlies,
     },
     (_, i) => String(i + 1 + bookPlies)
@@ -101,8 +101,8 @@ export function GameGraph({
         spanGaps: true,
       },
       {
-        label: "Stockfish",
-        data: liveInfosStockfish.slice(bookPlies).map(MODES[mode].map),
+        label: "Kibitzer",
+        data: liveInfosKibitzer.slice(bookPlies).map(MODES[mode].map),
         borderColor: "rgba(21, 101, 192, 0.7)",
         backgroundColor: "rgba(21, 101, 192, 0.7)",
         spanGaps: true,

@@ -2,13 +2,21 @@ import type { DrawShape } from "@lichess-org/chessground/draw";
 import type { CCCEngine, CCCLiveInfo } from "../types";
 import type { Square } from "chess.js";
 
+export interface IEngineWorker {
+  isReady(): boolean;
+  onMessage(callback: (e: any) => void): void;
+  onError(callback: () => void): void;
+  postMessage(e: any): void;
+  terminate(): void;
+}
+
 export type AnalysisResult = {
   fen: string;
   liveInfo: CCCLiveInfo;
   arrow: DrawShape | null;
 };
 
-const StockfishEngineDefinition: CCCEngine = {
+const EmptyEngineDefinition: CCCEngine = {
   authors: "",
   config: { command: "", options: {}, timemargin: 0 },
   country: "",
@@ -16,8 +24,8 @@ const StockfishEngineDefinition: CCCEngine = {
   facts: "",
   flag: "",
   id: "",
-  imageUrl: "stockfish",
-  name: "Stockfish 17.1",
+  imageUrl: "",
+  name: "",
   perf: "",
   points: "",
   rating: "",
@@ -27,10 +35,8 @@ const StockfishEngineDefinition: CCCEngine = {
   year: "",
 };
 
-export { StockfishEngineDefinition };
-
-export class StockfishWorker {
-  private worker: Worker;
+export class EngineWorker {
+  private worker: IEngineWorker;
 
   public onMessage: ((result: AnalysisResult) => void) | null = null;
 
@@ -42,18 +48,23 @@ export class StockfishWorker {
 
   private stopSignal: (() => void) | null = null;
 
-  constructor() {
-    this.worker = new Worker("/stockfish-17.1-single-a496a04.js");
+  private engine: CCCEngine = EmptyEngineDefinition;
 
-    this.worker.onmessage = (e) => this.handleWorkerMessage(e);
+  constructor(worker: IEngineWorker) {
+    this.worker = worker;
+    this.worker.onMessage((e) => this.handleWorkerMessage(e));
+    this.worker.onError(() => {
+      this.isSearching = false;
+    });
+  }
 
-    this.post("uci");
-    this.post("setoption name Hash value 128");
-    this.post("isready");
-    this.post("ucinewgame");
+  public getEngineInfo() {
+    return this.engine;
   }
 
   public analyze(fen: string) {
+    if (!this.worker.isReady()) return;
+
     this.latestRequestedFen = fen;
 
     this.queue = this.queue
@@ -63,8 +74,7 @@ export class StockfishWorker {
         }
         await this.performAnalysis(fen);
       })
-      .catch((err) => {
-        console.error("Worker Queue Error:", err);
+      .catch(() => {
         this.isSearching = false;
       });
   }
@@ -81,8 +91,14 @@ export class StockfishWorker {
     this.isSearching = true;
   }
 
-  private handleWorkerMessage(e: MessageEvent) {
-    const msg = e.data;
+  private handleWorkerMessage(msg: any) {
+    if (msg.startsWith("id name")) {
+      this.engine = {
+        ...this.engine,
+        name: msg.split("id name ")[1],
+        imageUrl: msg.split("id name ")[1].split(" ")[0].toLowerCase(),
+      };
+    }
 
     if (msg.startsWith("bestmove")) {
       this.isSearching = false;
@@ -152,7 +168,7 @@ export class StockfishWorker {
         ? {
             orig: bestmove.slice(0, 2) as Square,
             dest: bestmove.slice(2, 4) as Square,
-            brush: "stockfish",
+            brush: "kibitzer",
           }
         : null;
 

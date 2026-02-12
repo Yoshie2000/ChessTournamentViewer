@@ -26,10 +26,6 @@ import { StandingsTable } from "./components/StandingsTable";
 import { GameGraph } from "./components/GameGraph";
 import type { Config } from "@lichess-org/chessground/config";
 import { Schedule } from "./components/Schedule";
-import {
-  StockfishEngineDefinition,
-  StockfishWorker,
-} from "./components/StockfishWorker";
 import "./App.css";
 import {
   emptyLiveInfo,
@@ -40,6 +36,9 @@ import { Crosstable } from "./components/Crosstable";
 import { EventList } from "./components/EventList";
 import { MoveList } from "./components/MoveList";
 import { Spinner } from "./components/Loading";
+import { NativeWorker } from "./engine/NativeWorker";
+import { EngineWorker } from "./engine/EngineWorker";
+import { StockfishWorker } from "./engine/StockfishWorker";
 
 const CLOCK_UPDATE_MS = 25;
 
@@ -59,7 +58,7 @@ function App() {
   const game = useRef(new Chess());
   const ws = useRef<TournamentWebSocket>(new CCCWebSocket());
 
-  const stockfish = useRef<StockfishWorker>(null);
+  const kibitzer = useRef<EngineWorker>(null);
   const [fen, setFen] = useState(game.current.fen());
 
   const [popupOpen, setPopupOpen] = useState(false);
@@ -78,7 +77,7 @@ function App() {
   const liveInfosRef = useRef({
     white: [] as LiveInfoEntry[],
     black: [] as LiveInfoEntry[],
-    stockfish: [] as LiveInfoEntry[],
+    kibitzer: [] as LiveInfoEntry[],
   });
 
   const lastBoardUpdateRef = useRef(new Date().getTime());
@@ -107,7 +106,7 @@ function App() {
     const latestLiveInfoWhite = liveInfosRef.current.white.at(
       currentMoveNumber.current
     );
-    const latestLiveInfoStockfish = liveInfosRef.current.stockfish.at(
+    const latestLiveInfoKibitzer = liveInfosRef.current.kibitzer.at(
       currentMoveNumber.current
     );
 
@@ -131,14 +130,14 @@ function App() {
           brush: latestLiveInfoWhite.info.color,
         });
     }
-    if (latestLiveInfoStockfish) {
-      const pv = latestLiveInfoStockfish.info.pv.split(" ");
+    if (latestLiveInfoKibitzer) {
+      const pv = latestLiveInfoKibitzer.info.pv.split(" ");
       const nextMove = pv[0];
       if (nextMove && nextMove.length >= 4)
         arrows.push({
           orig: (nextMove.slice(0, 2) as Square) || "a1",
           dest: (nextMove.slice(2, 4) as Square) || "a1",
-          brush: "stockfish",
+          brush: "kibitzer",
         });
     }
 
@@ -148,8 +147,8 @@ function App() {
         brushes: {
           white: { key: "white", color: "#fff", opacity: 0.7, lineWidth: 10 },
           black: { key: "black", color: "#000", opacity: 0.7, lineWidth: 10 },
-          stockfish: {
-            key: "stockfish",
+          kibitzer: {
+            key: "kibitzer",
             color: "#0D47A1",
             opacity: 0.7,
             lineWidth: 10,
@@ -200,7 +199,7 @@ function App() {
         liveInfosRef.current.white = liveInfosWhite;
         liveInfosRef.current.black = liveInfosBlack;
 
-        const liveInfosStockfish: LiveInfoEntry[] = [];
+        const liveInfosKibitzer: LiveInfoEntry[] = [];
         const localStorageID = msg.gameDetails.gameNr + "|";
         for (
           let i = 0;
@@ -208,9 +207,9 @@ function App() {
           i++
         ) {
           const data = localStorage.getItem(localStorageID + i);
-          if (data) liveInfosStockfish[i] = JSON.parse(data);
+          if (data) liveInfosKibitzer[i] = JSON.parse(data);
         }
-        liveInfosRef.current.stockfish = liveInfosStockfish;
+        liveInfosRef.current.kibitzer = liveInfosKibitzer;
 
         currentMoveNumber.current = -1;
         game.current.loadPgn(msg.gameDetails.pgn);
@@ -218,8 +217,6 @@ function App() {
 
         setCccGame(msg);
         setFen(game.current.fen());
-
-        console.log("new game :)");
 
         break;
 
@@ -292,18 +289,18 @@ function App() {
   useEffect(() => {
     const clockTimer = setInterval(updateClocks, CLOCK_UPDATE_MS);
 
-    stockfish.current = new StockfishWorker();
+    kibitzer.current = new EngineWorker(new StockfishWorker());
 
     return () => {
       clearInterval(clockTimer);
-      stockfish.current?.terminate();
+      kibitzer.current?.terminate();
     };
   }, []);
 
   useEffect(() => {
-    if (!stockfish.current) return;
+    if (!kibitzer.current) return;
 
-    stockfish.current.onMessage = (result) => {
+    kibitzer.current.onMessage = (result) => {
       if (game.current.getHeaders()["Event"] === "?") return;
       if (game.current.fen() != result.fen) return;
 
@@ -315,19 +312,27 @@ function App() {
           JSON.stringify(result.liveInfo)
         );
 
-      const newLiveInfos = [...liveInfosRef.current.stockfish];
+      const newLiveInfos = [...liveInfosRef.current.kibitzer];
       newLiveInfos[result.liveInfo.info.ply] = result.liveInfo;
-      liveInfosRef.current.stockfish = newLiveInfos;
+      liveInfosRef.current.kibitzer = newLiveInfos;
     };
-    stockfish.current.analyze(fen);
+    kibitzer.current.analyze(fen);
   }, [fen]);
 
   const latestLiveInfoBlack =
     liveInfosRef.current.black.at(-1) ?? emptyLiveInfo();
   const latestLiveInfoWhite =
     liveInfosRef.current.white.at(-1) ?? emptyLiveInfo();
-  const latestLiveInfoStockfish =
-    liveInfosRef.current.stockfish.at(-1) ?? emptyLiveInfo();
+  
+  // Allow the kibitzer to be at most 1 ply behind
+  const currentPly = Math.max(
+    latestLiveInfoBlack.info.ply,
+    latestLiveInfoWhite.info.ply
+  );
+  const kibitzerInfoIdx =
+    liveInfosRef.current.kibitzer.length < currentPly - 1 ? currentPly : -1;
+  const latestLiveInfoKibitzer =
+    liveInfosRef.current.kibitzer.at(kibitzerInfoIdx) ?? emptyLiveInfo();
 
   const engines = useMemo(() => {
     if (!cccEvent?.tournamentDetails?.engines) return [];
@@ -379,10 +384,10 @@ function App() {
         />
 
         <EngineCard
-          engine={StockfishEngineDefinition}
-          info={latestLiveInfoStockfish}
-          time={Number(latestLiveInfoStockfish.info.time)}
-          placeholder={"Stockfish"}
+          engine={kibitzer.current?.getEngineInfo()}
+          info={latestLiveInfoKibitzer}
+          time={Number(latestLiveInfoKibitzer.info.time)}
+          placeholder={"Kibitzer"}
         />
 
         <EngineCard
@@ -432,7 +437,7 @@ function App() {
             white={white}
             liveInfosBlack={liveInfosRef.current.black}
             liveInfosWhite={liveInfosRef.current.white}
-            liveInfosStockfish={liveInfosRef.current.stockfish}
+            liveInfosKibitzer={liveInfosRef.current.kibitzer}
           />
         ) : (
           <>
