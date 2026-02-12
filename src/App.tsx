@@ -21,7 +21,6 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import { EngineCard } from "./components/EngineCard";
 import { StandingsTable } from "./components/StandingsTable";
 import { GameGraph } from "./components/GameGraph";
 import type { Config } from "@lichess-org/chessground/config";
@@ -38,6 +37,8 @@ import { Spinner } from "./components/Loading";
 import { NativeWorker } from "./engine/NativeWorker";
 import { EngineWorker } from "./engine/EngineWorker";
 import { StockfishWorker } from "./engine/StockfishWorker";
+import { EngineWindow } from "./components/EngineWindow";
+import { EngineMinimal } from "./components/EngineMinimal";
 
 const CLOCK_UPDATE_MS = 25;
 
@@ -403,30 +404,33 @@ function App() {
         />
       </div>
 
-      <div className="engineWindow">
-        <EngineCard
+      <EngineWindow
+        white={white}
+        black={black}
+        latestLiveInfoWhite={liveInfoWhite}
+        latestLiveInfoBlack={liveInfoBlack}
+        latestLiveInfoKibitzer={liveInfoKibitzer}
+        clocks={clocks}
+        activeKibitzerInfo={activeKibitzer?.getEngineInfo()}
+      />
+
+      <div className="boardWindow">
+        <EngineMinimal
           engine={black}
           info={liveInfoBlack}
           time={Number(clocks?.btime ?? 0)}
           placeholder={"Black"}
+          className="borderRadiusTop"
         />
-
-        <EngineCard
-          engine={activeKibitzer?.getEngineInfo()}
-          info={liveInfoKibitzer}
-          time={Number(liveInfoKibitzer?.info.time)}
-          placeholder={"Kibitzer"}
-        />
-
-        <EngineCard
+        <div ref={boardElementRef} className="board"></div>
+        <EngineMinimal
           engine={white}
           info={liveInfoWhite}
           time={Number(clocks?.wtime ?? 0)}
-          placeholder={"White"}
+          placeholder={"white"}
+          className="borderRadiusBottom"
         />
       </div>
-
-      <div ref={boardElementRef} className="boardWindow"></div>
 
       <div className="movesWindow">
         <h4>Move List</h4>

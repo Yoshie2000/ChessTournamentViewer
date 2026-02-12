@@ -41,14 +41,28 @@
 .scheduleWindow,
 .standingsWindow,
 .graphWindow,
-.boardWindow,
-.movesWindow {
+.board,
+.movesWindow,
+.engineWindowMobile {
   position: relative;
   border-radius: 8px;
   background: #343434;
   border: 1px solid #1a1a1a;
   padding: 1rem;
   overflow: hidden;
+}
+
+.engineWindowMobile {
+  padding: 0rem 0rem 0rem 0rem;
+}
+
+.engineTabs {
+  background: #343434;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid #333;
+  padding: 0.3rem 0rem 0.3rem 0rem;
+  gap: 0.5rem;
 }
 
 .topBar {
@@ -97,7 +111,7 @@ body:has(.popup) {
   gap: 0.5rem;
 }
 
-.boardWindow {
+.boardWindow .board {
   width: var(--board-size);
   height: var(--board-size);
   border: 1px solid #1a1a1a;
@@ -108,12 +122,12 @@ body:has(.popup) {
   justify-content: center;
 }
 
-.boardWindow cg-container {
+.boardWindow .board cg-container {
   width: var(--board-size) !important;
   height: var(--board-size) !important;
 }
 
-.boardWindow cg-board {
+.boardWindow .board cg-board {
   background-color: #8ca2ad;
 }
 
@@ -241,12 +255,18 @@ body:has(.popup) {
   .app {
     grid-template-columns: 1fr;
     grid-template-rows:
-      50px var(--board-size) 200px var(--graph-height) minmax(auto, 600px)
+      auto auto auto var(--graph-height) minmax(auto, 600px)
       600px;
+    height: auto;
+    overflow-y: auto;
   }
 
   .topBar {
     grid-column: 1 / 2;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
   }
 
   .engineWindow {
@@ -255,10 +275,15 @@ body:has(.popup) {
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: 1fr;
     gap: 0.5rem;
+    height: auto;
   }
 
   .boardWindow {
     grid-column: 1 / 2;
+  }
+
+  .boardWindow .board {
+    border-radius: 0px;
   }
 
   .movesWindow {

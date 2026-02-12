@@ -1,0 +1,136 @@
+@media (min-width: 768px) {
+  .engineMinimal {
+    display: none;
+  }
+}
+
+@media (max-width: 775px) {
+  .engineMinimal {
+    align-self: baseline !important;
+  }
+
+  .engineMinimal .engineInfoTable {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .engineMinimal .engineField .key {
+    font-size: 0;
+  }
+
+  .engineMinimal .engineField .key::first-letter {
+    font-size: 0.9rem;
+  }
+
+  .engineMinimal .engineField .value {
+    margin-left: 1rem;
+  }
+
+  .engineMinimal .engineInfoHeader .engineLogo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .engineMinimal {
+    display: flex;
+    flex-direction: column;
+    border-radius: 0px;
+    background: #343434;
+    border: 1px solid #1a1a1a;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .engineMinimal.borderRadiusBottom {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+
+  .engineMinimal.borderRadiusTop {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+  .engineMinimal hr {
+    background: #434343;
+    border: none;
+    height: 1px;
+    margin: 0;
+  }
+
+  .engineMinimal .engineName {
+    font-weight: bold;
+  }
+
+  .engineMinimal .engineInfoHeader {
+    display: flex;
+    align-items: center;
+  }
+
+  .engineMinimal .engineOutput {
+    display: flex;
+    gap: 3rem;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 1rem 0 auto;
+    font-weight: bold;
+  }
+
+  .engineMinimal .engineOutput .engineTime {
+    font-size: 0.9rem;
+  }
+
+  .engineMinimal .engineInfoTable {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0.5rem 1rem;
+    row-gap: 0.25rem;
+    column-gap: 2rem;
+    font-size: 0.9rem;
+  }
+
+  .engineMinimal .engineField {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .engineMinimal .engineField .key {
+    color: #a1a1a1;
+  }
+
+  .engineMinimal .engineField .value,
+  .engineMinimal .enginePv,
+  .engineMinimal .engineOutput {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .engineMinimal .enginePvWrapper {
+    margin: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .engineMinimal .enginePv {
+    --pv-rows: 3;
+    line-height: 1rem;
+    height: calc(var(--pv-rows) * 1rem);
+    overflow: hidden;
+
+    display: flex;
+    column-gap: 1ch;
+    flex-wrap: wrap;
+  }
+
+  .engineMinimal .enginePv .pvMove:first-child {
+    margin-left: 1ch;
+  }
+
+  .engineMinimal .enginePv,
+  .engineMinimal .enginePv .pvMove {
+    font-size: 0.9rem;
+    color: #a1a1a1;
+  }
+}

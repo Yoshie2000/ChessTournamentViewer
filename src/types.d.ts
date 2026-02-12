@@ -100,6 +100,17 @@ type CCCEvent = { id: number; name: string; tc: TimeControl };
 
 type CCCEventsListUpdate = { type: "eventsListUpdate"; events: CCCEvent[] };
 
+type EngineWindowProps = {
+  white?: CCCEngine;
+  black?: CCCEngine;
+  activeKibitzerInfo?: CCCEngine;
+
+  latestLiveInfoWhite?: CCCLiveInfo;
+  latestLiveInfoBlack?: CCCLiveInfo;
+  latestLiveInfoKibitzer: CCCLiveInfo | undefined;
+  clocks?: { wtime?: string; btime?: string };
+};
+
 export type CCCMessage =
   | CCCLiveInfo
   | CCCNewMove
@@ -107,3 +118,4 @@ export type CCCMessage =
   | CCCEventUpdate
   | CCCGameUpdate
   | CCCEventsListUpdate;
+
