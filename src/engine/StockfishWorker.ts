@@ -4,15 +4,18 @@ export class StockfishWorker implements IEngineWorker {
   private worker: Worker;
   private callback: null | ((e: any) => void) = null;
 
-  constructor() {
+  constructor(hash: number = 128, threads: number = 1) {
     this.worker = new Worker("/stockfish-18.js");
 
     this.worker.onmessage = this.callback;
 
     this.postMessage("uci");
-    this.postMessage("setoption name Hash value 128");
+    this.postMessage("setoption name Hash value " + hash);
+    this.postMessage("setoption name Threads value " + threads);
     this.postMessage("isready");
     this.postMessage("ucinewgame");
+
+    console.log(hash, threads)
   }
 
   public isReady() {

@@ -34,12 +34,14 @@ import { EventList } from "./components/EventList";
 import { getGameAtMoveNumber, MoveList } from "./components/MoveList";
 import { Spinner } from "./components/Loading";
 import { NativeWorker } from "./engine/NativeWorker";
-import { EngineWorker } from "./engine/EngineWorker";
+import { type EngineSettings, EngineWorker } from "./engine/EngineWorker";
 import { StockfishWorker } from "./engine/StockfishWorker";
 import { EngineWindow } from "./components/EngineWindow";
 import { EngineMinimal } from "./components/EngineMinimal";
 import { Chess960, type Square } from "./chess.js/chess";
 import { GameResultOverlay } from "./components/GameResultOverlay";
+import { LuSettings } from "react-icons/lu";
+import { getDefaultKibitzerSettings, Settings } from "./components/Settings";
 
 const CLOCK_UPDATE_MS = 25;
 
@@ -62,7 +64,7 @@ function App() {
   const kibitzer = useRef<EngineWorker[]>(null);
   const [fen, setFen] = useState(game.current.fen());
 
-  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupState, setPopupState] = useState<string>();
   const [cccEventList, setCccEventList] = useState<CCCEventsListUpdate>();
   const [cccEvent, setCccEvent] = useState<CCCEventUpdate>();
   const [cccGame, setCccGame] = useState<CCCGameUpdate>();
@@ -73,6 +75,10 @@ function App() {
     wtime: "0",
     type: "clocks",
   });
+
+  const [kibitzerSettings, setKibitzerSettings] = useState<EngineSettings>(
+    getDefaultKibitzerSettings()
+  );
 
   const currentMoveNumber = useRef(-1);
   const liveInfosRef = useRef({
@@ -85,29 +91,43 @@ function App() {
 
   function getCurrentLiveInfos(offset: number = -1) {
     if (liveInfosRef.current.black.at(currentMoveNumber.current)) {
-      return {
-        liveInfoBlack: liveInfosRef.current.black.at(currentMoveNumber.current),
-        liveInfoWhite: liveInfosRef.current.white.at(
-          currentMoveNumber.current === -1
-            ? -1
-            : Math.max(0, currentMoveNumber.current + offset)
-        ),
-        liveInfoKibitzer: liveInfosRef.current.kibitzer.at(
-          currentMoveNumber.current
-        ),
-      };
+      const liveInfoBlack = liveInfosRef.current.black.at(
+        currentMoveNumber.current
+      );
+      const liveInfoWhite = liveInfosRef.current.white.at(
+        currentMoveNumber.current === -1
+          ? -1
+          : Math.max(0, currentMoveNumber.current + offset)
+      );
+      const liveInfoKibitzer =
+        liveInfosRef.current.kibitzer.at(
+          liveInfoBlack?.info.ply ?? currentMoveNumber.current
+        ) ??
+        liveInfosRef.current.kibitzer.at(
+          liveInfoBlack?.info.ply
+            ? liveInfoBlack?.info.ply - 1
+            : currentMoveNumber.current
+        );
+      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
     } else {
-      return {
-        liveInfoBlack: liveInfosRef.current.black.at(
-          currentMoveNumber.current === -1
-            ? -1
-            : Math.max(0, currentMoveNumber.current + offset)
-        ),
-        liveInfoWhite: liveInfosRef.current.white.at(currentMoveNumber.current),
-        liveInfoKibitzer: liveInfosRef.current.kibitzer.at(
-          currentMoveNumber.current
-        ),
-      };
+      const liveInfoBlack = liveInfosRef.current.black.at(
+        currentMoveNumber.current === -1
+          ? -1
+          : Math.max(0, currentMoveNumber.current + offset)
+      );
+      const liveInfoWhite = liveInfosRef.current.white.at(
+        currentMoveNumber.current
+      );
+      const liveInfoKibitzer =
+        liveInfosRef.current.kibitzer.at(
+          liveInfoWhite?.info.ply ?? currentMoveNumber.current
+        ) ??
+        liveInfosRef.current.kibitzer.at(
+          liveInfoWhite?.info.ply
+            ? liveInfoWhite?.info.ply - 1
+            : currentMoveNumber.current
+        );
+      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
     }
   }
 
@@ -319,17 +339,20 @@ function App() {
 
   useEffect(() => {
     const clockTimer = setInterval(updateClocks, CLOCK_UPDATE_MS);
-
-    kibitzer.current = [
-      new EngineWorker(new NativeWorker()),
-      new EngineWorker(new StockfishWorker()),
-    ];
-
-    return () => {
-      clearInterval(clockTimer);
-      kibitzer.current?.forEach((worker) => worker.terminate());
-    };
+    return () => clearInterval(clockTimer);
   }, []);
+
+  useEffect(() => {
+    kibitzer.current = [
+      new EngineWorker(
+        new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+      ),
+      new EngineWorker(
+        new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+      ),
+    ];
+    return () => kibitzer.current?.forEach((worker) => worker.terminate());
+  }, [kibitzerSettings]);
 
   const activeKibitzer = kibitzer.current?.find((kibitzer) =>
     kibitzer.isReady()
@@ -364,10 +387,15 @@ function App() {
   ]);
 
   useEffect(() => {
-    if (!cccGame?.gameDetails.live) return;
+    if (!cccGame?.gameDetails.live || !kibitzerSettings.enableKibitzer) return;
 
     activeKibitzer?.analyze(fen);
-  }, [fen, activeKibitzer?.getID(), cccGame?.gameDetails.gameNr]);
+  }, [
+    fen,
+    activeKibitzer?.getID(),
+    cccGame?.gameDetails.gameNr,
+    kibitzerSettings.enableKibitzer,
+  ]);
 
   const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
     getCurrentLiveInfos();
@@ -392,13 +420,20 @@ function App() {
 
   return (
     <div className="app">
-      {popupOpen && (
+      {popupState && (
         <div className="popup">
-          {cccEvent && (
+          {popupState === "crosstable" && cccEvent && (
             <Crosstable
               engines={engines}
               cccEvent={cccEvent}
-              onClose={() => setPopupOpen(false)}
+              onClose={() => setPopupState(undefined)}
+            />
+          )}
+          {popupState === "settings" && (
+            <Settings
+              kibitzerSettings={kibitzerSettings}
+              setKibitzerSettings={setKibitzerSettings}
+              onClose={() => setPopupState(undefined)}
             />
           )}
         </div>
@@ -411,11 +446,16 @@ function App() {
             ? " - " + cccEvent?.tournamentDetails.name
             : ""}
         </div>
-        <EventList
-          eventList={cccEventList}
-          requestEvent={requestEvent}
-          selectedEvent={cccEvent}
-        />
+        <div className="settingsRow">
+          <EventList
+            eventList={cccEventList}
+            requestEvent={requestEvent}
+            selectedEvent={cccEvent}
+          />
+          <button onClick={() => setPopupState("settings")}>
+            <LuSettings />
+          </button>
+        </div>
       </div>
 
       <EngineWindow
@@ -471,7 +511,9 @@ function App() {
         <h4>Standings</h4>
         {white && black ? (
           <>
-            <button onClick={() => setPopupOpen(true)}>Show Crosstable</button>
+            <button onClick={() => setPopupState("crosstable")}>
+              Show Crosstable
+            </button>
             <StandingsTable engines={engines} />
           </>
         ) : (

@@ -75,6 +75,14 @@
   font-weight: bold;
 }
 
+.topBar .settingsRow {
+  margin-left: auto;
+  display: flex;
+  overflow: hidden;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
 .app:has(.popup),
 body:has(.popup) {
   overflow: hidden;
@@ -92,6 +100,25 @@ body:has(.popup) {
   z-index: 100;
   overflow: auto;
   border-radius: 8px;
+}
+
+.popup .closeButton {
+  background: #c62828;
+  color: #fff;
+  border: 1px solid #8e0000;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  padding: 0.25rem;
+}
+
+.popup .closeButton:hover {
+  background: #b71c1c;
 }
 
 .engineWindow {

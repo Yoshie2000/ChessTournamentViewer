@@ -36,6 +36,12 @@ const EmptyEngineDefinition: CCCEngine = {
   year: "",
 };
 
+export type EngineSettings = {
+  hash: number;
+  threads: number;
+  enableKibitzer: boolean;
+};
+
 export class EngineWorker {
   private worker: IEngineWorker;
 

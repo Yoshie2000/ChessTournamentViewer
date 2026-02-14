@@ -19,7 +19,8 @@ h4 {
   letter-spacing: 1px;
 }
 
-button {
+button,
+input {
   outline: none;
   border: 1px solid #232323;
   background: #323232;
@@ -28,7 +29,18 @@ button {
   border-radius: 4px;
 }
 
-button:hover {
+label {
+  margin-bottom: 0.125rem;
+  display: block;
+  font-size: 0.9rem;
+}
+
+input {
+  cursor: unset;
+}
+
+button:hover,
+input:hover {
   background: #434343;
 }
 

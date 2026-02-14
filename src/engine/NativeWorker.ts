@@ -7,18 +7,19 @@ export class NativeWorker implements IEngineWorker {
   private callback: null | ((e: any) => void) = null;
   private errorCallback: null | (() => void) = null;
 
-  constructor() {
-    this.connect();
+  constructor(hash: number = 128, threads: number = 1) {
+    this.connect(hash, threads);
   }
 
-  private connect() {
+  private connect(hash: number, threads: number) {
     this.ws = new WebSocket("ws://localhost:7654");
 
     this.ws.onopen = () => {
       this.ready = true;
       this.postMessage("stop");
       this.postMessage("uci");
-      this.postMessage("setoption name Hash value 128");
+      this.postMessage("setoption name Hash value " + hash);
+      this.postMessage("setoption name Threads value " + threads);
       this.postMessage("isready");
       this.postMessage("ucinewgame");
     };
@@ -31,7 +32,7 @@ export class NativeWorker implements IEngineWorker {
     this.ws.onclose = () => {
       if (this.shouldTerminate) return;
       this.ready = false;
-      setTimeout(() => this.connect(), 1000);
+      setTimeout(() => this.connect(hash, threads), 1000);
     };
   }
 
