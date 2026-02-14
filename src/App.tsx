@@ -39,6 +39,7 @@ import { StockfishWorker } from "./engine/StockfishWorker";
 import { EngineWindow } from "./components/EngineWindow";
 import { EngineMinimal } from "./components/EngineMinimal";
 import { Chess960, type Square } from "./chess.js/chess";
+import { Chess } from "./chess.js/chess";
 
 const CLOCK_UPDATE_MS = 25;
 
@@ -119,10 +120,9 @@ function App() {
     let fen = game.current.fen();
     let turn = game.current.turn();
     if (currentMoveNumber.current !== -1) {
-      const gameCopy = new Chess960(game.current.getHeaders()["FEN"]);
+      const gameCopy = new Chess960(game.current.getHeaders()["FEN"] ?? new Chess().fen());
       for (let i = 0; i < currentMoveNumber.current; i++) {
-        gameCopy.move(history[i].san, { strict: true });
-        console.log(history[i])
+        gameCopy.move(history[i].san, { strict: false });
       }
       fen = gameCopy.fen();
       turn = gameCopy.turn();
@@ -216,7 +216,6 @@ function App() {
         break;
 
       case "gameUpdate":
-        console.log(msg.gameDetails.pgn)
         game.current.loadPgn(msg.gameDetails.pgn);
 
         const { liveInfosBlack, liveInfosWhite } = extractLiveInfoFromGame(
