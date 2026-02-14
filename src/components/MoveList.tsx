@@ -1,6 +1,6 @@
-import type { Chess } from "chess.js";
 import { Fragment, memo, useEffect, useRef } from "react";
 import "./MoveList.css";
+import type { Chess } from "../chess.js/chess";
 
 type MoveListProps = {
   game: Chess;

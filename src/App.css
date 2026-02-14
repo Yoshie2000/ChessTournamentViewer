@@ -136,11 +136,11 @@ body:has(.popup) {
   display: grid;
   grid-template-rows: auto 2fr;
   gap: 1rem;
-  grid-column: 2 / 3;
+  grid-column: 3 / 4;
 }
 
 .graphWindow {
-  grid-column: 3 / 4;
+  grid-column: 2 / 3;
   grid-row: 3 / 4;
 }
 

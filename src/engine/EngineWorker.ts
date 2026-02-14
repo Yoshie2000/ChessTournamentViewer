@@ -1,7 +1,7 @@
 import type { DrawShape } from "@lichess-org/chessground/draw";
 import type { CCCEngine, CCCLiveInfo } from "../types";
-import type { Square } from "chess.js";
 import { v4 as uuidv4 } from "uuid";
+import type { Square } from "../chess.js/chess";
 
 export interface IEngineWorker {
   isReady(): boolean;

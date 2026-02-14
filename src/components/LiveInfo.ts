@@ -1,4 +1,4 @@
-import type { Chess } from "chess.js";
+import type { Chess } from "../chess.js/chess";
 import type { CCCLiveInfo } from "../types";
 
 export type LiveInfoEntry = CCCLiveInfo | undefined;
@@ -7,7 +7,7 @@ export function extractLiveInfoFromGame(game: Chess) {
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
   game.getComments().forEach((value, i) => {
-    const data = value.comment.split(", ");
+    const data = value.comment?.split(", ") ?? [];
 
     if (data[0] === "book") return;
 

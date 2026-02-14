@@ -1,7 +1,7 @@
 import io from "socket.io-client";
 import type { TournamentWebSocket } from "./CCCWebsocket";
 import type { CCCMessage } from "./types";
-import { Chess } from "chess.js";
+import { Chess960 } from "./chess.js/chess";
 
 const TCEC_SOCKET_URL = "https://tcec-chess.com";
 const TCEC_ROOM = "room1";
@@ -79,7 +79,7 @@ export class TCECSocket implements TournamentWebSocket {
         },
       });
 
-      const game = new Chess();
+      const game = new Chess960();
       game.load(e.Moves.at(-2).fen);
       game.move(e.Moves.at(-1).m);
 
