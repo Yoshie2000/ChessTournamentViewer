@@ -3,6 +3,7 @@ import type { CCCEngine, CCCLiveInfo } from "../types";
 import { useState } from "react";
 import "./GameGraph.css";
 import type { LiveInfoEntry } from "./LiveInfo";
+import { formatLargeNumber, formatTime } from "./EngineCard";
 
 type GameGraphProps = {
   liveInfosWhite: LiveInfoEntry[];
@@ -19,9 +20,12 @@ const MODES = [
     name: "Eval",
     map: function (liveInfo?: CCCLiveInfo) {
       if (!liveInfo) return NaN;
-      if (liveInfo.info.score.includes("+M")) return 10.0;
-      if (liveInfo.info.score.includes("-M")) return -10.0;
-      return Math.min(Math.max(Number(liveInfo.info.score), -10.0), 10.0);
+      else if (liveInfo.info.score.includes("+M")) return 144.0;
+      else if (liveInfo.info.score.includes("-M")) return -144.0;
+      else return Math.min(Math.max(Number(liveInfo!.info.score), -99.9), 99.9);
+    },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return liveInfo?.info.score ?? "-";
     },
   },
   {
@@ -29,11 +33,17 @@ const MODES = [
     map: function (liveInfo?: CCCLiveInfo) {
       return Number(liveInfo?.info.depth);
     },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return liveInfo?.info.depth ?? "-";
+    },
   },
   {
     name: "Nodes",
     map: function (liveInfo?: CCCLiveInfo) {
       return Number(liveInfo?.info.nodes);
+    },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return formatLargeNumber(liveInfo?.info.nodes);
     },
   },
   {
@@ -41,11 +51,17 @@ const MODES = [
     map: function (liveInfo?: CCCLiveInfo) {
       return Number(liveInfo?.info.time) / 1000;
     },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return liveInfo ? formatTime(Number(liveInfo.info.time)) : "-";
+    },
   },
   {
     name: "Speed",
     map: function (liveInfo?: CCCLiveInfo) {
       return Number(liveInfo?.info.speed);
+    },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return formatLargeNumber(liveInfo?.info.speed);
     },
   },
   {
@@ -53,11 +69,17 @@ const MODES = [
     map: function (liveInfo?: CCCLiveInfo) {
       return Number(liveInfo?.info.tbhits);
     },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return formatLargeNumber(liveInfo?.info.tbhits);
+    },
   },
   {
     name: "Hashfull",
     map: function (liveInfo?: CCCLiveInfo) {
       return Number(liveInfo?.info.hashfull);
+    },
+    mapLabel: function (liveInfo?: CCCLiveInfo) {
+      return liveInfo?.info.hashfull ?? "-";
     },
   },
 ];
@@ -87,26 +109,44 @@ export function GameGraph({
     (_, i) => String(i + 1 + bookPlies)
   );
 
+  function scaleData(value: number) {
+    return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
+  }
+
   const data = {
     labels,
     datasets: [
       {
         label: black.name,
-        data: liveInfosBlack.slice(bookPlies).map(MODES[mode].map),
+        data: liveInfosBlack
+          .slice(bookPlies)
+          .map(MODES[mode].map)
+          .map(scaleData),
+        dataLabels: liveInfosBlack.slice(bookPlies).map(MODES[mode].mapLabel),
         borderColor: "rgba(0, 0, 0, 0.7)",
         backgroundColor: "rgba(0, 0, 0, 0.7)",
         spanGaps: true,
       },
       {
         label: white.name,
-        data: liveInfosWhite.slice(bookPlies).map(MODES[mode].map),
+        data: liveInfosWhite
+          .slice(bookPlies)
+          .map(MODES[mode].map)
+          .map(scaleData),
+        dataLabels: liveInfosWhite.slice(bookPlies).map(MODES[mode].mapLabel),
         borderColor: "rgba(255, 255, 255, 0.7)",
         backgroundColor: "rgba(255, 255, 255, 0.7)",
         spanGaps: true,
       },
       {
         label: "Kibitzer",
-        data: liveInfosKibitzer.slice(bookPlies).map(MODES[mode].map),
+        data: liveInfosKibitzer
+          .slice(bookPlies)
+          .map(MODES[mode].map)
+          .map(scaleData),
+        dataLabels: liveInfosKibitzer
+          .slice(bookPlies)
+          .map(MODES[mode].mapLabel),
         borderColor: "rgba(21, 101, 192, 0.7)",
         backgroundColor: "rgba(21, 101, 192, 0.7)",
         spanGaps: true,
@@ -130,24 +170,43 @@ export function GameGraph({
       <div className="graphWrapper">
         <Line
           options={{
-            animation: false,
             responsive: true,
             maintainAspectRatio: false,
-            transitions: { active: { animation: { duration: 0 } } },
-            elements: {
-              line: { tension: 0 },
-              // point: { radius: 0 },
-            },
+            elements: { line: { tension: 0 } },
             plugins: {
               legend: { display: false, onClick: undefined },
               // @ts-ignore
               verticalLine: { index: currentMoveNumber - bookPlies },
+              tooltip: {
+                callbacks: {
+                  label: (
+                    context // @ts-ignore
+                  ) => context.dataset.dataLabels[context.dataIndex],
+                },
+              },
             },
             onClick: (_, elements) => {
               setCurrentMoveNumber(elements[0].index + bookPlies);
             },
             scales: {
               y: {
+                ticks: {
+                  callback: (value) => {
+                    const scaledValue =
+                      Math.sign(Number(value)) *
+                      Math.pow(Math.abs(Number(value)), 2);
+                    switch (mode) {
+                      case 0:
+                        if (scaledValue > 100) return "Mate";
+                        if (scaledValue < -100) return "-Mate";
+                        return scaledValue.toFixed(2);
+                      case 3:
+                        return formatTime(1000 * scaledValue);
+                      default:
+                        return formatLargeNumber(String(scaledValue));
+                    }
+                  },
+                },
                 beginAtZero: true,
                 grid: {
                   color: (context) => {

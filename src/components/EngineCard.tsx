@@ -10,23 +10,19 @@ type EngineCardProps = {
   placeholder?: string;
 };
 
-function formatLargeNumber(value: string) {
+export function formatLargeNumber(value?: string) {
+  if (!value) return "-";
   const x = Number(value);
-  if (x >= 1_000_000_000)
-    return (
-      String(Math.floor((100 * x) / 1_000_000_000) / 100).padEnd(2, "0") + "B"
-    );
-  if (x >= 1_000_000)
-    return String(Math.floor((100 * x) / 1_000_000) / 100).padEnd(2, "0") + "M";
-  if (x >= 1_000)
-    return String(Math.floor((100 * x) / 1_000) / 100).padEnd(2, "0") + "K";
-  return String(value);
+  if (x >= 1_000_000_000) return (x / 1_000_000_000).toFixed(2) + "B";
+  if (x >= 1_000_000) return (x / 1_000_000).toFixed(2) + "M";
+  if (x >= 1_000) return (x / 1_000).toFixed(2) + "K";
+  return String(x);
 }
 
-function formatTime(time: number) {
+export function formatTime(time: number) {
   if (time < 0) time = 0;
 
-  const hundreds = String(Math.floor(time / 10) % 100).padStart(2, "0");
+  const hundreds = String(Math.floor(time / 100) % 10).padEnd(2, "0");
   const seconds = String(Math.floor(time / 1000) % 60).padStart(2, "0");
   const minutes = String(Math.floor(time / (1000 * 60)) % 60).padStart(2, "0");
   return `${minutes}:${seconds}.${hundreds}`;
@@ -59,7 +55,7 @@ export function EngineCard({
     <div className={`engineComponent ${loading ? "loading" : ""}`}>
       <div className="engineInfoHeader">
         {loading ? (
-          <SkeletonBlock className="engineLogo" />
+          <SkeletonBlock width={36} height={36} style={{margin: 6}} />
         ) : (
           <EngineLogo engine={engine!} />
         )}

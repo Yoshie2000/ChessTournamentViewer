@@ -6,10 +6,11 @@
 .schedule .game {
   display: grid;
   align-items: center;
-  grid-template-columns: 50px 50px 1fr 3rem 1fr 50px;
+  grid-template-columns: 50px 40px 1fr 3rem 1fr 40px;
   cursor: pointer;
-  height: 50px;
+  height: 40px;
   border-bottom: 1px solid #232323;
+  font-size: 0.9rem;
 }
 
 .schedule .game:nth-child(4n + 1),
@@ -32,12 +33,10 @@
 
 .schedule .game .round {
   text-align: center;
-  font-size: 0.9rem;
   color: #a1a1a1;
 }
 
 .schedule .game .vs {
-  font-size: 0.9rem;
   color: #a1a1a1;
 }
 
@@ -56,11 +55,6 @@
 @media (max-width: 775px) {
   .schedule .game {
     grid-template-columns: 35px 40px 1fr 2rem 1fr 40px;
-  }
-
-  .schedule .game .engineLogo {
-    width: 28px;
-    height: 28px;
   }
 
   .schedule .game .round {

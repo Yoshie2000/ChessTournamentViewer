@@ -21,7 +21,7 @@
 }
 
 .standingsEntry .engineLogo {
-  margin: 0;
+  margin: 0 !important;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);

@@ -1,9 +1,9 @@
 import type { CCCEngine } from "../types";
 import "./EngineLogo.css";
 
-type EngineLogoProps = { engine: CCCEngine };
+type EngineLogoProps = { engine: CCCEngine, size?: number };
 
-export function EngineLogo({ engine }: EngineLogoProps) {
+export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
   return (
     <img
       src={
@@ -11,6 +11,11 @@ export function EngineLogo({ engine }: EngineLogoProps) {
         engine.imageUrl +
         ".png"
       }
+      style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          margin: `${size / 6}px`,
+      }}
       className="engineLogo"
     />
   );

@@ -1,6 +1,8 @@
 import type { CCCEngine, CCCLiveInfo } from "../types";
+import { formatLargeNumber, formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineVsEngine.css";
+import { SkeletonBlock } from "./Loading";
 
 type Props = {
   white?: CCCEngine;
@@ -10,13 +12,6 @@ type Props = {
   wtime: number;
   btime: number;
 };
-
-function formatTime(time: number) {
-  if (time < 0) time = 0;
-  const seconds = String(Math.floor(time / 1000) % 60).padStart(2, "0");
-  const minutes = String(Math.floor(time / (1000 * 60)) % 60).padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
 
 export function EngineVsEngine({
   white,
@@ -29,26 +24,17 @@ export function EngineVsEngine({
   const w = whiteInfo?.info;
   const b = blackInfo?.info;
 
-  const formatLargeNumber = (value?: string | number) => {
-    if (value == null) return "-";
-    const x = Number(value);
-    if (x >= 1_000_000_000) return (x / 1_000_000_000).toFixed(2) + "B";
-    if (x >= 1_000_000) return (x / 1_000_000).toFixed(2) + "M";
-    if (x >= 1_000) return (x / 1_000).toFixed(2) + "K";
-    return String(x);
-  };
-
   return (
     <div className="engineVsEngine">
       {/* ENGINE NAMES + LOGOS */}
       <div className="engineWhite">
         <div className="engineName">{white?.name ?? "White"}</div>
-        {white ? <EngineLogo engine={white} /> : null}
+        {white ? <EngineLogo engine={white} /> : <SkeletonBlock className="engineLogo" width={36} height={36} style={{margin: 6}} />}
       </div>
       <div className="engineLabel"></div>
       <div className="engineBlack">
         <div className="engineName">{black?.name ?? "Black"}</div>
-        {black ? <EngineLogo engine={black} /> : null}
+        {black ? <EngineLogo engine={black} /> : <SkeletonBlock className="engineLogo" width={36} height={36} style={{margin: 6}} />}
       </div>
 
       <div className="engineField">

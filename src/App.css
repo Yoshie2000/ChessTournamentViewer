@@ -288,6 +288,7 @@ body:has(.popup) {
 
   .movesWindow {
     grid-column: 1 / 2;
+    grid-row: 7 / 8;
   }
 
   .standingsWindow {

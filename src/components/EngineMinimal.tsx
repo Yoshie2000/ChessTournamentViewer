@@ -1,4 +1,5 @@
 import type { CCCEngine, CCCLiveInfo } from "../types";
+import { formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
@@ -10,15 +11,6 @@ type EngineCardProps = {
   placeholder?: string;
   className?: string;
 };
-
-function formatTime(time: number) {
-  if (time < 0) time = 0;
-
-  const hundreds = String(Math.floor(time / 10) % 100).padStart(2, "0");
-  const seconds = String(Math.floor(time / 1000) % 60).padStart(2, "0");
-  const minutes = String(Math.floor(time / (1000 * 60)) % 60).padStart(2, "0");
-  return `${minutes}:${seconds}.${hundreds}`;
-}
 
 export function EngineMinimal({
   engine,
@@ -36,7 +28,7 @@ export function EngineMinimal({
     >
       <div className="engineInfoHeader">
         {loading ? (
-          <SkeletonBlock className="engineLogo" />
+          <SkeletonBlock width={36} height={36} style={{margin: 6}} />
         ) : (
           <EngineLogo engine={engine!} />
         )}

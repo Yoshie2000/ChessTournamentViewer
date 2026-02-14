@@ -429,7 +429,7 @@ function App() {
           engine={white}
           info={liveInfoWhite}
           time={Number(clocks?.wtime ?? 0)}
-          placeholder={"white"}
+          placeholder={"White"}
           className="borderRadiusBottom"
         />
       </div>
