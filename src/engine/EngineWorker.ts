@@ -147,15 +147,7 @@ export class EngineWorker {
 
   private waitForStop(): Promise<void> {
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        this.stopSignal = null;
-        resolve();
-      }, 500);
-
-      this.stopSignal = () => {
-        clearTimeout(timeout);
-        resolve();
-      };
+      this.stopSignal = () => resolve();
     });
   }
 
