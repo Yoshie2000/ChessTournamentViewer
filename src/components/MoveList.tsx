@@ -1,15 +1,39 @@
 import { Fragment, memo, useEffect, useRef } from "react";
+import {
+  MdKeyboardArrowLeft,
+  MdKeyboardArrowRight,
+  MdKeyboardDoubleArrowLeft,
+  MdKeyboardDoubleArrowRight,
+} from "react-icons/md";
 import "./MoveList.css";
-import type { Chess } from "../chess.js/chess";
+import { Chess, Chess960 } from "../chess.js/chess";
+import { LuClipboard, LuClipboardList, LuDatabase, LuDownload } from "react-icons/lu";
 
 type MoveListProps = {
-  game: Chess;
+  game: Chess960;
+  cccGameId: number;
   currentMoveNumber: number;
   setCurrentMoveNumber: (moveNumber: number) => void;
 };
 
+export function getGameAtMoveNumber(game: Chess960, moveNumber: number) {
+  if (moveNumber === -1) return game;
+
+  const history = game.history({ verbose: true });
+  const headers = game.getHeaders();
+  const gameCopy = new Chess960(game.getHeaders()["FEN"] ?? new Chess().fen());
+  for (const header of Object.keys(headers)) {
+    gameCopy.setHeader(header, headers[header]);
+  }
+  for (let i = 0; i < moveNumber; i++) {
+    gameCopy.move(history[i].san, { strict: false });
+  }
+
+  return gameCopy;
+}
+
 const MoveList = memo(
-  ({ game, currentMoveNumber, setCurrentMoveNumber }: MoveListProps) => {
+  ({ game, currentMoveNumber, setCurrentMoveNumber, cccGameId }: MoveListProps) => {
     const moves = game.history();
     const moveListRef = useRef<HTMLDivElement>(null);
 
@@ -37,6 +61,33 @@ const MoveList = memo(
       if (currentMoveNumber + 1 < moves.length)
         setCurrentMoveNumber(currentMoveNumber + 1);
       else setCurrentMoveNumber(-1);
+    }
+
+    async function copyToClipboard(value: string) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function copyFen() {
+      copyToClipboard(getGameAtMoveNumber(game, currentMoveNumber).fen());
+    }
+
+    function copyPgn() {
+      copyToClipboard(getGameAtMoveNumber(game, currentMoveNumber).pgn());
+    }
+
+    function openChessDB() {
+      const url = "https://www.chessdb.cn/queryc_en/?" + getGameAtMoveNumber(game, currentMoveNumber).fen().replaceAll(" ", "_");
+      window.open(url, "_blank")
+    }
+
+    function downloadLogs() {
+      const url = `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${cccGameId}.log`
+      window.open(url, "_blank")
     }
 
     useEffect(() => {
@@ -89,17 +140,29 @@ const MoveList = memo(
 
         <div className="moveButtons">
           <button onClick={undoAllMoves} disabled={currentMoveNumber === 0}>
-            {"<<"}
+            <MdKeyboardDoubleArrowLeft />
           </button>
           <button onClick={undoMove} disabled={currentMoveNumber === 0}>
-            {"<"}
+            <MdKeyboardArrowLeft />
           </button>
           <button onClick={redoMove} disabled={currentMoveNumber === -1}>
-            {">"}
+            <MdKeyboardArrowRight />
           </button>
           <button onClick={redoAllMoves} disabled={currentMoveNumber === -1}>
-            {">>"}
+            <MdKeyboardDoubleArrowRight />
           </button>
+          <button onClick={copyFen} style={{ fontSize: "1rem" }}>
+            <LuClipboard />
+          </button>
+          <button onClick={copyPgn} style={{ fontSize: "1rem" }}>
+            <LuClipboardList />
+          </button>
+          <button onClick={openChessDB} style={{ fontSize: "1rem" }}>
+            <LuDatabase />
+          </button>
+          {game.getHeaders()["Termination"] && <button onClick={downloadLogs} style={{ fontSize: "1rem" }}>
+            <LuDownload />
+          </button>}
         </div>
       </>
     );

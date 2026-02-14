@@ -31,7 +31,7 @@ import {
 } from "./components/LiveInfo";
 import { Crosstable } from "./components/Crosstable";
 import { EventList } from "./components/EventList";
-import { MoveList } from "./components/MoveList";
+import { getGameAtMoveNumber, MoveList } from "./components/MoveList";
 import { Spinner } from "./components/Loading";
 import { NativeWorker } from "./engine/NativeWorker";
 import { EngineWorker } from "./engine/EngineWorker";
@@ -39,7 +39,6 @@ import { StockfishWorker } from "./engine/StockfishWorker";
 import { EngineWindow } from "./components/EngineWindow";
 import { EngineMinimal } from "./components/EngineMinimal";
 import { Chess960, type Square } from "./chess.js/chess";
-import { Chess } from "./chess.js/chess";
 import { GameResultOverlay } from "./components/GameResultOverlay";
 
 const CLOCK_UPDATE_MS = 25;
@@ -116,44 +115,42 @@ function App() {
     const currentTime = new Date().getTime();
     if (currentTime - lastBoardUpdateRef.current <= 50) return;
 
-    const history = game.current.history({ verbose: true });
-
-    let fen = game.current.fen();
-    let turn = game.current.turn();
-    if (currentMoveNumber.current !== -1) {
-      const gameCopy = new Chess960(
-        game.current.getHeaders()["FEN"] ?? new Chess().fen()
-      );
-      for (let i = 0; i < currentMoveNumber.current; i++) {
-        gameCopy.move(history[i].san, { strict: false });
-      }
-      fen = gameCopy.fen();
-      turn = gameCopy.turn();
-    }
+    const gameAtTurn = getGameAtMoveNumber(
+      game.current,
+      currentMoveNumber.current
+    );
+    let fen = gameAtTurn.fen();
+    let turn = gameAtTurn.turn();
 
     const arrows: DrawShape[] = [];
 
     const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
       getCurrentLiveInfos(game.current.getHeaders()["Termination"] ? 1 : -1);
 
-    if (liveInfoBlack) {
-      const pv = liveInfoBlack.info.pv.split(" ");
-      const nextMove = turn == "b" ? pv[0] : pv[1];
-      if (nextMove && nextMove.length >= 4)
-        arrows.push({
-          orig: (nextMove.slice(0, 2) as Square) || "a1",
-          dest: (nextMove.slice(2, 4) as Square) || "a1",
-          brush: liveInfoBlack.info.color,
-        });
-    }
+    let moveWhite: string | null = null;
     if (liveInfoWhite) {
       const pv = liveInfoWhite.info.pv.split(" ");
       const nextMove = turn == "w" ? pv[0] : pv[1];
-      if (nextMove && nextMove.length >= 4)
+      if (nextMove && nextMove.length >= 4) {
+        moveWhite = nextMove;
         arrows.push({
           orig: (nextMove.slice(0, 2) as Square) || "a1",
           dest: (nextMove.slice(2, 4) as Square) || "a1",
           brush: liveInfoWhite.info.color,
+        });
+      }
+    }
+    if (liveInfoBlack) {
+      const pv = liveInfoBlack.info.pv.split(" ");
+      const nextMove = turn == "b" ? pv[0] : pv[1];
+
+      if (nextMove == moveWhite) {
+        arrows[0].brush = "agree";
+      } else if (nextMove && nextMove.length >= 4)
+        arrows.push({
+          orig: (nextMove.slice(0, 2) as Square) || "a1",
+          dest: (nextMove.slice(2, 4) as Square) || "a1",
+          brush: liveInfoBlack.info.color,
         });
     }
     if (liveInfoKibitzer) {
@@ -171,13 +168,14 @@ function App() {
       drawable: {
         // @ts-ignore
         brushes: {
-          white: { key: "white", color: "#fff", opacity: 0.7, lineWidth: 10 },
-          black: { key: "black", color: "#000", opacity: 0.7, lineWidth: 10 },
+          white: { key: "white", color: "#fff", opacity: 1, lineWidth: 10 },
+          black: { key: "black", color: "#000", opacity: 1, lineWidth: 10 },
+          agree: { key: "agree", color: "#43a047", opacity: 1, lineWidth: 10 },
           kibitzer: {
             key: "kibitzer",
             color: "#0D47A1",
-            opacity: 0.7,
-            lineWidth: 10,
+            opacity: 0.75,
+            lineWidth: 5,
           },
         },
         enabled: false,
@@ -186,6 +184,8 @@ function App() {
       },
       fen,
     };
+
+    const history = game.current.history({ verbose: true });
 
     const lastMove =
       currentMoveNumber.current === -1
@@ -458,6 +458,7 @@ function App() {
             game={game.current}
             currentMoveNumber={currentMoveNumber.current}
             setCurrentMoveNumber={setCurrentMoveNumber}
+            cccGameId={cccGame.gameDetails.gameNr}
           />
         ) : (
           <div className="sectionSpinner">

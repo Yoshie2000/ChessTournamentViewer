@@ -1,9 +1,9 @@
-import type { Chess } from "../chess.js/chess";
+import type { Chess960 } from "../chess.js/chess";
 import type { CCCLiveInfo } from "../types";
 
 export type LiveInfoEntry = CCCLiveInfo | undefined;
 
-export function extractLiveInfoFromGame(game: Chess) {
+export function extractLiveInfoFromGame(game: Chess960) {
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
   game.getComments().forEach((value, i) => {

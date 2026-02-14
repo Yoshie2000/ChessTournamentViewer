@@ -1,3 +1,4 @@
+import { MdOutlineClose } from "react-icons/md";
 import type { CCCEngine, CCCEventUpdate, CCCGame } from "../types";
 import "./Crosstable.css";
 
@@ -235,7 +236,7 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
         <tr>
           <td>
             <button className="closeButton" onClick={onClose}>
-              Close
+              <MdOutlineClose/>
             </button>
           </td>
           {engines.map((engine, i) => (
