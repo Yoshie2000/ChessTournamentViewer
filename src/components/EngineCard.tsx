@@ -52,16 +52,16 @@ export function EngineCard({
       ];
 
   return (
-    <div className={`engineComponent ${loading ? "loading" : ""}`}>
+    <div className={`engineComponent ${!engine ? "loading" : ""}`}>
       <div className="engineInfoHeader">
-        {loading ? (
+        {!engine ? (
           <SkeletonBlock width={36} height={36} style={{margin: 6}} />
         ) : (
           <EngineLogo engine={engine!} />
         )}
 
         <div className="engineName">
-          {loading ? (placeholder ?? "Loading…") : engine!.name}
+          {!engine ? (placeholder ?? "Loading…") : engine!.name}
         </div>
 
         <div className="engineEval">
