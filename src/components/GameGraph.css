@@ -27,3 +27,27 @@
   height: 100%;
   min-width: 0;
 }
+
+@media (max-width: 775px) {
+  .graphWindow {
+    padding: 0 0.5rem !important;
+  }
+
+  .gameGraph {
+    grid-template-columns: 1fr;
+    grid-template-rows: 50px 1fr;
+    gap: 0;
+  }
+
+  .modeSelectorList {
+    padding: 0.5rem 0rem;
+    flex-direction: row;
+    overflow: auto;
+    gap: 0.25rem;
+  }
+
+  .modeSelector {
+    width: fit-content;
+    white-space: nowrap;
+  }
+}

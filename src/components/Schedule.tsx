@@ -11,6 +11,11 @@ type ScheduleProps = {
   selectedGame: CCCGameUpdate;
 };
 
+function formatDuration(value: number) {
+  if (value < 60) return `in ${value.toFixed(0)} minutes`;
+  return `in ${(value / 60).toFixed(0)} hours`;
+}
+
 const Schedule = memo(
   ({ engines, event, selectedGame, requestEvent }: ScheduleProps) => {
     const scheduleRef = useRef<HTMLDivElement>(null);
@@ -69,6 +74,22 @@ const Schedule = memo(
       ...event.tournamentDetails.schedule.future,
     ];
 
+    const durationPerGame = event.tournamentDetails.schedule.past
+      .map((game) => {
+        if (!game.timeEnd || !game.timeStart) return null;
+        return (
+          new Date(game.timeEnd!).getTime() -
+          new Date(game.timeStart!).getTime()
+        );
+      })
+      .filter((duration) => !!duration) as number[];
+    const averageDuration =
+      durationPerGame.reduce((prev, cur) => prev! + cur!, 0) /
+      durationPerGame.length /
+      1000 /
+      60;
+    const currentGameIdx = event.tournamentDetails.schedule.past.length;
+
     return (
       <>
         <div className="schedule" ref={scheduleRef}>
@@ -104,11 +125,23 @@ const Schedule = memo(
             const tournamentOver =
               !event.tournamentDetails.schedule.present &&
               event.tournamentDetails.schedule.future.length === 0;
-            const gameClass = isCurrentGame || isSelectedGame ? " active" : "";
             const ref =
               isCurrentGame || (isSelectedGame && tournamentOver)
                 ? currentGameRef
                 : null;
+
+            let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
+            gameClass += !game.outcome ? " future" : "";
+            gameClass +=
+              game.roundNr !== gamesList.at(i + 1)?.roundNr
+                ? " lastOfRound"
+                : "";
+
+            const vsText = isCurrentGame
+              ? "vs."
+              : game.outcome
+                ? `${game.outcome}`
+                : formatDuration(averageDuration * (i - currentGameIdx));
 
             return (
               <div
@@ -122,7 +155,7 @@ const Schedule = memo(
                 <span className={"engineName " + whiteClass}>
                   {gameWhite.name}
                 </span>
-                <span className="vs">vs.</span>
+                <span className="vs">{vsText}</span>
                 <span className={"engineName " + blackClass}>
                   {gameBlack.name}
                 </span>

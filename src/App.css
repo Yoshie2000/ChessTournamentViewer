@@ -260,17 +260,20 @@ body:has(.popup) {
 
 @media (max-width: 775px) {
   :root {
-    --board-size: calc(100vw - 2rem);
+    --board-size: calc(100vw - 1rem);
     --graph-height: 18rem;
   }
 
   .app {
     grid-template-columns: 1fr;
     grid-template-rows:
-      auto auto auto var(--graph-height) minmax(auto, 600px)
-      600px;
+      auto auto auto var(--graph-height) fit-content fit-content fit-content;
     height: auto;
     overflow-y: auto;
+
+    width: calc(100vw - 1rem);
+    margin: 0.5rem;
+    gap: 0.5rem;
   }
 
   .topBar {
@@ -303,16 +306,19 @@ body:has(.popup) {
   .movesWindow {
     grid-column: 1 / 2;
     grid-row: 7 / 8;
+    max-height: 600px;
   }
 
   .standingsWindow {
     grid-row: 5 / 6;
     grid-column: 1 / 2;
+    max-height: 600px;
   }
 
   .scheduleWindow {
     grid-column: 1 / 2;
     grid-row: 6 / 7;
+    max-height: 600px;
   }
 
   .graphWindow {

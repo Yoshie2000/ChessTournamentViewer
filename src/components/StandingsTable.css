@@ -73,12 +73,16 @@ td.rating {
     --placement-width: 1rem;
   }
 
+  td.logo {
+    width: 45px;
+  }
+
   td.score {
-    width: 90px;
+    width: 70px;
   }
 
   td.perf {
-    width: 50px;
+    width: 40px;
   }
 
   td.rating {

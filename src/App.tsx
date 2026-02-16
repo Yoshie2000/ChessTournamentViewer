@@ -444,7 +444,7 @@ function App() {
         const perf = 100 * points / playedGames.length;
         return { ...engine, perf: perf.toFixed(1), points: points.toFixed(1) };
       })
-      .sort((a, b) => Number(b.points) - Number(a.points));
+      .sort((a, b) => Number(b.perf) - Number(a.perf));
   }, [cccEvent]);
 
   const white = engines.find(
@@ -577,7 +577,6 @@ function App() {
           />
         ) : (
           <>
-            <h4>Game Graph</h4>
             <div className="sectionSpinner">
               <Spinner />
             </div>

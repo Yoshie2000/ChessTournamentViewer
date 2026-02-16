@@ -28,7 +28,7 @@ export function EngineMinimal({
     >
       <div className="engineInfoHeader">
         {loading ? (
-          <SkeletonBlock width={36} height={36} style={{margin: 6}} />
+          <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
         ) : (
           <EngineLogo engine={engine!} />
         )}
@@ -38,7 +38,9 @@ export function EngineMinimal({
         </div>
 
         <div className="engineOutput">
-          <div className="engineTime">{loading ? "" : formatTime(time)}</div>
+          <div className="engineTime">
+            {loading ? <SkeletonText width="80px" /> : formatTime(time)}
+          </div>
           <div> {loading ? <SkeletonText width="40px" /> : data.score}</div>
         </div>
       </div>

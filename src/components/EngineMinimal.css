@@ -69,15 +69,11 @@
 
   .engineMinimal .engineOutput {
     display: flex;
-    gap: 3rem;
+    gap: 2rem;
     justify-content: space-between;
-    align-items: center;
-    margin: 0 1rem 0 auto;
+    align-items: flex-end;
+    margin: 0 0.5rem 0 auto;
     font-weight: bold;
-  }
-
-  .engineMinimal .engineOutput .engineTime {
-    font-size: 0.9rem;
   }
 
   .engineMinimal .engineInfoTable {
