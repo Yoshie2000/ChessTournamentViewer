@@ -138,9 +138,9 @@ function App() {
     }
   }
 
-  function updateBoard() {
+  function updateBoard(bypass_rate_limit = false) {
     const currentTime = new Date().getTime();
-    if (currentTime - lastBoardUpdateRef.current <= 50) return;
+    if (!bypass_rate_limit && currentTime - lastBoardUpdateRef.current <= 50) return;
 
     const gameAtTurn = getGameAtMoveNumber(
       game.current,
@@ -311,6 +311,7 @@ function App() {
       case "result":
         game.current.setHeader("Termination", msg.reason);
         game.current.setHeader("Result", msg.score);
+        updateBoard(true);
     }
   }
 
