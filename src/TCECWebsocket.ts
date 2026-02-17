@@ -127,44 +127,40 @@ export class TCECSocket implements TournamentWebSocket {
         (moveData) => moveData.fen === this.game.fen()
       );
 
-      if (ignoreIndex === -1)
-        console.log("CURRENT FEN NOT FOUND", this.game.fen());
-      else {
-        for (const moveData of json.Moves.slice(ignoreIndex + 1)) {
-          const fenBeforeMove = this.game.fen();
+      for (const moveData of json.Moves.slice(ignoreIndex + 1)) {
+        const fenBeforeMove = this.game.fen();
 
-          // Make the move
-          const move = this.game
-            .moves({ verbose: true })
-            .find((move) => move.san === moveData.m)!;
-          if (!move) console.log(moveData, this.game.moves({ verbose: true }));
+        // Make the move
+        const move = this.game
+          .moves({ verbose: true })
+          .find((move) => move.san === moveData.m)!;
+        if (!move) console.log(moveData, this.game.moves({ verbose: true }));
 
-          this.game.move(move.san, { strict: false });
-          onMessage({ type: "newMove", move: move.lan, times: { w: 1, b: 1 } });
+        this.game.move(move.san, { strict: false });
+        onMessage({ type: "newMove", move: move.lan, times: { w: 1, b: 1 } });
 
-          // Extract the live info
-          const relevantKeys = Object.keys(moveData).filter(
-            (key) =>
-              (typeof moveData[key] === "string" &&
-                !moveData[key].includes(" ")) ||
-              key === "pv"
-          );
-          moveData.pv = moveData.pv.San;
-          const commentString = relevantKeys
-            .map((key) => `${key}=${moveData[key]}`)
-            .join(", ");
-          const liveInfo = extractLiveInfoFromTCECComment(
-            commentString,
-            fenBeforeMove,
-            plyFromFen(fenBeforeMove)
-          );
-          if (liveInfo) onMessage(liveInfo);
-        }
+        // Extract the live info
+        const relevantKeys = Object.keys(moveData).filter(
+          (key) =>
+            (typeof moveData[key] === "string" &&
+              !moveData[key].includes(" ")) ||
+            key === "pv"
+        );
+        moveData.pv = moveData.pv.San;
+        const commentString = relevantKeys
+          .map((key) => `${key}=${moveData[key]}`)
+          .join(", ");
+        const liveInfo = extractLiveInfoFromTCECComment(
+          commentString,
+          fenBeforeMove,
+          plyFromFen(fenBeforeMove)
+        );
+        if (liveInfo) onMessage(liveInfo);
       }
 
       const whiteToMove = this.game.turn() === "w";
-      const time0 = json.Moves.at(-2)?.tl ?? 0;
-      const time1 = json.Moves.at(-1)?.tl ?? 0;
+      const time0 = json.Moves.at(-2)?.tl ?? 1;
+      const time1 = json.Moves.at(-1)?.tl ?? 1;
 
       onMessage({
         type: "clocks",
@@ -179,7 +175,7 @@ export class TCECSocket implements TournamentWebSocket {
           type: "result",
           blackName: json.Headers.Black,
           whiteName: json.Headers.White,
-          reason: json.Headers.Termination,
+          reason: json.Headers.TerminationDetails,
           score: json.Headers.Result,
         });
         this.game.setHeader("Result", json.Headers.Result);
