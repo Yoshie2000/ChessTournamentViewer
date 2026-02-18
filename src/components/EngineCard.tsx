@@ -88,7 +88,7 @@ export function EngineCard({
     const game = buildPvGame(fen, normalizedPv, -1);
     lastAppliedRef.current = { fen, pv: normalizedPv };
 
-    setPvMoveNumber(-1);
+    pvMoveNumber.current = -1;
     setPvGame(game);
   }, [loading, data?.pv, data?.color, fen]);
 

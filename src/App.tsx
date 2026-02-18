@@ -134,7 +134,7 @@ function App() {
 
   function updateBoard(bypassRateLimit: boolean = false) {
     const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
-      getCurrentLiveInfos();
+    getCurrentLiveInfos();
 
     boardHandle.current?.updateBoard(
       game.current,
@@ -231,7 +231,7 @@ function App() {
 
         game.current.move({ from, to, promotion: promo as any });
         setFen(game.current.fen());
-        updateBoard();
+        updateBoard(true);
 
         break;
 

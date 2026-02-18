@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import {
   MdKeyboardArrowLeft,
   MdKeyboardArrowRight,
@@ -48,14 +48,14 @@ function moveClass(active: boolean, disagreement: boolean) {
   );
 }
 
-function MoveList({
+const MoveList = memo(({
   game,
   currentMoveNumber,
   setCurrentMoveNumber,
   cccGameId,
   controllers,
   disagreementMoveIndex,
-}: MoveListProps) {
+}: MoveListProps) => {
   const moves = game.history();
   const moveListRef = useRef<HTMLDivElement>(null);
 
@@ -281,6 +281,6 @@ function MoveList({
       )}
     </div>
   );
-}
+});
 
 export { MoveList };
