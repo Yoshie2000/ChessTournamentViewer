@@ -42,6 +42,10 @@
   color: #fff;
 }
 
+.moveList .move.right {
+  margin: 0 5px;
+}
+
 .moveTable th,
 .moveTable td {
   display: block;
