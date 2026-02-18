@@ -2,13 +2,19 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { CCCEngine, CCCEventUpdate, CCCGameUpdate } from "../types";
 import { EngineLogo } from "./EngineLogo";
 import "./Schedule.css";
+import { MdOutlineClose } from "react-icons/md";
 
 type ScheduleProps = {
   engines: CCCEngine[];
   event: CCCEventUpdate;
-  requestEvent: (gameNr: string) => void;
+  requestEvent: (gameNr?: string) => void;
   selectedGame: CCCGameUpdate;
 };
+
+function formatDuration(value: number) {
+  if (value < 60) return `in ${value.toFixed(0)} minutes`;
+  return `in ${(value / 60).toFixed(0)} hours`;
+}
 
 const Schedule = memo(
   ({ engines, event, selectedGame, requestEvent }: ScheduleProps) => {
@@ -17,7 +23,7 @@ const Schedule = memo(
 
     const [scrolledToCurrentGame, setScrolledToCurrentGame] = useState(false);
 
-    useEffect(() => {
+    function scrollToCurrentGame() {
       if (
         !scheduleRef.current ||
         !currentGameRef.current ||
@@ -37,12 +43,28 @@ const Schedule = memo(
           currentGameRef.current.clientHeight / 2,
         behavior: "instant",
       });
+    }
+
+    useEffect(() => {
+      if (
+        !scheduleRef.current ||
+        !currentGameRef.current ||
+        scrolledToCurrentGame
+      )
+        return;
+
+      scrollToCurrentGame();
+
       setScrolledToCurrentGame(true);
     }, [scheduleRef.current, currentGameRef.current]);
 
     useEffect(() => {
+      scrollToCurrentGame();
       setScrolledToCurrentGame(false);
-    }, [event.tournamentDetails.tNr]);
+    }, [
+      event.tournamentDetails.tNr,
+      event.tournamentDetails.schedule.present?.gameNr,
+    ]);
 
     const gamesList = [
       ...event.tournamentDetails.schedule.past,
@@ -52,67 +74,105 @@ const Schedule = memo(
       ...event.tournamentDetails.schedule.future,
     ];
 
+    const durationPerGame = event.tournamentDetails.schedule.past
+      .map((game) => {
+        if (!game.timeEnd || !game.timeStart) return null;
+        return (
+          new Date(game.timeEnd!).getTime() -
+          new Date(game.timeStart!).getTime()
+        );
+      })
+      .filter((duration) => !!duration) as number[];
+    const averageDuration =
+      durationPerGame.reduce((prev, cur) => prev! + cur!, 0) /
+      durationPerGame.length /
+      1000 /
+      60;
+    const currentGameIdx = event.tournamentDetails.schedule.past.length;
+
     return (
-      <div className="schedule" ref={scheduleRef}>
-        {gamesList.map((game, i) => {
-          const gameWhite = engines.find(
-            (engine) => engine.id === game.whiteId
-          )!!;
-          const gameBlack = engines.find(
-            (engine) => engine.id === game.blackId
-          )!!;
+      <>
+        <div className="schedule" ref={scheduleRef}>
+          {gamesList.map((game, i) => {
+            const gameWhite = engines.find(
+              (engine) => engine.id === game.whiteId
+            )!!;
+            const gameBlack = engines.find(
+              (engine) => engine.id === game.blackId
+            )!!;
+            if (!gameWhite || !gameBlack)
+            console.log(game.whiteId, game.blackId, engines.map(e => e.id), gameWhite, gameBlack)
 
-          const whiteClass =
-            game.outcome === "1-0"
-              ? "winner"
-              : game.outcome === "0-1"
-                ? "loser"
-                : game.timeEnd
-                  ? "draw"
-                  : "tbd";
-          const blackClass =
-            game.outcome === "1-0"
-              ? "loser"
-              : game.outcome === "0-1"
+            const whiteClass =
+              game.outcome === "1-0"
                 ? "winner"
-                : game.timeEnd
-                  ? "draw"
-                  : "tbd";
+                : game.outcome === "0-1"
+                  ? "loser"
+                  : game.timeEnd
+                    ? "draw"
+                    : "tbd";
+            const blackClass =
+              game.outcome === "1-0"
+                ? "loser"
+                : game.outcome === "0-1"
+                  ? "winner"
+                  : game.timeEnd
+                    ? "draw"
+                    : "tbd";
 
-          const isCurrentGame =
-            game.gameNr === event.tournamentDetails.schedule.present?.gameNr;
-          const isSelectedGame =
-            game.gameNr === String(selectedGame.gameDetails.gameNr);
-          const tournamentOver =
-            !event.tournamentDetails.schedule.present &&
-            event.tournamentDetails.schedule.future.length === 0;
-          const gameClass = isCurrentGame || isSelectedGame ? " active" : "";
-          const ref =
-            isCurrentGame || (isSelectedGame && tournamentOver)
-              ? currentGameRef
-              : null;
+            const isCurrentGame =
+              game.gameNr === event.tournamentDetails.schedule.present?.gameNr;
+            const isSelectedGame =
+              game.gameNr === String(selectedGame.gameDetails.gameNr);
+            const tournamentOver =
+              !event.tournamentDetails.schedule.present &&
+              event.tournamentDetails.schedule.future.length === 0;
+            const ref =
+              isCurrentGame || (isSelectedGame && tournamentOver)
+                ? currentGameRef
+                : null;
 
-          return (
-            <div
-              className={"game" + gameClass}
-              ref={ref}
-              key={game.gameNr}
-              onClick={() => requestEvent(game.gameNr)}
-            >
-              <span className="round">#{i + 1}</span>
-              <EngineLogo engine={gameWhite} size={28}/>
-              <span className={"engineName " + whiteClass}>
-                {gameWhite.name}
-              </span>
-              <span className="vs">vs.</span>
-              <span className={"engineName " + blackClass}>
-                {gameBlack.name}
-              </span>
-              <EngineLogo engine={gameBlack} size={28} />
-            </div>
-          );
-        })}
-      </div>
+            let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
+            gameClass += !game.outcome ? " future" : "";
+            gameClass +=
+              game.roundNr !== gamesList.at(i + 1)?.roundNr
+                ? " lastOfRound"
+                : "";
+
+            const vsText = isCurrentGame
+              ? "vs."
+              : game.outcome
+                ? `${game.outcome}`
+                : formatDuration(averageDuration * (i - currentGameIdx));
+
+            return (
+              <div
+                className={"game" + gameClass}
+                ref={ref}
+                key={game.gameNr}
+                onClick={() => requestEvent(game.gameNr)}
+              >
+                <span className="round">#{i + 1}</span>
+                <EngineLogo engine={gameWhite} size={28} />
+                <span className={"engineName " + whiteClass}>
+                  {gameWhite.name}
+                </span>
+                <span className="vs">{vsText}</span>
+                <span className={"engineName " + blackClass}>
+                  {gameBlack.name}
+                </span>
+                <EngineLogo engine={gameBlack} size={28} />
+              </div>
+            );
+          })}
+        </div>
+        {String(selectedGame.gameDetails.gameNr) !==
+          event.tournamentDetails.schedule.present?.gameNr && (
+          <button className="closeButton" onClick={() => requestEvent()}>
+            <MdOutlineClose />
+          </button>
+        )}
+      </>
     );
   }
 );

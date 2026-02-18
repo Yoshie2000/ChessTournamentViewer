@@ -130,6 +130,10 @@
     margin: 0 auto;
     justify-content: center;
   }
+
+  .moveButtons {
+    flex-grow: 1;
+  }
 }
 
 @media (max-width: 775px) {

@@ -38,6 +38,7 @@ import { Chess960, type Square } from "./chess.js/chess";
 import { GameResultOverlay } from "./components/GameResultOverlay";
 import { LuSettings } from "react-icons/lu";
 import { getDefaultKibitzerSettings, Settings } from "./components/Settings";
+import { TCECSocket } from "./TCECWebsocket";
 import { Board, type BoardHandle } from "./components/Board";
 import { MoveList, getGameAtMoveNumber } from "./components/MoveList";
 
@@ -56,7 +57,11 @@ Chart.register(
 function App() {
   const boardHandle = useRef<BoardHandle>(null);
   const game = useRef(new Chess960());
-  const ws = useRef<TournamentWebSocket>(new CCCWebSocket());
+  const ws = useRef<TournamentWebSocket>(
+    window.location.search.includes("tcec")
+      ? new TCECSocket()
+      : new CCCWebSocket()
+  );
 
   const kibitzer = useRef<EngineWorker[]>(null);
   const [fen, setFen] = useState(game.current.fen());
@@ -84,20 +89,68 @@ function App() {
     kibitzer: [] as LiveInfoEntry[],
   });
 
-  function updateBoard() {
+  function getCurrentLiveInfos() {
+    const gameAtTurn = getGameAtMoveNumber(
+      game.current,
+      currentMoveNumber.current
+    );
+
+    if (gameAtTurn.turn() === "w") {
+      const liveInfoBlack = liveInfosRef.current.black.at(
+        currentMoveNumber.current
+      );
+      const liveInfoWhite = liveInfosRef.current.white.at(
+        currentMoveNumber.current === -1 ? -1 : currentMoveNumber.current + 1
+      );
+      const liveInfoKibitzer =
+        liveInfosRef.current.kibitzer.at(
+          liveInfoBlack?.info.ply ?? currentMoveNumber.current
+        ) ??
+        liveInfosRef.current.kibitzer.at(
+          liveInfoBlack?.info.ply
+            ? liveInfoBlack?.info.ply - 1
+            : currentMoveNumber.current
+        );
+      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
+    } else {
+      const liveInfoBlack = liveInfosRef.current.black.at(
+        currentMoveNumber.current === -1 ? -1 : currentMoveNumber.current + 1
+      );
+      const liveInfoWhite = liveInfosRef.current.white.at(
+        currentMoveNumber.current
+      );
+      const liveInfoKibitzer =
+        liveInfosRef.current.kibitzer.at(
+          liveInfoWhite?.info.ply ?? currentMoveNumber.current
+        ) ??
+        liveInfosRef.current.kibitzer.at(
+          liveInfoWhite?.info.ply
+            ? liveInfoWhite?.info.ply - 1
+            : currentMoveNumber.current
+        );
+      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
+    }
+  }
+
+  function updateBoard(bypassRateLimit: boolean = false) {
+    const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
+      getCurrentLiveInfos();
+
     boardHandle.current?.updateBoard(
       game.current,
       currentMoveNumber.current,
-      liveInfosRef.current.white,
-      liveInfosRef.current.black,
-      liveInfosRef.current.kibitzer
+      liveInfoWhite,
+      liveInfoBlack,
+      liveInfoKibitzer,
+      bypassRateLimit
     );
   }
 
   function updateClocks() {
     setClocks((currentClock) => {
       if (!currentClock) return currentClock;
-      if (game.current.getHeaders()["Termination"]) return { ...currentClock };
+      const result = game.current.getHeaders()["Result"];
+      if (result && result !== "*") return { ...currentClock };
 
       let wtime = Number(currentClock.wtime);
       let btime = Number(currentClock.btime);
@@ -145,13 +198,17 @@ function App() {
         break;
 
       case "liveInfo":
-        if (msg.info.color == "white") {
+        const updatedMsg = {
+          ...msg,
+          info: { ...msg.info, ply: msg.info.ply + 1 },
+        };
+        if (updatedMsg.info.color == "white") {
           const newLiveInfos = [...liveInfosRef.current.white];
-          newLiveInfos[msg.info.ply] = msg;
+          newLiveInfos[updatedMsg.info.ply] = updatedMsg;
           liveInfosRef.current.white = newLiveInfos;
         } else {
           const newLiveInfos = [...liveInfosRef.current.black];
-          newLiveInfos[msg.info.ply] = msg;
+          newLiveInfos[updatedMsg.info.ply] = updatedMsg;
           liveInfosRef.current.black = newLiveInfos;
         }
 
@@ -181,6 +238,7 @@ function App() {
       case "result":
         game.current.setHeader("Termination", msg.reason);
         game.current.setHeader("Result", msg.score);
+        updateBoard(true);
     }
   }
 
@@ -266,56 +324,6 @@ function App() {
     kibitzerSettings.enableKibitzer,
   ]);
 
-  // getCurrentLiveInfos is still needed here for EngineWindow / EngineMinimal
-  function getCurrentLiveInfos() {
-    const gameAtTurn = getGameAtMoveNumber(
-      game.current,
-      currentMoveNumber.current
-    );
-    const ply =
-      2 * gameAtTurn.moveNumber() - (gameAtTurn.turn() === "w" ? 1 : 0) - 1;
-
-    if (liveInfosRef.current.black.at(ply)) {
-      const liveInfoBlack = liveInfosRef.current.black.at(
-        currentMoveNumber.current
-      );
-      const liveInfoWhite = liveInfosRef.current.white.at(
-        currentMoveNumber.current === -1
-          ? -1
-          : Math.max(0, currentMoveNumber.current - 1)
-      );
-      const liveInfoKibitzer =
-        liveInfosRef.current.kibitzer.at(
-          liveInfoBlack?.info.ply ?? currentMoveNumber.current
-        ) ??
-        liveInfosRef.current.kibitzer.at(
-          liveInfoBlack?.info.ply
-            ? liveInfoBlack?.info.ply - 1
-            : currentMoveNumber.current
-        );
-      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
-    } else {
-      const liveInfoBlack = liveInfosRef.current.black.at(
-        currentMoveNumber.current === -1
-          ? -1
-          : Math.max(0, currentMoveNumber.current - 1)
-      );
-      const liveInfoWhite = liveInfosRef.current.white.at(
-        currentMoveNumber.current
-      );
-      const liveInfoKibitzer =
-        liveInfosRef.current.kibitzer.at(
-          liveInfoWhite?.info.ply ?? currentMoveNumber.current
-        ) ??
-        liveInfosRef.current.kibitzer.at(
-          liveInfoWhite?.info.ply
-            ? liveInfoWhite?.info.ply - 1
-            : currentMoveNumber.current
-        );
-      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
-    }
-  }
-
   const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
     getCurrentLiveInfos();
 
@@ -352,10 +360,10 @@ function App() {
             }
           }
         }, 0);
-        const perf = ((points / playedGames.length) * 100).toFixed(2);
-        return { ...engine, perf: String(perf), points: String(points) };
+        const perf = (100 * points) / playedGames.length;
+        return { ...engine, perf: perf.toFixed(1), points: points.toFixed(1) };
       })
-      .sort((a, b) => Number(b.points) - Number(a.points));
+      .sort((a, b) => Number(b.perf) - Number(a.perf));
   }, [cccEvent]);
 
   const white = engines.find(
@@ -367,7 +375,9 @@ function App() {
 
   const pgnHeaders = game.current.getHeaders();
   const termination =
-    cccGame?.gameDetails?.termination ?? pgnHeaders["Termination"];
+    cccGame?.gameDetails?.termination ??
+    pgnHeaders["Termination"] ??
+    pgnHeaders["TerminationDetails"];
   const result = pgnHeaders["Result"];
 
   const currentFen =
@@ -450,9 +460,12 @@ function App() {
           className="borderRadiusBottom"
         />
 
-        {termination && result && currentMoveNumber.current === -1 && (
-          <GameResultOverlay result={result} termination={termination} />
-        )}
+        {termination &&
+          result &&
+          result !== "*" &&
+          currentMoveNumber.current === -1 && (
+            <GameResultOverlay result={result} termination={termination} />
+          )}
       </div>
 
       <div className="standingsWindow">
@@ -484,7 +497,6 @@ function App() {
           />
         ) : (
           <>
-            <h4>Game Graph</h4>
             <div className="sectionSpinner">
               <Spinner />
             </div>
@@ -494,7 +506,7 @@ function App() {
 
       <div className="scheduleWindow">
         <h4>Schedule</h4>
-        {cccEvent && cccGame && cccEventList ? (
+        {cccEvent && cccGame ? (
           <Schedule
             event={cccEvent}
             engines={engines}

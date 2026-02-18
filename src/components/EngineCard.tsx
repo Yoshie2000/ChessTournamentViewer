@@ -7,6 +7,7 @@ import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
 import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
 import { Chess960 } from "../chess.js/chess";
+import { useMediaQuery } from "react-responsive";
 
 type EngineCardProps = {
   info?: CCCLiveInfo;
@@ -20,6 +21,7 @@ type EngineCardProps = {
 export function formatLargeNumber(value?: string) {
   if (!value) return "-";
   const x = Number(value);
+  if (isNaN(x)) return "-";
   if (x >= 1_000_000_000) return (x / 1_000_000_000).toFixed(2) + "B";
   if (x >= 1_000_000) return (x / 1_000_000).toFixed(2) + "M";
   if (x >= 1_000) return (x / 1_000).toFixed(2) + "K";
@@ -50,13 +52,7 @@ export function EngineCard({
   const boardHandle = useRef<BoardHandle>(null);
 
   function updateBoard() {
-    boardHandle.current?.updateBoard(
-      game.current,
-      pvMoveNumber.current,
-      [],
-      [],
-      []
-    );
+    boardHandle.current?.updateBoard(game.current, pvMoveNumber.current);
   }
 
   const setPvMoveNumber = useCallback(
@@ -99,16 +95,9 @@ export function EngineCard({
     if (!pvGame) return;
 
     game.current = pvGame;
-
     pvMoveNumber.current = -1;
 
-    boardHandle.current?.updateBoard(
-      game.current,
-      pvMoveNumber.current,
-      [],
-      [],
-      []
-    );
+    updateBoard();
   }, [pvGame]);
 
   const fields = loading
@@ -121,35 +110,30 @@ export function EngineCard({
         ["Depth", `${data.depth} / ${data.seldepth ?? "-"}`],
         ["Nodes", formatLargeNumber(data.nodes)],
         ["NPS", formatLargeNumber(data.speed)],
-        ["TB Hits", data.tbhits ?? "-"],
+        ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
         ["Hashfull", data.hashfull ?? "-"],
       ];
+
+  const isMobile = useMediaQuery({ maxWidth: 1400 });
 
   return (
     <div className={`engineComponent ${loading ? "loading" : ""}`}>
       <div className="engineLeftSection">
         <div className="engineInfoHeader">
-          {loading ? (
+          {!engine ? (
             <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
           ) : (
             <EngineLogo engine={engine!} />
           )}
 
           <div className="engineName">
-            {loading ? (placeholder ?? "Loading…") : engine!.name}
+            {!engine ? (placeholder ?? "Loading…") : engine!.name}
           </div>
         </div>
 
-        <div className="engineInfoTable">
-          {loading ? (
-            <SkeletonText width="100%" />
-          ) : (
-            <div className="engineField">
-              <div className="key">Evaluation</div>
-              <div className="value engineEval">{data.score}</div>
-            </div>
-          )}
+        <hr />
 
+        <div className="engineInfoTable">
           {fields.map(([label, value]) => (
             <div className="engineField" key={label}>
               {loading ? (
@@ -163,12 +147,26 @@ export function EngineCard({
             </div>
           ))}
         </div>
+
+        <hr />
+
+        <div className="engineInfoEval">
+          {loading ? (
+            <SkeletonText width="100%" />
+          ) : (
+            <div className="engineEval">{data.score}</div>
+          )}
+        </div>
       </div>
 
-      {loading ? (
-        <SkeletonText width="100%" />
-      ) : pvGame ? (
-        <>
+      {loading && !isMobile ? (
+        <SkeletonBlock
+          width="100%"
+          height="calc(100% - 2 * var(--padding))"
+          style={{ margin: "var(--padding) var(--padding) var(--padding) 0" }}
+        />
+      ) : pvGame && !isMobile ? (
+        <div className="engineRightSection">
           <Board ref={boardHandle} />
 
           <MoveList
@@ -180,7 +178,7 @@ export function EngineCard({
               pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
             }
           />
-        </>
+        </div>
       ) : null}
     </div>
   );

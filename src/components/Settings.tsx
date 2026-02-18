@@ -13,11 +13,11 @@ export function getDefaultKibitzerSettings(): EngineSettings {
   return {
     hash: localStorage.getItem("kibitzerHash")
       ? Number(localStorage.getItem("kibitzerHash"))
-      : 128,
+      : 1,
     threads: localStorage.getItem("kibitzerThreads")
       ? Number(localStorage.getItem("kibitzerThreads"))
       : 1,
-    enableKibitzer: localStorage.getItem("kibitzerEnabled") !== "false",
+    enableKibitzer: localStorage.getItem("kibitzerEnabled") === "true",
   };
 }
 

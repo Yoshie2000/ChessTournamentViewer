@@ -6,11 +6,18 @@
 .schedule .game {
   display: grid;
   align-items: center;
-  grid-template-columns: 50px 40px 1fr 3rem 1fr 40px;
-  cursor: pointer;
+  grid-template-columns: 50px 40px 1fr 7rem 1fr 40px;
   height: 40px;
   border-bottom: 1px solid #232323;
   font-size: 0.9rem;
+}
+
+.schedule .game * {
+  color: #a1a1a1;
+}
+
+.schedule .game:last-child {
+  border-bottom: none !important;
 }
 
 .schedule .game:nth-child(4n + 1),
@@ -23,7 +30,10 @@
   background: #343434;
 }
 
-.schedule .game:hover {
+.schedule .game:not(.future) {
+  cursor: pointer;
+}
+.schedule .game:not(.future):hover {
   background: #434343;
 }
 
@@ -31,13 +41,20 @@
   background: #4d4d4d;
 }
 
+.schedule .game.active .engineName {
+  color: #fff;
+}
+
+.schedule .game.lastOfRound {
+  border-bottom: 1px solid #e53935;
+}
+
 .schedule .game .round {
   text-align: center;
-  color: #a1a1a1;
 }
 
 .schedule .game .vs {
-  color: #a1a1a1;
+  text-align: center;
 }
 
 .schedule .game .engineName.winner {
@@ -48,16 +65,42 @@
   color: #e53935;
 }
 
-.schedule .game .engineName.draw {
-  color: #a1a1a1;
+.schedule .game .engineName:last-of-type {
+  text-align: right;
+}
+
+.scheduleWindow .closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+@media (max-width: 1920px) {
+  .schedule .game {
+    grid-template-columns: 45px 40px 1fr 6rem 1fr 40px;
+  }
+
+  .schedule .game .engineName {
+    font-size: 0.9rem;
+  }
+
+  .schedule .game .round,
+  .schedule .game .vs {
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 775px) {
   .schedule .game {
-    grid-template-columns: 35px 40px 1fr 2rem 1fr 40px;
+    grid-template-columns: 35px 40px 1fr 5rem 1fr 40px;
   }
 
-  .schedule .game .round {
-    font-size: 0.75rem;
+  .schedule .game .engineName {
+    font-size: 0.8rem;
+  }
+
+  .schedule .game .round,
+  .schedule .game .vs {
+    font-size: 0.7rem;
   }
 }

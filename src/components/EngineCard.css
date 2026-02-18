@@ -34,17 +34,23 @@
   gap: 0.5rem;
 }
 
-.engineComponent .engineEval {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
 .engineComponent .engineInfoTable {
   display: grid;
   grid-template-columns: 1fr;
   row-gap: 0.25rem;
+  margin-left: 0.25rem;
   font-size: 0.9rem;
   padding: 0.5rem 0;
+  flex-grow: 1;
+}
+
+.engineComponent .engineInfoEval {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
 
 .engineComponent .engineField {
@@ -64,18 +70,24 @@
   font-variant-numeric: tabular-nums;
 }
 
-.engineComponent .engineField .value {
+.engineComponent .engineRightSection {
+  display: flex;
+  height: calc(var(--engine-board-width)) !important;
+  transform: translateY(
+    calc((var(--engine-card-height) - var(--engine-board-width)) / 2)
+  );
 }
 
 .engineComponent .board {
   border-radius: 4px;
-  height: calc(var(--engine-card-height)) !important;
-  width: calc(var(--engine-card-height)) !important;
+  height: calc(var(--engine-board-width)) !important;
+  width: calc(var(--engine-board-width)) !important;
+  overflow: hidden;
 }
 
 .engineComponent .board cg-container {
-  height: calc(var(--engine-card-height)) !important;
-  width: calc(var(--engine-card-height)) !important;
+  height: calc(var(--engine-board-width)) !important;
+  width: calc(var(--engine-board-width)) !important;
 }
 
 .engineComponent .board cg-board {
@@ -109,45 +121,31 @@
   color: #a1a1a1;
 }
 
-@media (max-width: 1150px) {
+@media (max-width: 1600px) {
+  .engineComponent .engineRightSection {
+    flex-direction: column;
+    height: calc(100% - 2 * var(--padding)) !important;
+    transform: translateY(var(--padding));
+  }
+
+  .engineComponent .movesWindow {
+    height: calc(100% - var(--engine-board-width));
+    width: 100%;
+    padding-bottom: 0 !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+}
+
+@media (max-width: 1400px) {
   .engineComponent {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 100px;
-    height: auto;
+    border: none;
+    padding: 0;
+    height: calc(100% - 44px);
     width: 100%;
   }
 
   .engineComponent .engineLeftSection {
-    grid-column: 1 / -1;
-    grid-row: 1 / 2;
     width: 100%;
-    min-width: 0;
-  }
-
-  .engineComponent .board {
-    grid-column: 1 / -1;
-    grid-row: 2 / 3;
-    height: var(--engine-card-width) !important;
-    width: var(--engine-card-width) !important;
-  }
-
-  .engineComponent .board cg-container {
-    height: var(--engine-card-width) !important;
-    width: var(--engine-card-width) !important;
-  }
-
-  .engineComponent .movesWindow {
-    grid-column: 1 / -1;
-    grid-row: 3 / 4;
-    width: 100%;
-    min-width: 0;
-  }
-}
-
-@media (max-width: 775px) {
-  .engineComponent {
-    border: none;
-    padding: 0;
   }
 }

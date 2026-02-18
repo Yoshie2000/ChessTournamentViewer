@@ -1,3 +1,4 @@
 .engineLogo {
   border-radius: 4px;
+  object-fit: contain;
 }

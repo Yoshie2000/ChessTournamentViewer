@@ -9,7 +9,9 @@
 
 .engineWindow {
   display: grid;
-  grid-template-rows: var(--engine-card-height) var(--engine-card-height) var(--engine-card-height);
+  grid-template-rows: var(--engine-card-height) var(--engine-card-height) var(
+      --engine-card-height
+    );
   gap: 1rem;
   max-width: 100%;
   overflow: hidden;

@@ -20,9 +20,9 @@ const MODES = [
     name: "Eval",
     map: function (liveInfo?: CCCLiveInfo) {
       if (!liveInfo) return NaN;
-      else if (liveInfo.info.score.includes("+M")) return 144.0;
-      else if (liveInfo.info.score.includes("-M")) return -144.0;
-      else return Math.min(Math.max(Number(liveInfo!.info.score), -99.9), 99.9);
+      else if (liveInfo.info.score.includes("+M")) return 64.0;
+      else if (liveInfo.info.score.includes("-M")) return -64.0;
+      else return Math.min(Math.max(Number(liveInfo!.info.score), -49.0), 49.0);
     },
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return liveInfo?.info.score ?? "-";
@@ -197,8 +197,8 @@ export function GameGraph({
                       Math.pow(Math.abs(Number(value)), 2);
                     switch (mode) {
                       case 0:
-                        if (scaledValue > 100) return "Mate";
-                        if (scaledValue < -100) return "-Mate";
+                        if (scaledValue >= 64) return "Mate";
+                        if (scaledValue <= -64) return "-Mate";
                         return scaledValue.toFixed(2);
                       case 3:
                         return formatTime(1000 * scaledValue);

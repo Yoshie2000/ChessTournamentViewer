@@ -1,24 +1,24 @@
 .gameGraph {
   height: 100%;
   display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 1rem;
-}
-
-@media (max-width: 1920px) {
-  .gameGraph {
-    grid-template-columns: 75px 1fr;
-  }
+  grid-template-columns: 1fr;
+  grid-template-rows: calc(50px + var(--padding)) 1fr;
+  gap: 0;
 }
 
 .modeSelectorList {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
+  padding: var(--padding) 0rem;
+  flex-direction: row;
+  overflow: auto;
+  gap: 0.25rem;
 }
 
 .modeSelector {
-  width: 100%;
+  width: fit-content;
+  flex-grow: 1;
+  white-space: nowrap;
 }
 
 .graphWrapper {
@@ -26,4 +26,15 @@
   width: 100%;
   height: 100%;
   min-width: 0;
+  padding-bottom: var(--padding);
+}
+
+.graphWindow {
+  padding: 0 var(--padding) !important;
+}
+
+@media (max-width: 775px) {
+  .gameGraph {
+    grid-template-rows: 50px 1fr;
+  }
 }

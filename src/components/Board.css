@@ -29,6 +29,10 @@
   background-color: #8ca2ad;
 }
 
+.cg-wrap coords {
+  display: none;
+}
+
 @media (max-width: 1150px) {
   .boardWindow .board {
     grid-column: 1 / -1;
@@ -41,13 +45,6 @@
 }
 
 @media (max-width: 775px) {
-  .boardWindow {
-    grid-column: 1 / 2;
-    display: grid;
-    grid-template-columns: minmax(var(--board-size), var(--board-size));
-    grid-template-rows: auto var(--board-size) auto 1rem auto auto;
-  }
-
   .boardWindow .board {
     grid-column: 1 / 2;
     grid-row: 2;

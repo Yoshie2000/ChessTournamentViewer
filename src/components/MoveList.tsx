@@ -16,7 +16,7 @@ import {
 
 type MoveListProps = {
   game: Chess960;
-  cccGameId?: number;
+  cccGameId?: string;
   currentMoveNumber: number;
   setCurrentMoveNumber: (moveNumber: number) => void;
   controllers: boolean;

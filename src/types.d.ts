@@ -55,7 +55,7 @@ type CCCEventUpdate = {
 type CCCGameUpdate = {
   type: "gameUpdate";
   gameDetails: {
-    gameNr: number;
+    gameNr: string;
     live: boolean;
     opening: string;
     pgn: string;
@@ -96,7 +96,7 @@ type CCCNewMove = {
   times: { w: number; b: number };
 };
 
-type CCCEvent = { id: number; name: string; tc: TimeControl };
+type CCCEvent = { id: string; name: string; tc?: TimeControl };
 
 type CCCEventsListUpdate = { type: "eventsListUpdate"; events: CCCEvent[] };
 

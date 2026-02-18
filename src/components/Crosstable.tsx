@@ -101,8 +101,7 @@ function scoreToElo(score: number): number {
 }
 
 function inverseErrorFunction(value: number): number {
-  const coefficient =
-    (8 * (Math.PI - 3)) / (3 * Math.PI * (4 - Math.PI));
+  const coefficient = (8 * (Math.PI - 3)) / (3 * Math.PI * (4 - Math.PI));
   const y = Math.log(1 - value * value);
   const z = 2 / (Math.PI * coefficient) + y / 2;
   const sign = value < 0 ? -1 : 1;
@@ -114,31 +113,28 @@ function phiInverse(probability: number): number {
   return Math.sqrt(2) * inverseErrorFunction(2 * probability - 1);
 }
 
-function calculateEloAndMargin(wdl: WDL): {
+function calculateEloAndMargin(penta: Penta): {
   text: string;
   className: EloClassName;
 } {
-  const [wins, draws, losses] = wdl;
-  const totalGames = wins + draws + losses;
+  const totalPairs = penta.reduce((sum, count) => sum + count, 0);
 
-  if (totalGames < 2) {
-    return { text: "--", className: "tbd" };
+  if (totalPairs < 1) {
+    return { text: "-", className: "tbd" };
   }
 
-  const score = (wins + draws * 0.5) / totalGames;
+  const score =
+    penta.reduce((sum, count, index) => sum + count * (index / 4), 0) /
+    totalPairs;
   const elo = scoreToElo(clampProbability(score));
 
-  const winProbability = wins / totalGames;
-  const drawProbability = draws / totalGames;
-  const lossProbability = losses / totalGames;
+  const variance = penta.reduce((sum, count, index) => {
+    const pairScore = index / 4;
+    const probability = count / totalPairs;
+    return sum + probability * (pairScore - score) ** 2;
+  }, 0);
 
-  const winDeviation = winProbability * (1 - score) ** 2;
-  const drawDeviation = drawProbability * (0.5 - score) ** 2;
-  const lossDeviation = lossProbability * score ** 2;
-
-  const stdDeviation =
-    Math.sqrt(winDeviation + drawDeviation + lossDeviation) /
-    Math.sqrt(totalGames);
+  const stdDeviation = Math.sqrt(variance / totalPairs);
 
   const minConfidenceProbability = (1 - TWO_SIGMA_CONFIDENCE) / 2;
   const maxConfidenceProbability = 1 - minConfidenceProbability;
@@ -163,10 +159,7 @@ function calculateEloAndMargin(wdl: WDL): {
 function calculatePentaAndWDL(
   gamePairs: [CCCGame, CCCGame][],
   engineId: string
-): {
-  penta: Penta;
-  wdl: WDL;
-} {
+): { penta: Penta; wdl: WDL } {
   const penta: Penta = [0, 0, 0, 0, 0];
   const wdl: WDL = [0, 0, 0];
   for (const gamePair of gamePairs) {
@@ -218,7 +211,7 @@ function calculatePentaAndWDL(
 }
 
 function formatPenta(penta: Penta): string {
-  return penta.join(", ");
+  return "[" + penta.join(", ") + "]";
 }
 
 export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
@@ -236,7 +229,7 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
         <tr>
           <td>
             <button className="closeButton" onClick={onClose}>
-              <MdOutlineClose/>
+              <MdOutlineClose />
             </button>
           </td>
           {engines.map((engine, i) => (
@@ -262,19 +255,24 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
               );
 
               const gamePairs: CCCGame[][] = [];
-              for (let gameIndex = 0; gameIndex < games.length; gameIndex += 2) {
+              for (
+                let gameIndex = 0;
+                gameIndex < games.length;
+                gameIndex += 2
+              ) {
                 gamePairs.push(games.slice(gameIndex, gameIndex + 2));
               }
 
               const completeGamePairs = gamePairs.filter(
-                (gamePair): gamePair is [CCCGame, CCCGame] => gamePair.length > 1
+                (gamePair): gamePair is [CCCGame, CCCGame] =>
+                  gamePair.length > 1
               );
 
-              const { penta, wdl } = calculatePentaAndWDL(
+              const { penta } = calculatePentaAndWDL(
                 completeGamePairs,
                 engine.id
               );
-              const elo = calculateEloAndMargin(wdl);
+              const elo = calculateEloAndMargin(penta);
 
               return (
                 <td key={engine2.id} className="h2hCell">
@@ -304,8 +302,12 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
                             .filter(Boolean)
                             .join(" ")}
                         >
-                          <span className={result1}>{textFromResult(result1)}</span>
-                          <span className={result2}>{textFromResult(result2)}</span>
+                          <span className={result1}>
+                            {textFromResult(result1)}
+                          </span>
+                          <span className={result2}>
+                            {textFromResult(result2)}
+                          </span>
                         </span>
                       );
                     })}

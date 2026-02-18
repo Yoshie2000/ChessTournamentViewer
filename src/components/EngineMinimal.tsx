@@ -38,7 +38,9 @@ export function EngineMinimal({
         </div>
 
         <div className="engineOutput">
-          <div className="engineTime">{loading ? "" : formatTime(time)}</div>
+          <div className="engineTime">
+            {loading ? <SkeletonText width="80px" /> : formatTime(time)}
+          </div>
           <div> {loading ? <SkeletonText width="40px" /> : data.score}</div>
         </div>
       </div>

@@ -12,7 +12,7 @@ export function StandingsTable({ engines }: StandingsTableProps) {
           {engines.map((engine, index) => {
             const playedGames = Math.round(
               (100 * Number(engine.points)) / Number(engine.perf)
-            );
+            ).toFixed(1);
             return (
               <tr key={engine.id} className="standingsEntry">
                 <td className="placement">#{index + 1}</td>
@@ -21,7 +21,7 @@ export function StandingsTable({ engines }: StandingsTableProps) {
                 </td>
                 <td className="name">{engine.name}</td>
                 <td className="score">
-                  {engine.points} / {playedGames}.00
+                  {engine.points} / {playedGames}
                 </td>
                 <td className="perf">{engine.perf}%</td>
                 <td className="rating">{engine.rating}</td>

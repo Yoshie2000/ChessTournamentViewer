@@ -1,13 +1,33 @@
 @media (max-width: 1400px) {
   .engineVsEngine {
     text-align: center;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    grid-template-rows: auto auto auto;
-    align-items: stretch;
-    row-gap: 0.4rem;
     font-size: 0.9rem;
-    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    height: max-content;
+  }
+
+  .engineVsEngine .engineVsEngineBody,
+  .engineVsEngine .engineVsEngineHeader,
+  .engineVsEngine .engineVsEngineEval {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: stretch;
+    align-items: end;
+  }
+
+  .engineVsEngine .engineVsEngineBody,
+  .engineVsEngine .engineVsEngineEval {
+    padding: var(--padding) 0;
+    flex-grow: 1;
+    row-gap: 0.5rem;
+  }
+
+  .engineVsEngine hr {
+    background: #434343;
+    border: none;
+    height: 1px;
+    margin: 0;
   }
 
   .engineVsEngine .engineWhite,

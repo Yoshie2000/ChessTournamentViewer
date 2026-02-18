@@ -1,8 +1,6 @@
 .standingsWrapper {
   height: 100%;
   overflow: auto;
-
-  --placement-width: 2rem;
 }
 
 .standings {
@@ -29,7 +27,7 @@
 }
 
 td.placement {
-  width: var(--placement-width);
+  width: 2.25rem;
   text-align: center;
   color: #a1a1a1;
 }
@@ -63,22 +61,44 @@ td.rating {
   width: 70px;
 }
 
-@media (max-width: 1550px) {
-  .standingsWrapper {
-    font-size: 0.9rem;
+@media (max-width: 1775px) {
+  td.placement {
+    width: 2.25rem;
+  }
 
-    --placement-width: 1rem;
+  td.logo {
+    width: 45px;
+    overflow: hidden;
   }
 
   td.score {
     width: 90px;
+    text-align: right;
   }
 
   td.perf {
-    width: 50px;
+    width: 80px;
+    text-align: right;
+    padding-right: var(--padding);
   }
 
   td.rating {
     display: none;
+  }
+}
+
+@media (max-width: 1550px) {
+  td.perf {
+    width: 70px;
+  }
+}
+
+@media (max-width: 775px) {
+  .standingsWrapper {
+    margin-top: calc(var(--padding) / 2);
+  }
+
+  .standingsWindow h4 {
+    margin-top: calc(var(--padding) / 2) !important;
   }
 }

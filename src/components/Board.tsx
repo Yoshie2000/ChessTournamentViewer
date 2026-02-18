@@ -14,47 +14,12 @@ export type BoardHandle = {
   updateBoard: (
     game: Chess960,
     currentMoveNumber: number,
-    liveInfosWhite: LiveInfoEntry[],
-    liveInfosBlack: LiveInfoEntry[],
-    liveInfosKibitzer: LiveInfoEntry[]
+    liveInfosWhite?: LiveInfoEntry,
+    liveInfosBlack?: LiveInfoEntry,
+    liveInfosKibitzer?: LiveInfoEntry,
+    bypassRateLimit?: boolean
   ) => void;
 };
-
-function getCurrentLiveInfos(
-  game: Chess960,
-  currentMoveNumber: number,
-  liveInfosWhite: LiveInfoEntry[],
-  liveInfosBlack: LiveInfoEntry[],
-  liveInfosKibitzer: LiveInfoEntry[]
-) {
-  const gameAtTurn = getGameAtMoveNumber(game, currentMoveNumber);
-  const ply =
-    2 * gameAtTurn.moveNumber() - (gameAtTurn.turn() === "w" ? 1 : 0) - 1;
-
-  if (liveInfosBlack.at(ply)) {
-    const liveInfoBlack = liveInfosBlack.at(currentMoveNumber);
-    const liveInfoWhite = liveInfosWhite.at(
-      currentMoveNumber === -1 ? -1 : Math.max(0, currentMoveNumber - 1)
-    );
-    const liveInfoKibitzer =
-      liveInfosKibitzer.at(liveInfoBlack?.info.ply ?? currentMoveNumber) ??
-      liveInfosKibitzer.at(
-        liveInfoBlack?.info.ply ? liveInfoBlack.info.ply - 1 : currentMoveNumber
-      );
-    return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
-  } else {
-    const liveInfoBlack = liveInfosBlack.at(
-      currentMoveNumber === -1 ? -1 : Math.max(0, currentMoveNumber - 1)
-    );
-    const liveInfoWhite = liveInfosWhite.at(currentMoveNumber);
-    const liveInfoKibitzer =
-      liveInfosKibitzer.at(liveInfoWhite?.info.ply ?? currentMoveNumber) ??
-      liveInfosKibitzer.at(
-        liveInfoWhite?.info.ply ? liveInfoWhite.info.ply - 1 : currentMoveNumber
-      );
-    return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
-  }
-}
 
 export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
   const boardElementRef = useRef<HTMLDivElement>(null);
@@ -74,27 +39,23 @@ export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
     updateBoard(
       game,
       currentMoveNumber,
-      liveInfosWhite,
-      liveInfosBlack,
-      liveInfosKibitzer
+      liveInfoWhite,
+      liveInfoBlack,
+      liveInfoKibitzer,
+      bypassRateLimit
     ) {
       if (!boardRef.current) return;
 
       const currentTime = new Date().getTime();
-      if (currentTime - lastBoardUpdateRef.current <= BOARD_THROTTLE_MS) return;
+      if (
+        !bypassRateLimit &&
+        currentTime - lastBoardUpdateRef.current <= BOARD_THROTTLE_MS
+      )
+        return;
 
       const gameAtTurn = getGameAtMoveNumber(game, currentMoveNumber);
       const fen = gameAtTurn.fen();
       const turn = gameAtTurn.turn();
-
-      const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
-        getCurrentLiveInfos(
-          game,
-          currentMoveNumber,
-          liveInfosWhite,
-          liveInfosBlack,
-          liveInfosKibitzer
-        );
 
       const arrows: DrawShape[] = [];
 
@@ -115,7 +76,7 @@ export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
       if (liveInfoBlack) {
         const pv = liveInfoBlack.info.pv.split(" ");
         const nextMove = turn === "b" ? pv[0] : pv[1];
-        if (nextMove === moveWhite) {
+        if (nextMove && nextMove === moveWhite) {
           arrows[0].brush = "agree";
         } else if (nextMove && nextMove.length >= 4) {
           arrows.push({

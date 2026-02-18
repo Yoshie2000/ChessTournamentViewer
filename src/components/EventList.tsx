@@ -28,7 +28,12 @@ export function EventList({
     >
       {eventList.events.map((event) => (
         <option key={event.id} value={event.id}>
-          {event.name} ({event.tc.init}+{event.tc.incr})
+          {event.name}{" "}
+          {event.tc && (
+            <>
+              ({event.tc.init}+{event.tc.incr})
+            </>
+          )}
         </option>
       ))}
     </select>
