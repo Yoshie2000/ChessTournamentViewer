@@ -74,19 +74,20 @@ export function EngineCard({
   }, [info, opponentInfo, fen]);
 
   useEffect(() => {
-    if (loading || !fen || !data?.pv || !data?.color) return;
+    if (loading || !fen || !data?.color) return;
 
     const normalizedPv = normalizePv(data.pv, data.color, fen);
-    if (!normalizedPv) return;
 
-    if (lastAppliedRef.current && lastAppliedRef.current.fen === fen) {
+    if (
+      lastAppliedRef.current &&
+      lastAppliedRef.current.fen === fen &&
+      lastAppliedRef.current.pv === normalizedPv
+    )
       return;
-    }
 
     const game = buildPvGame(fen, normalizedPv, -1);
-    if (game.history().length === 0) return;
-
     lastAppliedRef.current = { fen, pv: normalizedPv };
+
     setPvMoveNumber(-1);
     setPvGame(game);
   }, [loading, data?.pv, data?.color, fen]);

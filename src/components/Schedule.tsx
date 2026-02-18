@@ -100,8 +100,6 @@ const Schedule = memo(
             const gameBlack = engines.find(
               (engine) => engine.id === game.blackId
             )!!;
-            if (!gameWhite || !gameBlack)
-            console.log(game.whiteId, game.blackId, engines.map(e => e.id), gameWhite, gameBlack)
 
             const whiteClass =
               game.outcome === "1-0"
@@ -150,7 +148,9 @@ const Schedule = memo(
                 className={"game" + gameClass}
                 ref={ref}
                 key={game.gameNr}
-                onClick={() => requestEvent(game.gameNr)}
+                onClick={
+                  game.outcome ? () => requestEvent(game.gameNr) : undefined
+                }
               >
                 <span className="round">#{i + 1}</span>
                 <EngineLogo engine={gameWhite} size={28} />

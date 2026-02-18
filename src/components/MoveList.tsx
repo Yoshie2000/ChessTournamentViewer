@@ -158,25 +158,6 @@ function MoveList({
     window.open(url, "_blank");
   }
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-      if (event.key === "ArrowLeft") {
-        undoMove();
-      } else if (event.key === "ArrowRight") {
-        redoMove();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentMoveNumber, moves.length]);
-
   return (
     <div className="movesWindow">
       <div className="moveList" ref={moveListRef}>
