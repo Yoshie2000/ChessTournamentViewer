@@ -26,15 +26,32 @@ export function EngineVsEngine({
 
   return (
     <div className="engineVsEngine">
-      {/* ENGINE NAMES + LOGOS */}
       <div className="engineWhite">
         <div className="engineName">{white?.name ?? "White"}</div>
-        {white ? <EngineLogo engine={white} /> : <SkeletonBlock className="engineLogo" width={36} height={36} style={{margin: 6}} />}
+        {white ? (
+          <EngineLogo engine={white} />
+        ) : (
+          <SkeletonBlock
+            className="engineLogo"
+            width={36}
+            height={36}
+            style={{ margin: 6 }}
+          />
+        )}
       </div>
       <div className="engineLabel"></div>
       <div className="engineBlack">
         <div className="engineName">{black?.name ?? "Black"}</div>
-        {black ? <EngineLogo engine={black} /> : <SkeletonBlock className="engineLogo" width={36} height={36} style={{margin: 6}} />}
+        {black ? (
+          <EngineLogo engine={black} />
+        ) : (
+          <SkeletonBlock
+            className="engineLogo"
+            width={36}
+            height={36}
+            style={{ margin: 6 }}
+          />
+        )}
       </div>
 
       <div className="engineField">

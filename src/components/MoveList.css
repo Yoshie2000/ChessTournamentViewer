@@ -1,12 +1,28 @@
-.moveList {
+.movesWindow {
   display: flex;
-  flex-wrap: wrap;
-  column-gap: 0.25rem;
-  overflow: auto;
-  max-height: 100%;
+  flex-direction: column;
+  align-items: self-start;
+  text-align: left;
+  gap: 0.5rem;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  width: var(--movelist-width);
+  font-size: 0.9rem;
+  padding: 0.5rem !important;
+  position: relative;
+  border-radius: 8px;
+  background: #343434;
+  overflow: hidden;
 }
 
-.moveList span {
+.moveList {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.moveList span,
+.moveList td {
   color: #a1a1a1;
 }
 
@@ -26,8 +42,45 @@
   color: #fff;
 }
 
-.moveButtons {
+.moveTable th,
+.moveTable td {
+  display: block;
+  font-weight: normal;
+  color: #a1a1a1;
+}
+
+.moveList .moveTable th.right {
+  text-align: right;
+}
+
+.moveTable {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  width: 100%;
+}
+
+.moveTable tbody {
+  display: contents;
+}
+
+.moveTable tr {
+  display: contents;
+}
+
+.moveTable th {
+  text-align: right;
+}
+
+.moveButtonsWrapper {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.moveButtons {
   display: flex;
   gap: 0.5rem;
 }
@@ -41,4 +94,50 @@
   justify-content: center;
   position: relative;
   width: 100%;
+}
+
+.moveList .disagreementMove {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .moveTable {
+    display: block;
+  }
+
+  .moveTable tbody {
+    display: block;
+  }
+
+  .moveTable tr {
+    display: inline;
+  }
+
+  .moveTable th,
+  .moveTable td {
+    display: inline-block;
+    padding: 0 0.15rem;
+    overflow-wrap: break-word;
+  }
+
+  .moveTable th {
+    text-align: left;
+  }
+
+  .moveButtonsWrapper {
+    flex-direction: row;
+    gap: 0.5rem;
+    margin: 0 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 775px) {
+  .boardWindow > .movesWindow {
+    grid-column: 1 / 2;
+    width: var(--board-size);
+    border-radius: 8px !important;
+    grid-row: 5;
+    max-height: 200px;
+  }
 }

@@ -106,13 +106,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .engineMinimal .enginePvWrapper {
-    margin: 0.5rem 1rem;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-  }
-
   .engineMinimal .enginePv {
     --pv-rows: 3;
     line-height: 1rem;

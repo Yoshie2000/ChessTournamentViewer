@@ -10,14 +10,11 @@
   border: 1px solid #232323;
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.9rem;
 }
 
 .standingsEntry {
   border-bottom: 1px solid #232323;
-}
-
-.standingsEntry td {
-  padding: 0 0.5rem;
 }
 
 .standingsEntry .engineLogo {

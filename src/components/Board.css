@@ -1,0 +1,66 @@
+.boardWindow {
+  display: flex;
+  padding: 0;
+  overflow: unset;
+}
+
+.boardWindow .board {
+  width: var(--board-size);
+  height: var(--board-size);
+  min-height: var(--board-size);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  position: relative;
+  border-radius: 8px;
+  background: #343434;
+}
+
+.boardWindow .board cg-container {
+  height: var(--board-size) !important;
+  width: var(--board-size) !important;
+}
+
+.boardWindow .board cg-board {
+  background-color: #8ca2ad;
+}
+
+@media (max-width: 1150px) {
+  .boardWindow .board {
+    grid-column: 1 / -1;
+    grid-row: 2 / 3;
+  }
+
+  .boardWindow .board cg-board {
+    border-radius: 0px;
+  }
+}
+
+@media (max-width: 775px) {
+  .boardWindow {
+    grid-column: 1 / 2;
+    display: grid;
+    grid-template-columns: minmax(var(--board-size), var(--board-size));
+    grid-template-rows: auto var(--board-size) auto 1rem auto auto;
+  }
+
+  .boardWindow .board {
+    grid-column: 1 / 2;
+    grid-row: 2;
+    border-radius: 0px;
+  }
+
+  .boardWindow > .engineMinimal:first-child {
+    grid-column: 1 / 2;
+    grid-row: 1;
+  }
+
+  .boardWindow > .engineMinimal:last-child {
+    grid-column: 1 / 2;
+    grid-row: 3;
+  }
+}

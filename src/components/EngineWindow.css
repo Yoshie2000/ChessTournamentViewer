@@ -1,0 +1,34 @@
+.engineTabs {
+  background: #343434;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid #333;
+  padding: 0.3rem 0;
+  gap: 0.5rem;
+}
+
+.engineWindow {
+  display: grid;
+  grid-template-rows: var(--engine-card-height) var(--engine-card-height) var(--engine-card-height);
+  gap: 1rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 1150px) {
+  .engineWindow {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
+    gap: 1rem;
+    height: auto;
+  }
+}
+
+@media (max-width: 775px) {
+  .engineWindow {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
+    gap: 0.5rem;
+    height: auto;
+  }
+}

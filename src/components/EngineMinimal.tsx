@@ -28,7 +28,7 @@ export function EngineMinimal({
     >
       <div className="engineInfoHeader">
         {loading ? (
-          <SkeletonBlock width={36} height={36} style={{margin: 6}} />
+          <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
         ) : (
           <EngineLogo engine={engine!} />
         )}

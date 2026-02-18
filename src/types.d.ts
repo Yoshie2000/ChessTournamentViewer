@@ -117,6 +117,7 @@ type EngineWindowProps = {
   latestLiveInfoBlack?: CCCLiveInfo;
   latestLiveInfoKibitzer: CCCLiveInfo | undefined;
   clocks?: { wtime?: string; btime?: string };
+  fen: string
 };
 
 export type CCCMessage =
