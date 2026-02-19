@@ -117,6 +117,8 @@ export function EngineCard({
 
   const isMobile = useMediaQuery({ maxWidth: 1400 });
 
+  const moveNumberOffset = new Chess960(fen).moveNumber() - 1;
+
   return (
     <div className={`engineComponent ${loading ? "loading" : ""}`}>
       <div className="engineLeftSection">
@@ -178,6 +180,7 @@ export function EngineCard({
             disagreementMoveIndex={
               pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
             }
+            moveNumberOffset={moveNumberOffset}
           />
         </div>
       ) : null}

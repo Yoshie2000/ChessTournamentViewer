@@ -18,6 +18,7 @@ type MoveListProps = {
   game: Chess960;
   cccGameId?: string;
   currentMoveNumber: number;
+  moveNumberOffset?: number;
   setCurrentMoveNumber: (moveNumber: number) => void;
   controllers: boolean;
   disagreementMoveIndex?: number;
@@ -55,6 +56,7 @@ const MoveList = memo(({
   cccGameId,
   controllers,
   disagreementMoveIndex,
+  moveNumberOffset = 0,
 }: MoveListProps) => {
   const moves = game.history();
   const moveListRef = useRef<HTMLDivElement>(null);
@@ -174,7 +176,7 @@ const MoveList = memo(({
                     <th
                       className={"move right" + (active ? " currentMove" : "")}
                     >
-                      1.
+                      {1 + moveNumberOffset}.
                     </th>
                     <td>...</td>
                     <td>
@@ -197,7 +199,7 @@ const MoveList = memo(({
 
               const whiteMove = moves[i];
               const blackMove = moves[i + 1];
-              const moveNumber = blackMovesFirst ? (i + 1) / 2 + 1 : i / 2 + 1;
+              const moveNumber = moveNumberOffset + (blackMovesFirst ? (i + 1) / 2 + 1 : i / 2 + 1);
               const isLatest = currentMoveNumber === -1;
 
               const whiteActive =

@@ -90,41 +90,43 @@ function App() {
   });
 
   function getCurrentLiveInfos() {
-    const index = currentMoveNumber.current === -1 ? game.current.length() - 2 : currentMoveNumber.current;
+    const moveNumber = currentMoveNumber.current === game.current.length() ? -1 : currentMoveNumber.current;
+
+    const index = moveNumber === -1 ? game.current.length() - 2 : moveNumber;
     const turn = game.current.turnAt(index);
 
     if (turn === "w") {
       const liveInfoBlack = liveInfosRef.current.black.at(
-        currentMoveNumber.current
+        moveNumber
       );
       const liveInfoWhite = liveInfosRef.current.white.at(
-        currentMoveNumber.current === -1 ? -1 : currentMoveNumber.current + 1
+        moveNumber === -1 ? -1 : moveNumber + 1
       );
       const liveInfoKibitzer =
         liveInfosRef.current.kibitzer.at(
-          liveInfoBlack?.info.ply ?? currentMoveNumber.current
+          liveInfoBlack?.info.ply ?? moveNumber
         ) ??
         liveInfosRef.current.kibitzer.at(
           liveInfoBlack?.info.ply
             ? liveInfoBlack?.info.ply - 1
-            : currentMoveNumber.current
+            : moveNumber
         );
       return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
     } else {
       const liveInfoBlack = liveInfosRef.current.black.at(
-        currentMoveNumber.current === -1 ? -1 : currentMoveNumber.current + 1
+        moveNumber === -1 ? -1 : moveNumber + 1
       );
       const liveInfoWhite = liveInfosRef.current.white.at(
-        currentMoveNumber.current
+        moveNumber
       );
       const liveInfoKibitzer =
         liveInfosRef.current.kibitzer.at(
-          liveInfoWhite?.info.ply ?? currentMoveNumber.current
+          liveInfoWhite?.info.ply ?? moveNumber
         ) ??
         liveInfosRef.current.kibitzer.at(
           liveInfoWhite?.info.ply
             ? liveInfoWhite?.info.ply - 1
-            : currentMoveNumber.current
+            : moveNumber
         );
       return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
     }
@@ -461,7 +463,7 @@ function App() {
         {termination &&
           result &&
           result !== "*" &&
-          currentMoveNumber.current === -1 && (
+          (currentMoveNumber.current === -1 || currentMoveNumber.current === game.current.length()) && (
             <GameResultOverlay result={result} termination={termination} />
           )}
       </div>
