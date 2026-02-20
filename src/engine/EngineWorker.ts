@@ -47,6 +47,7 @@ export class EngineWorker {
 
   public onMessage: ((result: AnalysisResult) => void) | null = null;
 
+  public terminated: boolean = false;
   public isSearching: boolean = false;
   public activeFen: string | null = null;
   public latestRequestedFen: string | null = null;
@@ -84,12 +85,11 @@ export class EngineWorker {
     if (!this.isSearching) return;
 
     this.post("stop");
-    this.post("isready");
     await this.waitForStop();
   }
 
   public analyze(fen: string) {
-    if (!this.worker.isReady()) return;
+    if (!this.worker.isReady() || this.terminated) return;
 
     this.latestRequestedFen = fen;
 
@@ -126,7 +126,7 @@ export class EngineWorker {
       };
     }
 
-    if (msg.startsWith("bestmove") || msg.startsWith("readyok")) {
+    if (msg.startsWith("bestmove") || this.terminated) {
       this.isSearching = false;
       if (this.stopSignal) {
         this.stopSignal();
@@ -167,6 +167,7 @@ export class EngineWorker {
   }
 
   public terminate() {
+    this.terminated = true;
     this.post("quit");
     this.worker.terminate();
   }

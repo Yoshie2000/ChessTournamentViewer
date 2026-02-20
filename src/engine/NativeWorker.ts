@@ -22,6 +22,9 @@ export class NativeWorker implements IEngineWorker {
       this.postMessage("setoption name Threads value " + threads);
       this.postMessage("isready");
       this.postMessage("ucinewgame");
+
+      // Tell the EngineWorker that we are ready to search
+      this.callback?.({data: "bestmove 0000"});
     };
     this.ws.onmessage = this.callback;
     this.ws.onerror = () => {
