@@ -152,9 +152,13 @@ export class EngineWorker {
     }
   }
 
-  private waitForStop(): Promise<void> {
+  private async waitForStop(): Promise<void> {
     return new Promise((resolve) => {
-      this.stopSignal = () => resolve();
+      const previousSignal = this.stopSignal;
+      this.stopSignal = () => {
+        if (previousSignal) previousSignal();
+        resolve();
+      };
     });
   }
 
