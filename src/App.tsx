@@ -40,7 +40,7 @@ import { Board, type BoardHandle } from "./components/Board";
 import { MoveList } from "./components/MoveList";
 import { loadLiveInfos, saveLiveInfos } from "./LocalStorage";
 
-const CLOCK_UPDATE_MS = 25;
+const CLOCK_UPDATE_MS = 100;
 
 Chart.register(
   CategoryScale,
@@ -96,23 +96,22 @@ function App() {
     const index = moveNumber === -1 ? game.current.length() - 2 : moveNumber;
     const turn = game.current.turnAt(index);
 
+    const liveInfoKibitzer =
+      liveInfosRef.current.kibitzer.at(moveNumber) ??
+      liveInfosRef.current.kibitzer.at(moveNumber - 1) ??
+      liveInfosRef.current.kibitzer.at(moveNumber - 2);
+
     if (turn === "w") {
       const liveInfoBlack = liveInfosRef.current.black.at(moveNumber);
       const liveInfoWhite = liveInfosRef.current.white.at(
         moveNumber === -1 ? -1 : moveNumber + 1
       );
-      const liveInfoKibitzer =
-        liveInfosRef.current.kibitzer.at(moveNumber) ??
-        liveInfosRef.current.kibitzer.at(moveNumber - 1);
       return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
     } else {
       const liveInfoBlack = liveInfosRef.current.black.at(
         moveNumber === -1 ? -1 : moveNumber + 1
       );
       const liveInfoWhite = liveInfosRef.current.white.at(moveNumber);
-      const liveInfoKibitzer =
-        liveInfosRef.current.kibitzer.at(moveNumber) ??
-        liveInfosRef.current.kibitzer.at(moveNumber - 1);
       return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
     }
   }

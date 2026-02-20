@@ -47,9 +47,9 @@ export class EngineWorker {
 
   public onMessage: ((result: AnalysisResult) => void) | null = null;
 
-  private isSearching: boolean = false;
-  private activeFen: string | null = null;
-  private latestRequestedFen: string | null = null;
+  public isSearching: boolean = false;
+  public activeFen: string | null = null;
+  public latestRequestedFen: string | null = null;
 
   private queue: Promise<void> = Promise.resolve();
 
@@ -84,6 +84,7 @@ export class EngineWorker {
     if (!this.isSearching) return;
 
     this.post("stop");
+    this.post("isready");
     await this.waitForStop();
   }
 
@@ -125,7 +126,7 @@ export class EngineWorker {
       };
     }
 
-    if (msg.startsWith("bestmove")) {
+    if (msg.startsWith("bestmove") || msg.startsWith("readyok")) {
       this.isSearching = false;
       if (this.stopSignal) {
         this.stopSignal();
