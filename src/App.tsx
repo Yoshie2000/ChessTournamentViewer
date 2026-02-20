@@ -245,14 +245,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    kibitzer.current = [
-      new EngineWorker(
-        new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads)
-      ),
-      new EngineWorker(
-        new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads)
-      ),
-    ];
+    if (kibitzerSettings.enableKibitzer) {
+      kibitzer.current = [
+        new EngineWorker(
+          new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+        ),
+        new EngineWorker(
+          new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+        ),
+      ];
+    } else {
+      kibitzer.current = [];
+    }
     return () => kibitzer.current?.forEach((worker) => worker.terminate());
   }, [kibitzerSettings]);
 
