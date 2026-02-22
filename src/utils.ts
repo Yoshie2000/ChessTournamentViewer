@@ -52,7 +52,7 @@ export function normalizePv(
 ): string {
   const turn = fen.split(" ")[1];
   const turnColor = turn === "w" ? "white" : "black";
-  if (engineColor !== turnColor) {
+  if (engineColor !== turnColor && !["red", "blue", "green"].includes(engineColor)) {
     const moves = pv.trim().split(/\s+/);
     return moves.slice(1).join(" ");
   }

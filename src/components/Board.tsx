@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { Api } from "@lichess-org/chessground/api";
 import type { Config } from "@lichess-org/chessground/config";
 import type { DrawShape } from "@lichess-org/chessground/draw";
-import type { LiveInfoEntry } from "../LiveInfo";
+import type { LiveEngineDataEntry } from "../LiveInfo";
 import type { Chess960, Square } from "../chess.js/chess";
 import "./Board.css";
 
@@ -13,9 +13,7 @@ export type BoardHandle = {
   updateBoard: (
     game: Chess960,
     currentMoveNumber: number,
-    liveInfosWhite?: LiveInfoEntry,
-    liveInfosBlack?: LiveInfoEntry,
-    liveInfosKibitzer?: LiveInfoEntry,
+    liveInfos?: LiveEngineDataEntry,
     bypassRateLimit?: boolean
   ) => void;
 };
@@ -35,14 +33,7 @@ export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
   }, []);
 
   useImperativeHandle(ref, () => ({
-    updateBoard(
-      game,
-      currentMoveNumber,
-      liveInfoWhite,
-      liveInfoBlack,
-      liveInfoKibitzer,
-      bypassRateLimit
-    ) {
+    updateBoard(game, currentMoveNumber, liveInfos, bypassRateLimit) {
       if (!boardRef.current) return;
 
       const currentTime = new Date().getTime();
@@ -58,21 +49,21 @@ export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
       const arrows: DrawShape[] = [];
 
       let moveWhite: string | null = null;
-      if (liveInfoWhite) {
-        const pv = liveInfoWhite.info.pv.split(" ");
+      if (liveInfos?.white.liveInfo) {
+        const pv = liveInfos.white.liveInfo.info.pv.split(" ");
         const nextMove = turn === "w" ? pv[0] : pv[1];
         if (nextMove && nextMove.length >= 4) {
           moveWhite = nextMove;
           arrows.push({
             orig: (nextMove.slice(0, 2) as Square) || "a1",
             dest: (nextMove.slice(2, 4) as Square) || "a1",
-            brush: liveInfoWhite.info.color,
+            brush: liveInfos.white.liveInfo.info.color,
           });
         }
       }
 
-      if (liveInfoBlack) {
-        const pv = liveInfoBlack.info.pv.split(" ");
+      if (liveInfos?.black.liveInfo) {
+        const pv = liveInfos.black.liveInfo.info.pv.split(" ");
         const nextMove = turn === "b" ? pv[0] : pv[1];
         if (nextMove && nextMove === moveWhite) {
           arrows[0].brush = "agree";
@@ -80,20 +71,22 @@ export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
           arrows.push({
             orig: (nextMove.slice(0, 2) as Square) || "a1",
             dest: (nextMove.slice(2, 4) as Square) || "a1",
-            brush: liveInfoBlack.info.color,
+            brush: liveInfos.black.liveInfo.info.color,
           });
         }
       }
 
-      if (liveInfoKibitzer) {
-        const pv = liveInfoKibitzer.info.pv.split(" ");
-        const nextMove = pv[0];
-        if (nextMove && nextMove.length >= 4) {
-          arrows.push({
-            orig: (nextMove.slice(0, 2) as Square) || "a1",
-            dest: (nextMove.slice(2, 4) as Square) || "a1",
-            brush: "kibitzer",
-          });
+      for (const color of ["green", "red", "blue"] as const) {
+        if (liveInfos?.[color].liveInfo) {
+          const pv = liveInfos[color].liveInfo.info.pv.split(" ");
+          const nextMove = pv[0];
+          if (nextMove && nextMove.length >= 4) {
+            arrows.push({
+              orig: (nextMove.slice(0, 2) as Square) || "a1",
+              dest: (nextMove.slice(2, 4) as Square) || "a1",
+              brush: color,
+            });
+          }
         }
       }
 
@@ -111,13 +104,20 @@ export const Board = forwardRef<BoardHandle, { id?: string }>((props, ref) => {
             black: { key: "black", color: "#000", opacity: 1, lineWidth: 10 },
             agree: {
               key: "agree",
-              color: "#43a047",
+              color: "#a79a50",
               opacity: 1,
               lineWidth: 10,
             },
-            kibitzer: {
-              key: "kibitzer",
+            red: { key: "red", color: "#ff1f1f", opacity: 0.75, lineWidth: 5 },
+            blue: {
+              key: "blue",
               color: "#0D47A1",
+              opacity: 0.75,
+              lineWidth: 5,
+            },
+            green: {
+              key: "green",
+              color: "#17a01d",
               opacity: 0.75,
               lineWidth: 5,
             },

@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
-import type { EngineWindowProps } from "../types";
 import { EngineCard } from "./EngineCard";
 import { EngineVsEngine } from "./EngineVsEngine";
 import "./EngineWindow.css";
+import type { LiveEngineDataEntry } from "../LiveInfo";
 
-export function EngineWindow(props: EngineWindowProps) {
+type EngineWindowProps = {
+  liveInfos: LiveEngineDataEntry;
+  clocks?: { wtime?: string; btime?: string };
+  fen: string
+};
+
+export function EngineWindow({liveInfos, clocks, fen}: EngineWindowProps) {
   const isMobile = useMediaQuery({ maxWidth: 1400 });
   const [activeTab, setActiveTab] = useState<"engines" | "kibitzer">("engines");
 
@@ -30,51 +36,60 @@ export function EngineWindow(props: EngineWindowProps) {
 
         {activeTab === "engines" ? (
           <EngineVsEngine
-            white={props.white}
-            black={props.black}
-            whiteInfo={props.latestLiveInfoWhite}
-            blackInfo={props.latestLiveInfoBlack}
-            wtime={Number(props.clocks?.wtime ?? 0)}
-            btime={Number(props.clocks?.btime ?? 0)}
+            white={liveInfos.white.engineInfo}
+            black={liveInfos.black.engineInfo}
+            whiteInfo={liveInfos.white.liveInfo}
+            blackInfo={liveInfos.black.liveInfo}
+            wtime={Number(clocks?.wtime ?? 0)}
+            btime={Number(clocks?.btime ?? 0)}
           />
         ) : (
           <EngineCard
-            engine={props.activeKibitzerInfo}
-            info={props.latestLiveInfoKibitzer}
-            time={Number(props.latestLiveInfoKibitzer?.info?.time ?? 0)}
+            engine={liveInfos.green.engineInfo}
+            info={liveInfos.green.liveInfo}
+            time={Number(liveInfos.green.liveInfo?.info.time ?? 1) || 1}
             placeholder="Kibitzer"
-            fen={props.fen}
+            fen={fen}
           />
         )}
       </div>
     );
   }
 
+  const activeKibitzers = (["green", "blue", "red"] as const).filter((color) => !!liveInfos[color].liveInfo);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--num-engine-cards", String(2 + activeKibitzers.length));
+  }, [activeKibitzers.length])
+
   return (
     <div className="engineWindow">
       <EngineCard
-        engine={props.black}
-        info={props.latestLiveInfoBlack}
-        opponentInfo={props.latestLiveInfoWhite}
-        time={Number(props.clocks?.btime ?? 0)}
+        engine={liveInfos.black.engineInfo}
+        info={liveInfos.black.liveInfo}
+        opponentInfo={liveInfos.white.liveInfo}
+        time={Number(clocks?.btime ?? 0)}
         placeholder="Black"
-        fen={props.fen}
+        fen={fen}
       />
       <EngineCard
-        engine={props.white}
-        info={props.latestLiveInfoWhite}
-        opponentInfo={props.latestLiveInfoBlack}
-        time={Number(props.clocks?.wtime ?? 0)}
+        engine={liveInfos.white.engineInfo}
+        info={liveInfos.white.liveInfo}
+        opponentInfo={liveInfos.black.liveInfo}
+        time={Number(clocks?.wtime ?? 0)}
         placeholder="White"
-        fen={props.fen}
+        fen={fen}
       />
-      <EngineCard
-        engine={props.activeKibitzerInfo}
-        info={props.latestLiveInfoKibitzer}
-        time={Number(props.latestLiveInfoKibitzer?.info?.time ?? 1) || 1}
-        placeholder="Kibitzer"
-        fen={props.fen}
-      />
+      {activeKibitzers.map((color) => (
+        <EngineCard
+          engine={liveInfos[color].engineInfo}
+          info={liveInfos[color].liveInfo}
+          time={Number(liveInfos[color].liveInfo?.info.time ?? 1) || 1}
+          placeholder="Kibitzer"
+          fen={fen}
+          key={color}
+        />
+      ))}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import type { LiveEngineDataEntry } from "./LiveInfo";
+
 type TimeControl = { init: number; incr: number };
 
 type CCCEngine = {
@@ -108,17 +110,11 @@ type CCCResult = {
   blackName;
 };
 
-type EngineWindowProps = {
-  white?: CCCEngine;
-  black?: CCCEngine;
-  activeKibitzerInfo?: CCCEngine;
-
-  latestLiveInfoWhite?: CCCLiveInfo;
-  latestLiveInfoBlack?: CCCLiveInfo;
-  latestLiveInfoKibitzer: CCCLiveInfo | undefined;
-  clocks?: { wtime?: string; btime?: string };
-  fen: string
-};
+type CCCKibitzer = {
+  type: "kibitzer";
+  engine: CCCEngine;
+  color: string;
+}
 
 export type CCCMessage =
   | CCCLiveInfo
@@ -127,4 +123,5 @@ export type CCCMessage =
   | CCCEventUpdate
   | CCCGameUpdate
   | CCCEventsListUpdate
-  | CCCResult;
+  | CCCResult
+  | CCCKibitzer;

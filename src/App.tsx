@@ -22,7 +22,13 @@ import { GameGraph } from "./components/GameGraph";
 import { Schedule } from "./components/Schedule";
 import "./App.css";
 import "./components/Popup.css";
-import { extractLiveInfoFromGame, type LiveInfoEntry } from "./LiveInfo";
+import {
+  extractLiveInfoFromGame,
+  type LiveInfoEntry,
+  type LiveEngineDataEntry,
+  type LiveEngineData,
+  EmptyEngineDefinition,
+} from "./LiveInfo";
 import { Crosstable } from "./components/Crosstable";
 import { EventList } from "./components/EventList";
 import { Spinner } from "./components/Loading";
@@ -81,13 +87,15 @@ function App() {
   );
 
   const currentMoveNumber = useRef(-1);
-  const liveInfosRef = useRef({
-    white: [] as LiveInfoEntry[],
-    black: [] as LiveInfoEntry[],
-    kibitzer: [] as LiveInfoEntry[],
+  const liveInfosRef = useRef<LiveEngineData>({
+    white: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
+    black: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
+    red: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
+    blue: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
+    green: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
   });
 
-  function getCurrentLiveInfos() {
+  function getCurrentLiveInfos(): LiveEngineDataEntry {
     const moveNumber =
       currentMoveNumber.current === game.current.length()
         ? -1
@@ -96,36 +104,62 @@ function App() {
     const index = moveNumber === -1 ? game.current.length() - 2 : moveNumber;
     const turn = game.current.turnAt(index);
 
-    const liveInfoKibitzer =
-      liveInfosRef.current.kibitzer.at(moveNumber) ??
-      liveInfosRef.current.kibitzer.at(moveNumber - 1) ??
-      liveInfosRef.current.kibitzer.at(moveNumber - 2);
+    function kibitzer(base: LiveInfoEntry, color: "red" | "green" | "blue") {
+      const array = liveInfosRef.current[color].liveInfo;
+      return {
+        engineInfo: liveInfosRef.current[color].engineInfo,
+        liveInfo:
+          array.at(base?.info.ply ?? moveNumber) ??
+          array.at(base?.info.ply ? base?.info.ply - 1 : moveNumber),
+      };
+    }
 
     if (turn === "w") {
-      const liveInfoBlack = liveInfosRef.current.black.at(moveNumber);
-      const liveInfoWhite = liveInfosRef.current.white.at(
-        moveNumber === -1 ? -1 : moveNumber + 1
+      const white = liveInfosRef.current.white.liveInfo.at(moveNumber);
+      const black = liveInfosRef.current.black.liveInfo.at(
+        moveNumber === -1 ? -1 : moveNumber - 1
       );
-      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
+
+      return {
+        black: {
+          liveInfo: black,
+          engineInfo: liveInfosRef.current.black.engineInfo,
+        },
+        white: {
+          liveInfo: white,
+          engineInfo: liveInfosRef.current.white.engineInfo,
+        },
+        green: kibitzer(white, "green"),
+        red: kibitzer(white, "red"),
+        blue: kibitzer(white, "blue"),
+      };
     } else {
-      const liveInfoBlack = liveInfosRef.current.black.at(
-        moveNumber === -1 ? -1 : moveNumber + 1
+      const white = liveInfosRef.current.white.liveInfo.at(
+        moveNumber === -1 ? -1 : moveNumber - 1
       );
-      const liveInfoWhite = liveInfosRef.current.white.at(moveNumber);
-      return { liveInfoBlack, liveInfoWhite, liveInfoKibitzer };
+      const black = liveInfosRef.current.black.liveInfo.at(moveNumber);
+
+      return {
+        black: {
+          liveInfo: black,
+          engineInfo: liveInfosRef.current.black.engineInfo,
+        },
+        white: {
+          liveInfo: white,
+          engineInfo: liveInfosRef.current.white.engineInfo,
+        },
+        green: kibitzer(black, "green"),
+        red: kibitzer(black, "red"),
+        blue: kibitzer(black, "blue"),
+      };
     }
   }
 
   function updateBoard(bypassRateLimit: boolean = false) {
-    const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
-      getCurrentLiveInfos();
-
     boardHandle.current?.updateBoard(
       game.current,
       currentMoveNumber.current,
-      liveInfoWhite,
-      liveInfoBlack,
-      liveInfoKibitzer,
+      getCurrentLiveInfos(),
       bypassRateLimit
     );
   }
@@ -158,12 +192,22 @@ function App() {
         const { liveInfosBlack, liveInfosWhite } = extractLiveInfoFromGame(
           game.current
         );
-        liveInfosRef.current.white = liveInfosWhite;
-        liveInfosRef.current.black = liveInfosBlack;
+        liveInfosRef.current.white.liveInfo = liveInfosWhite;
+        liveInfosRef.current.white.engineInfo =
+          cccEvent.current?.tournamentDetails.engines.find(
+            (engine) => engine.name === game.current.getHeaders()["White"]
+          )!;
+        liveInfosRef.current.black.liveInfo = liveInfosBlack;
+        liveInfosRef.current.black.engineInfo =
+          cccEvent.current?.tournamentDetails.engines.find(
+            (engine) => engine.name === game.current.getHeaders()["Black"]
+          )!;
 
-        liveInfosRef.current.kibitzer = cccEvent.current
+        liveInfosRef.current.green.liveInfo = cccEvent.current
           ? loadLiveInfos(cccEvent.current, msg)
           : [];
+        liveInfosRef.current.blue.liveInfo = [];
+        liveInfosRef.current.red.liveInfo = [];
 
         currentMoveNumber.current = -1;
         updateBoard();
@@ -174,19 +218,10 @@ function App() {
         break;
 
       case "liveInfo":
-        const updatedMsg = {
-          ...msg,
-          info: { ...msg.info, ply: msg.info.ply + 1 },
-        };
-        if (updatedMsg.info.color == "white") {
-          const newLiveInfos = [...liveInfosRef.current.white];
-          newLiveInfos[updatedMsg.info.ply] = updatedMsg;
-          liveInfosRef.current.white = newLiveInfos;
-        } else {
-          const newLiveInfos = [...liveInfosRef.current.black];
-          newLiveInfos[updatedMsg.info.ply] = updatedMsg;
-          liveInfosRef.current.black = newLiveInfos;
-        }
+        const color = msg.info.color as keyof LiveEngineData;
+        const newLiveInfos = [...liveInfosRef.current[color].liveInfo];
+        newLiveInfos[msg.info.ply] = msg;
+        liveInfosRef.current[color].liveInfo = newLiveInfos;
 
         updateBoard();
 
@@ -209,6 +244,11 @@ function App() {
         setFen(game.current.fen());
         updateBoard(true);
 
+        break;
+
+      case "kibitzer":
+        liveInfosRef.current[msg.color as keyof LiveEngineData].engineInfo =
+          msg.engine;
         break;
 
       case "result":
@@ -273,11 +313,14 @@ function App() {
           if (game.current.getHeaders()["Event"] === "?") return;
           if (game.current.fen() != result.fen) return;
 
-          updateBoard();
+          liveInfosRef.current.green.engineInfo =
+            activeKibitzer.getEngineInfo();
 
-          const newLiveInfos = [...liveInfosRef.current.kibitzer];
+          const newLiveInfos = [...liveInfosRef.current.green.liveInfo];
           newLiveInfos[result.liveInfo.info.ply] = result.liveInfo;
-          liveInfosRef.current.kibitzer = newLiveInfos;
+          liveInfosRef.current.green.liveInfo = newLiveInfos;
+
+          updateBoard();
 
           if (cccEvent.current && cccGame)
             saveLiveInfos(cccEvent.current, cccGame, newLiveInfos);
@@ -301,8 +344,7 @@ function App() {
     kibitzerSettings.enableKibitzer,
   ]);
 
-  const { liveInfoBlack, liveInfoKibitzer, liveInfoWhite } =
-    getCurrentLiveInfos();
+  const liveInfos = getCurrentLiveInfos();
 
   const engines = useMemo(() => {
     if (!cccEvent.current?.tournamentDetails?.engines) return [];
@@ -343,13 +385,6 @@ function App() {
       })
       .sort((a, b) => Number(b.perf) - Number(a.perf));
   }, [cccEvent.current]);
-
-  const white = engines.find(
-    (engine) => engine.name === game.current.getHeaders()["White"]
-  );
-  const black = engines.find(
-    (engine) => engine.name === game.current.getHeaders()["Black"]
-  );
 
   const pgnHeaders = game.current.getHeaders();
   const termination =
@@ -400,21 +435,11 @@ function App() {
         </div>
       </div>
 
-      <EngineWindow
-        white={white}
-        black={black}
-        latestLiveInfoWhite={liveInfoWhite}
-        latestLiveInfoBlack={liveInfoBlack}
-        latestLiveInfoKibitzer={liveInfoKibitzer}
-        clocks={clocks}
-        activeKibitzerInfo={activeKibitzer?.getEngineInfo()}
-        fen={currentFen}
-      />
+      <EngineWindow liveInfos={liveInfos} clocks={clocks} fen={currentFen} />
 
       <div className="boardWindow">
         <EngineMinimal
-          engine={black}
-          info={liveInfoBlack}
+          info={liveInfos.black.liveInfo}
           time={Number(clocks?.btime ?? 0)}
           placeholder={"Black"}
           className="borderRadiusTop"
@@ -428,8 +453,7 @@ function App() {
           controllers={true}
         />
         <EngineMinimal
-          engine={white}
-          info={liveInfoWhite}
+          info={liveInfos.white.liveInfo}
           time={Number(clocks?.wtime ?? 0)}
           placeholder={"White"}
           className="borderRadiusBottom"
@@ -446,7 +470,7 @@ function App() {
 
       <div className="standingsWindow">
         <h4>Standings</h4>
-        {white && black && cccEvent ? (
+        {cccEvent && cccGame ? (
           <>
             <button onClick={() => setPopupState("crosstable")}>
               Show Crosstable
@@ -461,13 +485,13 @@ function App() {
       </div>
 
       <div className="graphWindow">
-        {black && white ? (
+        {cccEvent && cccGame ? (
           <GameGraph
-            black={black}
-            white={white}
-            liveInfosBlack={liveInfosRef.current.black}
-            liveInfosWhite={liveInfosRef.current.white}
-            liveInfosKibitzer={liveInfosRef.current.kibitzer}
+            liveInfosWhite={liveInfosRef.current.white.liveInfo}
+            liveInfosBlack={liveInfosRef.current.black.liveInfo}
+            liveInfosGreen={liveInfosRef.current.green.liveInfo}
+            liveInfosRed={liveInfosRef.current.red.liveInfo}
+            liveInfosBlue={liveInfosRef.current.blue.liveInfo}
             setCurrentMoveNumber={setCurrentMoveNumber}
             currentMoveNumber={currentMoveNumber.current}
           />

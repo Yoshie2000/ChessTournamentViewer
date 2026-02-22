@@ -5,6 +5,7 @@
   border: 1px solid #1a1a1a;
   overflow: hidden;
   height: 100%;
+  width: 100%;
 }
 
 .engineComponent .engineLeftSection {
@@ -16,11 +17,17 @@
   min-width: var(--engine-card-info-width);
 }
 
+.engineComponent .engineLeftSection .engineLogo {
+  margin: 0 !important;
+  margin-left: 0.25rem !important;
+}
+
 .engineComponent .engineLeftSection > hr {
   background: #434343;
   border: none;
   height: 1px;
   margin: 0;
+  flex-shrink: 0;
 }
 
 .engineComponent .engineName {

@@ -7,13 +7,13 @@
   --available-height: calc(
     100vh - 2 * var(--padding) - 2 * var(--gap) - var(--topbar-height)
   );
-  --movelist-width: max(145px, calc(var(--board-size) / 3.5));
+  --movelist-width: max(150px, calc(var(--board-size) / 3.5));
   --board-wrapper-width: calc(var(--board-size) + var(--movelist-width));
   --graph-height: calc(var(--available-height) - var(--board-size));
-  --engine-card-height: calc((var(--available-height) - var(--gap)) / 3);
+  --engine-card-height: min(300px, max(250px, calc((var(--available-height) - var(--gap)) / var(--num-engine-cards))));
   --engine-board-width: var(--engine-card-height);
   --engine-card-movelist-width: max(
-    125px,
+    150px,
     calc(var(--engine-board-width) / 1.9)
   );
   --engine-card-width: calc(

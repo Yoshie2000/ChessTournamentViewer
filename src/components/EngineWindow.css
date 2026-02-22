@@ -9,12 +9,13 @@
 
 .engineWindow {
   display: grid;
-  grid-template-rows: var(--engine-card-height) var(--engine-card-height) var(
-      --engine-card-height
-    );
+  grid-template-rows: repeat(var(--num-engine-cards), var(--engine-card-height));
+  grid-template-columns: 1fr;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 1rem;
   max-width: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 
 @media (max-width: 1150px) {
