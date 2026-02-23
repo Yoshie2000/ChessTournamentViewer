@@ -20,7 +20,7 @@ type MoveListProps = {
   downloadURL?: string;
   currentMoveNumber: number;
   moveNumberOffset?: number;
-  setCurrentMoveNumber: (moveNumber: number) => void;
+  setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   controllers: boolean;
   disagreementMoveIndex?: number;
 };
@@ -106,7 +106,7 @@ const MoveList = memo(
     }, [currentMoveNumber, moves.length]);
 
     function undoAllMoves() {
-      setCurrentMoveNumber(0);
+      setCurrentMoveNumber(() => 0);
       const el = moveListRef.current;
       if (el) {
         requestAnimationFrame(() => {
@@ -115,7 +115,7 @@ const MoveList = memo(
       }
     }
     function redoAllMoves() {
-      setCurrentMoveNumber(-1);
+      setCurrentMoveNumber(() => -1);
       const el = moveListRef.current;
       if (el) {
         requestAnimationFrame(() => {
@@ -125,19 +125,21 @@ const MoveList = memo(
     }
     function undoMove() {
       if (currentMoveNumber === 0) return;
-      if (currentMoveNumber === -1) {
-        setCurrentMoveNumber(moves.length - 1);
-      } else {
-        setCurrentMoveNumber(currentMoveNumber - 1);
-      }
+
+      setCurrentMoveNumber((previous) => {
+        if (previous === 0) return previous;
+        if (previous === -1) return moves.length - 1;
+        return previous - 1;
+      })
     }
     function redoMove() {
       if (currentMoveNumber === -1) return;
-      if (currentMoveNumber + 1 >= moves.length) {
-        setCurrentMoveNumber(-1);
-      } else {
-        setCurrentMoveNumber(currentMoveNumber + 1);
-      }
+
+      setCurrentMoveNumber((previous) => {
+        if (previous === -1) return previous;
+        if (previous + 1 >= moves.length) return -1;
+        return previous + 1;
+      })
     }
 
     function copyFen() {
@@ -219,7 +221,7 @@ const MoveList = memo(
                             active,
                             disagreementMoveIndex === 0
                           )}
-                          onClick={() => setCurrentMoveNumber(1)}
+                          onClick={() => setCurrentMoveNumber(() => 1)}
                         >
                           {moves[0]}
                         </span>

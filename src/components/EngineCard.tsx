@@ -72,9 +72,8 @@ const EngineCard = memo(
       return () => clearTimeout(timeout);
     }, [moves]);
 
-    const setPvMoveNumber = useCallback(
-      (moveNumber: number) => {
-        pvMoveNumber.current = moveNumber;
+    const setPvMoveNumber = useCallback((callback: ((previous: number) => number)) => {
+        pvMoveNumber.current = callback(pvMoveNumber.current);
         updateBoard();
       },
       [moves, fen]

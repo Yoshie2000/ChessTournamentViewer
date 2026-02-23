@@ -12,7 +12,7 @@ type GameGraphProps = {
   liveInfosGreen: LiveInfoEntry[];
   liveInfosRed: LiveInfoEntry[];
   liveInfosBlue: LiveInfoEntry[];
-  setCurrentMoveNumber: (moveNumber: number) => void;
+  setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   currentMoveNumber: number;
 };
 
@@ -198,7 +198,7 @@ export function GameGraph({
               },
             },
             onClick: (_, elements) => {
-              setCurrentMoveNumber(elements[0].index + bookPlies);
+              setCurrentMoveNumber(() => elements[0].index + bookPlies);
             },
             scales: {
               y: {

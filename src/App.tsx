@@ -276,8 +276,8 @@ function App() {
     ws.current.send(message);
   }, []);
 
-  const setCurrentMoveNumber = useCallback((moveNumber: number) => {
-    currentMoveNumber.current = moveNumber;
+  const setCurrentMoveNumber = useCallback((callback: ((previous: number) => number)) => {
+    currentMoveNumber.current = callback(currentMoveNumber.current);
     updateBoard(true);
   }, []);
 
