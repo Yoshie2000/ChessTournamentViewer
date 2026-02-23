@@ -1,24 +1,11 @@
 import { Chess960 } from "./chess.js/chess";
 import type { CCCLiveInfo } from "./types";
 
-export function buildPvGame(fen: string, pv: string, pvMoveNumber: number) {
-  const game = new Chess960();
+export function uciToSan(fen: string, moves: string[]): string[] {
+  const game = new Chess960(fen);
 
-  try {
-    game.load(fen);
-  } catch {
-    return game;
-  }
-
-  if (!pv) return game;
-
-  const moves = pv.trim().split(/\s+/);
-
+  const sanMoves: string[] = [];
   for (let i = 0; i < moves.length; i++) {
-    if (pvMoveNumber !== -1 && i > pvMoveNumber) {
-      break;
-    }
-
     const uci = moves[i];
     if (!uci || uci.length < 4) {
       break;
@@ -30,6 +17,57 @@ export function buildPvGame(fen: string, pv: string, pvMoveNumber: number) {
 
     try {
       const result = game.move({ from, to, promotion: promotion as any });
+      if (!result) break;
+
+      sanMoves.push(result.san);
+    } catch {
+      break;
+    }
+  }
+
+  return sanMoves;
+}
+
+export function sanToUci(fen: string, moves: string[]): string[] {
+  const game = new Chess960(fen);
+
+  const uciMoves: string[] = [];
+  for (let i = 0; i < moves.length; i++) {
+    const san = moves[i];
+    if (!san) {
+      break;
+    }
+
+    try {
+      const result = game.move(san, { strict: false });
+      if (!result) break;
+
+      uciMoves.push(result.lan);
+    } catch {
+      break;
+    }
+  }
+
+  return uciMoves;
+}
+
+export function buildPvGame(
+  fen: string,
+  moves: string[],
+  pvMoveNumber: number
+) {
+  const game = new Chess960(fen);
+
+  for (let i = 0; i < moves.length; i++) {
+    if (pvMoveNumber !== -1 && i > pvMoveNumber) {
+      break;
+    }
+
+    const san = moves[i];
+    if (!san) break;
+
+    try {
+      const result = game.move(san, { strict: false });
 
       if (!result) {
         break;
@@ -49,14 +87,17 @@ export function normalizePv(
   pv: string,
   engineColor: string,
   fen: string
-): string {
+): string[] {
   const turn = fen.split(" ")[1];
   const turnColor = turn === "w" ? "white" : "black";
-  if (engineColor !== turnColor && !["red", "blue", "green"].includes(engineColor)) {
-    const moves = pv.trim().split(/\s+/);
-    return moves.slice(1).join(" ");
+  const moves = pv.trim().split(/\s+/);
+  if (
+    engineColor !== turnColor &&
+    !["red", "blue", "green"].includes(engineColor)
+  ) {
+    return moves.slice(1);
   }
-  return pv;
+  return moves;
 }
 
 export function findPvDisagreementPoint(
@@ -73,12 +114,12 @@ export function findPvDisagreementPoint(
     return -1;
 
   // Normalize both PVs to start from the current position, then compare directly
-  const myMoves = normalizePv(myData.pv, myData.color, fen)
-    .split(/\s+/)
-    .filter(Boolean);
-  const opponentMoves = normalizePv(opponentData.pv, opponentData.color, fen)
-    .split(/\s+/)
-    .filter(Boolean);
+  const myMoves = normalizePv(myData.pv, myData.color, fen).filter(Boolean);
+  const opponentMoves = normalizePv(
+    opponentData.pv,
+    opponentData.color,
+    fen
+  ).filter(Boolean);
 
   for (let i = 0; i < Math.min(myMoves.length, opponentMoves.length); i++) {
     if (myMoves[i] !== opponentMoves[i]) {

@@ -14,7 +14,7 @@ export function getDefaultKibitzerSettings(): EngineSettings {
   const settings = loadSettings();
 
   const loadedSettings = {
-    hash: settings["hash"] ? Number(settings["hash"]) : 1,
+    hash: settings["hash"] ? Number(settings["hash"]) : 128,
     threads: settings["threads"]
       ? Number(settings["threads"])
       : 1,

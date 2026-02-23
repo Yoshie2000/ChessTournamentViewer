@@ -1,6 +1,7 @@
 import type { DrawShape } from "@lichess-org/chessground/draw";
 import { Chess960, type Square } from "./chess.js/chess";
 import type { CCCEngine, CCCLiveInfo } from "./types";
+import { sanToUci, uciToSan } from "./utils";
 
 export type LiveInfoEntry = CCCLiveInfo | undefined;
 type LiveEngineDataObject = {
@@ -61,22 +62,10 @@ export function extractLiveInfoFromTCECComment(
 
   const tmpGame = new Chess960(fenBeforeMove);
   const isWhite = tmpGame.turn() === "w";
-  const pvMoves = data[data.findIndex((s) => s.includes("pv="))]
+  const sanMoves = data[data.findIndex((s) => s.includes("pv="))]
     .replace("pv=", "")
-    .replaceAll('"', "")
-    .split(" ");
-
-  const lanMoves: string[] = [];
-  for (let pvMove of pvMoves) {
-    if (!pvMove) break;
-
-    const move = tmpGame.move(pvMove, { strict: false });
-    if (move) {
-      lanMoves.push(move.lan);
-    } else {
-      break;
-    }
-  }
+    .replaceAll('"', "");
+  const uciMoves = sanToUci(fenBeforeMove, sanMoves.split(" "));
 
   const liveInfo: CCCLiveInfo = {
     type: "liveInfo",
@@ -90,7 +79,8 @@ export function extractLiveInfoFromTCECComment(
       name: "",
       nodes: data[data.findIndex((s) => s.includes("n="))].split("=")[1],
       ply: ply,
-      pv: lanMoves.join(" "),
+      pv: uciMoves.join(" "),
+      pvSan: sanMoves,
       score,
       seldepth: data[data.findIndex((s) => s.includes("sd="))].split("=")[1],
       speed: data[data.findIndex((s) => s.includes("s="))].split("=")[1],
@@ -133,7 +123,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
 
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
-  game.getComments().forEach((value, i) => {
+  game.getComments().forEach((value, i, allValues) => {
     const data = value.comment?.split(", ") ?? [];
 
     if (data[0] === "book") return;
@@ -143,6 +133,9 @@ export function extractLiveInfoFromGame(game: Chess960) {
       if (score.includes("+")) score = score.replace("+", "-");
       else score = score.replace("-", "+");
     }
+
+    const pvString = data[8].replace("pv=", "").replaceAll('"', "");
+    const sanPv = uciToSan(allValues[i - 1].fen ?? "", pvString.split(" ")).join(" ")
 
     const liveInfo: CCCLiveInfo = {
       type: "liveInfo",
@@ -154,7 +147,8 @@ export function extractLiveInfoFromGame(game: Chess960) {
         name: "",
         nodes: data[3].split("=")[1],
         ply: i,
-        pv: data[8].replace("pv=", "").replaceAll('"', ""),
+        pv: pvString,
+        pvSan: sanPv,
         score,
         seldepth: data[4].split("=")[1],
         speed: data[5].split("=")[1],
@@ -181,6 +175,7 @@ export function emptyLiveInfo(): CCCLiveInfo {
       nodes: "0",
       ply: 0,
       pv: "",
+      pvSan: "",
       score: "+0.00",
       seldepth: "0",
       speed: "0",
@@ -203,7 +198,10 @@ export function extractLiveInfoFromInfoString(
   fen: string,
   brush: string = ""
 ) {
-  const data = raw.split(" ");
+  let data = raw.split(" ");
+  if (data.includes("string"))
+    data = data.slice(0, data.indexOf("string") - 1);
+
   const color = fen.includes(" w ") ? "white" : "black";
   const ply = plyFromFen(fen);
 
@@ -236,6 +234,9 @@ export function extractLiveInfoFromInfoString(
         }
       : null;
 
+  const pvMoves = data.slice(data.indexOf("pv") + 1);
+  const sanMoves = uciToSan(fen, pvMoves);
+
   const liveInfo: CCCLiveInfo = {
     type: "liveInfo",
     info: {
@@ -249,7 +250,8 @@ export function extractLiveInfoFromInfoString(
         : "-",
       multipv: data[data.indexOf("multipv") + 1],
       nodes: data[data.indexOf("nodes") + 1],
-      pv: data.slice(data.indexOf("pv") + 1).join(" "),
+      pv: pvMoves.join(" "),
+      pvSan: sanMoves.join(" "),
       seldepth: data[data.indexOf("seldepth") + 1],
       speed: data[data.indexOf("nps") + 1],
       tbhits: data[data.indexOf("tbhits") + 1] ?? "-",

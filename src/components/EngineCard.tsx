@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useRef, useCallback, memo, useEffect } from "react";
 import type { CCCEngine, CCCLiveInfo } from "../types";
 import { EngineLogo } from "./EngineLogo";
 import { Board, type BoardHandle } from "../components/Board";
@@ -6,7 +6,7 @@ import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
 import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
-import { Chess960 } from "../chess.js/chess";
+import { Chess, Chess960 } from "../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
 
 type EngineCardProps = {
@@ -36,154 +36,137 @@ export function formatTime(time: number) {
   return `${minutes}:${seconds}.${hundreds}`;
 }
 
-export function EngineCard({
-  engine,
-  info,
-  time,
-  placeholder,
-  fen,
-  opponentInfo,
-}: EngineCardProps) {
-  const data = info?.info;
-  const loading = !data || !engine || !info || !time;
+const EngineCard = memo(
+  ({ engine, info, time, placeholder, fen, opponentInfo }: EngineCardProps) => {
+    const data = info?.info;
+    const loading = !data || !engine || !info || !time;
 
-  const pvMoveNumber = useRef(-1);
-  const game = useRef(new Chess960());
-  const boardHandle = useRef<BoardHandle>(null);
+    const pvMoveNumber = useRef(-1);
+    const game = useRef(new Chess960());
+    const boardHandle = useRef<BoardHandle>(null);
 
-  function updateBoard() {
-    boardHandle.current?.updateBoard(game.current, pvMoveNumber.current);
-  }
+    function updateBoard() {
+      boardHandle.current?.updateBoard(game.current, pvMoveNumber.current);
+    }
 
-  const setPvMoveNumber = useCallback(
-    (moveNumber: number) => {
-      pvMoveNumber.current = moveNumber;
-      updateBoard();
-    },
-    [game.current.moves().length]
-  );
+    const pvDisagreementPoint = useMemo(() => {
+      return findPvDisagreementPoint(info, opponentInfo, fen);
+    }, [info, opponentInfo, fen]);
 
-  const [pvGame, setPvGame] = useState<ReturnType<typeof buildPvGame> | null>(
-    null
-  );
+    const moves = useMemo(() => {
+      if (loading || !fen || !data?.color) return undefined;
 
-  const lastAppliedRef = useRef<{ fen: string; pv: string } | null>(null);
+      pvMoveNumber.current = -1;
+      return normalizePv(data.pvSan, data.color, fen);
+    }, [loading, data?.pvSan, data?.color, fen]);
 
-  const pvDisagreementPoint = useMemo(() => {
-    return findPvDisagreementPoint(info, opponentInfo, fen);
-  }, [info, opponentInfo, fen]);
+    useEffect(() => {
+      if (!fen || !moves) return;
 
-  useEffect(() => {
-    if (loading || !fen || !data?.color) return;
+      // Throttle the actual update slightly to not destroy react render times
+      const timeout = setTimeout(() => {
+        game.current = buildPvGame(fen, moves, -1);
+        updateBoard();
+      }, 10);
 
-    const normalizedPv = normalizePv(data.pv, data.color, fen);
+      return () => clearTimeout(timeout);
+    }, [moves]);
 
-    if (
-      lastAppliedRef.current &&
-      lastAppliedRef.current.fen === fen &&
-      lastAppliedRef.current.pv === normalizedPv
-    )
-      return;
+    const setPvMoveNumber = useCallback(
+      (moveNumber: number) => {
+        pvMoveNumber.current = moveNumber;
+        updateBoard();
+      },
+      [moves, fen]
+    );
 
-    const game = buildPvGame(fen, normalizedPv, -1);
-    lastAppliedRef.current = { fen, pv: normalizedPv };
+    const fields = loading
+      ? ["Time", "Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map(
+          (label) => [label, null]
+        )
+      : [
+          ["Time", formatTime(time)],
+          ["Depth", `${data.depth} / ${data.seldepth ?? "-"}`],
+          ["Nodes", formatLargeNumber(data.nodes)],
+          ["NPS", formatLargeNumber(data.speed)],
+          ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
+          ["Hashfull", data.hashfull ?? "-"],
+        ];
 
-    pvMoveNumber.current = -1;
-    setPvGame(game);
-  }, [loading, data?.pv, data?.color, fen]);
+    const isMobile = useMediaQuery({ maxWidth: 1400 });
 
-  useEffect(() => {
-    if (!pvGame) return;
+    const safeFen = fen ?? new Chess().fen();
+    const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
-    game.current = pvGame;
-    pvMoveNumber.current = -1;
+    return (
+      <div className={`engineComponent ${loading ? "loading" : ""}`}>
+        <div className="engineLeftSection">
+          <div className="engineInfoHeader">
+            {!engine ? (
+              <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
+            ) : (
+              <EngineLogo engine={engine!} />
+            )}
 
-    updateBoard();
-  }, [pvGame]);
+            <div className="engineName">
+              {!engine ? (placeholder ?? "Loading…") : engine!.name}
+            </div>
+          </div>
 
-  const fields = loading
-    ? ["Time", "Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map((label) => [
-        label,
-        null,
-      ])
-    : [
-        ["Time", formatTime(time)],
-        ["Depth", `${data.depth} / ${data.seldepth ?? "-"}`],
-        ["Nodes", formatLargeNumber(data.nodes)],
-        ["NPS", formatLargeNumber(data.speed)],
-        ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
-        ["Hashfull", data.hashfull ?? "-"],
-      ];
+          <hr />
 
-  const isMobile = useMediaQuery({ maxWidth: 1400 });
+          <div className="engineInfoTable">
+            {fields.map(([label, value]) => (
+              <div className="engineField" key={label}>
+                {loading ? (
+                  <SkeletonText width="100%" />
+                ) : (
+                  <>
+                    <div className="key">{label}</div>
+                    <div className="value">{value}</div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
 
-  const moveNumberOffset = new Chess960(fen).moveNumber() - 1;
+          <hr />
 
-  return (
-    <div className={`engineComponent ${loading ? "loading" : ""}`}>
-      <div className="engineLeftSection">
-        <div className="engineInfoHeader">
-          {!engine ? (
-            <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
-          ) : (
-            <EngineLogo engine={engine!} />
-          )}
-
-          <div className="engineName">
-            {!engine ? (placeholder ?? "Loading…") : engine!.name}
+          <div className="engineInfoEval">
+            {loading ? (
+              <SkeletonText width="100%" />
+            ) : (
+              <div className="engineEval">{data.score}</div>
+            )}
           </div>
         </div>
 
-        <hr />
-
-        <div className="engineInfoTable">
-          {fields.map(([label, value]) => (
-            <div className="engineField" key={label}>
-              {loading ? (
-                <SkeletonText width="100%" />
-              ) : (
-                <>
-                  <div className="key">{label}</div>
-                  <div className="value">{value}</div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <hr />
-
-        <div className="engineInfoEval">
-          {loading ? (
-            <SkeletonText width="100%" />
-          ) : (
-            <div className="engineEval">{data.score}</div>
-          )}
-        </div>
-      </div>
-
-      {loading && !isMobile ? (
-        <SkeletonBlock
-          width="100%"
-          height="calc(100% - 2 * var(--padding))"
-          style={{ margin: "var(--padding) var(--padding) var(--padding) 0" }}
-        />
-      ) : pvGame && !isMobile ? (
-        <div className="engineRightSection">
-          <Board ref={boardHandle} />
-
-          <MoveList
-            game={pvGame}
-            currentMoveNumber={pvMoveNumber.current}
-            setCurrentMoveNumber={setPvMoveNumber}
-            controllers={false}
-            disagreementMoveIndex={
-              pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
-            }
-            moveNumberOffset={moveNumberOffset}
+        {loading && !isMobile ? (
+          <SkeletonBlock
+            width="100%"
+            height="calc(100% - 2 * var(--padding))"
+            style={{ margin: "var(--padding) var(--padding) var(--padding) 0" }}
           />
-        </div>
-      ) : null}
-    </div>
-  );
-}
+        ) : moves && !isMobile ? (
+          <div className="engineRightSection">
+            <Board ref={boardHandle} animated={false} />
+
+            <MoveList
+              startFen={safeFen}
+              moves={moves}
+              currentMoveNumber={pvMoveNumber.current}
+              setCurrentMoveNumber={setPvMoveNumber}
+              controllers={false}
+              disagreementMoveIndex={
+                pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
+              }
+              moveNumberOffset={moveNumberOffset}
+            />
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+);
+
+export { EngineCard };

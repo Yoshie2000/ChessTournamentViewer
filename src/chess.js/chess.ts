@@ -866,7 +866,7 @@ export class Chess {
 
   fen({
     forceEnpassantSquare = true,
-  }: { forceEnpassantSquare?: boolean } = {}) {
+  }: { forceEnpassantSquare?: boolean } = { forceEnpassantSquare: true }) {
     let empty = 0
     let fen = ''
 
@@ -1811,6 +1811,18 @@ export class Chess {
     if (idx < 0 || idx === this.length())
       return this.turn();
     return this._history[idx].turn;
+  }
+
+  public moveAt(idx: number) {
+    if (idx !== -1)
+      idx -= 1;
+
+    const move = this._history.at(idx)?.move;
+    if (!move) return undefined;
+    return {
+      from: algebraic(move.from),
+      to: algebraic(move.to),
+    };
   }
 
   public length() {
@@ -3306,7 +3318,7 @@ export class Chess960 extends Chess {
   /**
    * Override fen() to generate X-FEN notation
    */
-  override fen(options: { forceEnpassantSquare?: boolean; useXFEN?: boolean } = {}): string {
+  override fen(options: { forceEnpassantSquare?: boolean; useXFEN?: boolean } = { forceEnpassantSquare: true }): string {
     const standardFen = super.fen(options)
     
     // If useXFEN is explicitly false, return standard FEN

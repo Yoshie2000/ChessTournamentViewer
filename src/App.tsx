@@ -45,6 +45,7 @@ import { TCECSocket } from "./TCECWebsocket";
 import { Board, type BoardHandle } from "./components/Board";
 import { MoveList } from "./components/MoveList";
 import { loadLiveInfos, saveLiveInfos } from "./LocalStorage";
+import { uciToSan } from "./utils";
 
 const CLOCK_UPDATE_MS = 100;
 
@@ -69,6 +70,7 @@ function App() {
 
   const kibitzer = useRef<EngineWorker[]>(null);
   const [fen, setFen] = useState(game.current.fen());
+  const [moves, setMoves] = useState<string[]>([]);
 
   const [popupState, setPopupState] = useState<string>();
   const [cccEventList, setCccEventList] = useState<CCCEventsListUpdate>();
@@ -214,17 +216,24 @@ function App() {
 
         setCccGame(msg);
         setFen(game.current.fen());
+        setMoves(game.current.history());
 
         break;
 
       case "liveInfo":
+        if (ws.current instanceof CCCWebSocket) {
+          msg.info.pvSan = uciToSan(
+            game.current.fen(),
+            msg.info.pv.split(" ")
+          ).join(" ");
+        }
+
         const color = msg.info.color as keyof LiveEngineData;
         const newLiveInfos = [...liveInfosRef.current[color].liveInfo];
         newLiveInfos[msg.info.ply] = msg;
         liveInfosRef.current[color].liveInfo = newLiveInfos;
 
         updateBoard();
-
         break;
 
       case "eventsListUpdate":
@@ -242,6 +251,7 @@ function App() {
 
         game.current.move({ from, to, promotion: promo as any });
         setFen(game.current.fen());
+        setMoves(game.current.history());
         updateBoard(true);
 
         break;
@@ -266,13 +276,10 @@ function App() {
     ws.current.send(message);
   }, []);
 
-  const setCurrentMoveNumber = useCallback(
-    (moveNumber: number) => {
-      currentMoveNumber.current = moveNumber;
-      updateBoard();
-    },
-    [game.current.moves().length]
-  ); // required for MoveList to re-render correctly
+  const setCurrentMoveNumber = useCallback((moveNumber: number) => {
+    currentMoveNumber.current = moveNumber;
+    updateBoard(true);
+  }, []);
 
   useEffect(() => {
     ws.current.disconnect();
@@ -444,12 +451,17 @@ function App() {
           placeholder={"Black"}
           className="borderRadiusTop"
         />
-        <Board id="main-board" ref={boardHandle} />
+        <Board id="main-board" ref={boardHandle} animated={true} />
         <MoveList
-          game={game.current}
+          startFen={game.current.getHeaders()["FEN"]}
+          moves={moves}
           currentMoveNumber={currentMoveNumber.current}
           setCurrentMoveNumber={setCurrentMoveNumber}
-          cccGameId={cccGame?.gameDetails.gameNr}
+          downloadURL={
+            termination && result && result !== "*"
+              ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${cccGame?.gameDetails.gameNr}.log`
+              : undefined
+          }
           controllers={true}
         />
         <EngineMinimal

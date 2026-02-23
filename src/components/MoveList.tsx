@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import {
   MdKeyboardArrowLeft,
   MdKeyboardArrowRight,
@@ -6,7 +6,7 @@ import {
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
 import "./MoveList.css";
-import { Chess, Chess960 } from "../chess.js/chess";
+import { Chess960 } from "../chess.js/chess";
 import {
   LuClipboard,
   LuClipboardList,
@@ -15,8 +15,9 @@ import {
 } from "react-icons/lu";
 
 type MoveListProps = {
-  game: Chess960;
-  cccGameId?: string;
+  startFen: string;
+  moves: string[];
+  downloadURL?: string;
   currentMoveNumber: number;
   moveNumberOffset?: number;
   setCurrentMoveNumber: (moveNumber: number) => void;
@@ -24,21 +25,18 @@ type MoveListProps = {
   disagreementMoveIndex?: number;
 };
 
-export function getGameAtMoveNumber(game: Chess960, moveNumber: number) {
+export function getGameAtMoveNumber(
+  fen: string,
+  moves: string[],
+  moveNumber: number
+) {
+  const game = new Chess960(fen);
   if (moveNumber === -1) return game;
 
-  const history = game.history({ verbose: true });
-  const headers = game.getHeaders();
-  const gameCopy = new Chess960(headers["FEN"] ?? new Chess().fen());
-
-  for (const header of Object.keys(headers)) {
-    gameCopy.setHeader(header, headers[header]);
+  for (let i = 0; i < moveNumber && i < moves.length; i++) {
+    game.move(moves[i], { strict: false });
   }
-  for (let i = 0; i < moveNumber && i < history.length; i++) {
-    gameCopy.move(history[i].san, { strict: false });
-  }
-
-  return gameCopy;
+  return game;
 }
 
 function moveClass(active: boolean, disagreement: boolean) {
@@ -60,18 +58,17 @@ async function copyToClipboard(value: string) {
 
 const MoveList = memo(
   ({
-    game,
+    startFen,
+    moves,
     currentMoveNumber,
     setCurrentMoveNumber,
-    cccGameId,
+    downloadURL,
     controllers,
     disagreementMoveIndex,
     moveNumberOffset = 0,
   }: MoveListProps) => {
-    const moves = useMemo(() => game.history(), [game.length()]);
     const moveListRef = useRef<HTMLDivElement>(null);
 
-    const startFen = game.getHeaders()["FEN"];
     const blackMovesFirst = startFen?.split(" ")[1] === "b";
     const pairStart = blackMovesFirst ? 1 : 0;
 
@@ -144,20 +141,55 @@ const MoveList = memo(
     }
 
     function copyFen() {
-      copyToClipboard(getGameAtMoveNumber(game, currentMoveNumber).fen());
+      copyToClipboard(
+        getGameAtMoveNumber(startFen, moves, currentMoveNumber).fen()
+      );
     }
     function copyPgn() {
-      copyToClipboard(getGameAtMoveNumber(game, currentMoveNumber).pgn());
+      copyToClipboard(
+        getGameAtMoveNumber(startFen, moves, currentMoveNumber).pgn()
+      );
     }
     function openChessDB() {
       const url =
         "https://www.chessdb.cn/queryc_en/?" +
-        getGameAtMoveNumber(game, currentMoveNumber).fen().replaceAll(" ", "_");
+        getGameAtMoveNumber(startFen, moves, currentMoveNumber)
+          .fen()
+          .replaceAll(" ", "_");
       window.open(url, "_blank");
     }
     function downloadLogs() {
-      const url = `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${cccGameId}.log`;
-      window.open(url, "_blank");
+      window.open(downloadURL, "_blank");
+    }
+
+    const rows = [];
+    for (let i = pairStart; i < moves.length; i += 2) {
+      const whiteMove = moves[i];
+      const blackMove = moves[i + 1];
+      const moveNumber =
+        moveNumberOffset + (blackMovesFirst ? (i + 1) / 2 + 1 : i / 2 + 1);
+      const isLatest = currentMoveNumber === -1;
+
+      const whiteActive =
+        currentMoveNumber === i + 1 || (isLatest && i === moves.length - 1);
+      const blackActive =
+        currentMoveNumber === i + 2 || (isLatest && i + 1 === moves.length - 1);
+
+      rows.push(
+        <MoveRow
+          key={i}
+          moveIndex={i}
+          moveNumber={moveNumber}
+          whiteMove={whiteMove}
+          blackMove={blackMove}
+          whiteActive={whiteActive}
+          blackActive={blackActive}
+          rowActive={whiteActive}
+          disagreementWhite={disagreementMoveIndex === i}
+          disagreementBlack={disagreementMoveIndex === i + 1}
+          setCurrentMoveNumber={setCurrentMoveNumber}
+        />
+      );
     }
 
     return (
@@ -196,59 +228,7 @@ const MoveList = memo(
                   );
                 })()}
 
-              {moves.map((_, i) => {
-                if (i < pairStart || (i - pairStart) % 2 !== 0) return null;
-
-                const whiteMove = moves[i];
-                const blackMove = moves[i + 1];
-                const moveNumber =
-                  moveNumberOffset +
-                  (blackMovesFirst ? (i + 1) / 2 + 1 : i / 2 + 1);
-                const isLatest = currentMoveNumber === -1;
-
-                const whiteActive =
-                  currentMoveNumber === i + 1 ||
-                  (isLatest && i === moves.length - 1);
-                const blackActive =
-                  currentMoveNumber === i + 2 ||
-                  (isLatest && i + 1 === moves.length - 1);
-                const rowActive = whiteActive;
-
-                return (
-                  <tr key={i}>
-                    <th
-                      className={
-                        "move right" + (rowActive ? " currentMove" : "")
-                      }
-                      onClick={() => setCurrentMoveNumber(i + 1)}
-                    >
-                      {moveNumber}.
-                    </th>
-                    <td
-                      className={moveClass(
-                        whiteActive,
-                        disagreementMoveIndex === i
-                      )}
-                      onClick={() => setCurrentMoveNumber(i + 1)}
-                    >
-                      {whiteMove}
-                    </td>
-                    <td>
-                      {blackMove && (
-                        <span
-                          className={moveClass(
-                            blackActive,
-                            disagreementMoveIndex === i + 1
-                          )}
-                          onClick={() => setCurrentMoveNumber(i + 2)}
-                        >
-                          {blackMove}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {rows}
             </tbody>
           </table>
         </div>
@@ -282,7 +262,7 @@ const MoveList = memo(
               <button onClick={openChessDB} style={{ fontSize: "1rem" }}>
                 <LuDatabase />
               </button>
-              {game.getHeaders()["Termination"] && (
+              {downloadURL && (
                 <button onClick={downloadLogs} style={{ fontSize: "1rem" }}>
                   <LuDownload />
                 </button>
@@ -291,6 +271,48 @@ const MoveList = memo(
           </div>
         )}
       </div>
+    );
+  }
+);
+
+const MoveRow = memo(
+  ({
+    moveIndex,
+    moveNumber,
+    whiteMove,
+    blackMove,
+    whiteActive,
+    blackActive,
+    rowActive,
+    disagreementWhite,
+    disagreementBlack,
+    setCurrentMoveNumber,
+  }: any) => {
+    return (
+      <tr>
+        <th
+          className={"move right" + (rowActive ? " currentMove" : "")}
+          onClick={() => setCurrentMoveNumber(moveIndex + 1)}
+        >
+          {moveNumber}.
+        </th>
+        <td
+          className={moveClass(whiteActive, disagreementWhite)}
+          onClick={() => setCurrentMoveNumber(moveIndex + 1)}
+        >
+          {whiteMove}
+        </td>
+        <td>
+          {blackMove && (
+            <span
+              className={moveClass(blackActive, disagreementBlack)}
+              onClick={() => setCurrentMoveNumber(moveIndex + 2)}
+            >
+              {blackMove}
+            </span>
+          )}
+        </td>
+      </tr>
     );
   }
 );

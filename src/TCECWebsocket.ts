@@ -268,6 +268,7 @@ export class TCECSocket implements TournamentWebSocket {
         name: "",
         nodes: String(json.nodes),
         pv: lanMoves.join(" "),
+        pvSan: pvMoves.join(" "),
         score: String(json.eval),
         seldepth: json.depth.split("/")[1],
         speed: String(
