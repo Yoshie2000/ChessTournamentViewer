@@ -25,10 +25,6 @@
   width: var(--board-size) !important;
 }
 
-.boardWindow .board cg-board {
-  background-color: #8ca2ad;
-}
-
 .cg-wrap coords {
   display: none;
 }

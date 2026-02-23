@@ -101,28 +101,30 @@ export function normalizePv(
 }
 
 export function findPvDisagreementPoint(
-  myInfo: CCCLiveInfo | undefined,
-  opponentInfo: CCCLiveInfo | undefined,
-  fen: string | undefined
+  fen: string | undefined,
+  ...infos: (CCCLiveInfo | undefined)[]
 ): number {
-  if (!myInfo?.info || !opponentInfo?.info || !fen) return -1;
+  if (!fen || infos.length < 2) return -1;
 
-  const myData = myInfo.info;
-  const opponentData = opponentInfo.info;
+  // Normalize all PVs to start from the current position, then compare directly
+  const allMoves = infos
+    .map(item => {
+      const data = item?.info;
+      if (!data?.pv || !data?.color) return null;
+      return normalizePv(data.pv, data.color, fen).filter(Boolean);
+    })
+    .filter((moves) => moves !== null);
 
-  if (!myData.pv || !opponentData.pv || !myData.color || !opponentData.color)
-    return -1;
+  if (allMoves.length < 2) return -1;
 
-  // Normalize both PVs to start from the current position, then compare directly
-  const myMoves = normalizePv(myData.pv, myData.color, fen).filter(Boolean);
-  const opponentMoves = normalizePv(
-    opponentData.pv,
-    opponentData.color,
-    fen
-  ).filter(Boolean);
+  const minLength = Math.min(...allMoves.map(m => m.length));
 
-  for (let i = 0; i < Math.min(myMoves.length, opponentMoves.length); i++) {
-    if (myMoves[i] !== opponentMoves[i]) {
+  for (let i = 0; i < minLength; i++) {
+    const firstEngineMove = allMoves[0][i];
+    
+    const allAgree = allMoves.every(moveList => moveList[i] === firstEngineMove);
+
+    if (!allAgree) {
       return i;
     }
   }

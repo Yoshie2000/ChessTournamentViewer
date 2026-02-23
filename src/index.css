@@ -12,6 +12,11 @@ body {
   color: #fafafa;
 }
 
+cg-board {
+  background-color: #8ca2ad !important;
+  aspect-ratio: 1;
+}
+
 h4 {
   margin: 0;
   font-size: 1rem;

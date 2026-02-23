@@ -1,30 +1,43 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { EngineCard } from "./EngineCard";
 import { EngineVsEngine } from "./EngineVsEngine";
 import "./EngineWindow.css";
 import type { LiveEngineDataEntry } from "../LiveInfo";
+import { KibitzerCard } from "./KibitzerCard";
 
 type EngineWindowProps = {
   liveInfos: LiveEngineDataEntry;
   clocks?: { wtime?: string; btime?: string };
-  fen: string
+  fen: string;
 };
 
-export function EngineWindow({liveInfos, clocks, fen}: EngineWindowProps) {
+export function EngineWindow({ liveInfos, clocks, fen }: EngineWindowProps) {
   const isMobile = useMediaQuery({ maxWidth: 1400 });
   const [activeTab, setActiveTab] = useState<"engines" | "kibitzer">("engines");
 
-  const [wtime, btime, ktimes] = useMemo(() => {
+  const activeKibitzers = (["green", "blue", "red"] as const).filter(
+    (color) => !!liveInfos[color].liveInfo
+  );
+
+  const [wtime, btime] = useMemo(() => {
     const wtime = Number(clocks?.wtime ?? 0);
     const btime = Number(clocks?.btime ?? 0);
-    const ktimes = {
-      red: Number(liveInfos.red.liveInfo?.info?.time ?? 1) || 1,
-      green: Number(liveInfos.green.liveInfo?.info?.time ?? 1) || 1,
-      blue: Number(liveInfos.blue.liveInfo?.info?.time ?? 1) || 1,
-    }
-    return [wtime, btime, ktimes];
-  }, [clocks?.wtime, clocks?.btime, liveInfos.red.liveInfo?.info.time, liveInfos.green.liveInfo?.info.time, liveInfos.blue.liveInfo?.info.time]);
+    return [wtime, btime];
+  }, [clocks?.wtime, clocks?.btime]);
+
+  const kibitzerCard =
+    activeKibitzers.length === 0 ? null : activeKibitzers.length === 1 ? (
+      <EngineCard
+        engine={liveInfos.green.engineInfo}
+        info={liveInfos.green.liveInfo}
+        time={1}
+        placeholder="Kibitzer"
+        fen={fen}
+      />
+    ) : (
+      <KibitzerCard fen={fen} liveInfos={liveInfos} />
+    );
 
   if (isMobile) {
     return (
@@ -55,23 +68,11 @@ export function EngineWindow({liveInfos, clocks, fen}: EngineWindowProps) {
             btime={btime}
           />
         ) : (
-          <EngineCard
-            engine={liveInfos.green.engineInfo}
-            info={liveInfos.green.liveInfo}
-            time={ktimes["green"]}
-            placeholder="Kibitzer"
-            fen={fen}
-          />
+          kibitzerCard
         )}
       </div>
     );
   }
-
-  const activeKibitzers = (["green", "blue", "red"] as const).filter((color) => !!liveInfos[color].liveInfo);
-
-  useEffect(() => {
-    document.documentElement.style.setProperty("--num-engine-cards", String(2 + activeKibitzers.length));
-  }, [activeKibitzers.length])
 
   return (
     <div className="engineWindow">
@@ -91,16 +92,7 @@ export function EngineWindow({liveInfos, clocks, fen}: EngineWindowProps) {
         placeholder="White"
         fen={fen}
       />
-      {activeKibitzers.map((color) => (
-        <EngineCard
-          engine={liveInfos[color].engineInfo}
-          info={liveInfos[color].liveInfo}
-          time={ktimes[color]}
-          placeholder="Kibitzer"
-          fen={fen}
-          key={color}
-        />
-      ))}
+      {kibitzerCard}
     </div>
   );
 }

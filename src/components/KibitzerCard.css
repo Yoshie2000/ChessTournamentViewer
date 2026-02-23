@@ -1,0 +1,80 @@
+.kibitzerCard {
+  display: grid;
+  grid-template-rows: 45px 1fr;
+  border-radius: 8px;
+  background: #343434;
+  border: 1px solid #1a1a1a;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  padding: 0 var(--padding);
+  padding-top: calc(0.5 * var(--padding));
+
+  --kibitzer-board-size: min(200px, calc((var(--engine-card-width) - var(--gap) * var(--num-kibitzer-cards)) / var(--num-kibitzer-cards)));
+  --kibitzer-movelist-height: calc(
+    var(--graph-height) - var(--kibitzer-board-size) - 45px - 45px
+  );
+}
+
+.kibitzerCard table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  text-align: center;
+}
+
+.kibitzerCard .borderTop {
+  border-top: 1px solid #434343;
+}
+
+.kibitzerCard .engineHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(0.5 * var(--gap));
+  margin-bottom: calc(0.5 * var(--gap));
+}
+
+.kibitzerCard .engineFieldKey {
+  color: #a1a1a1;
+  font-size: 0.9rem;
+  width: 50px;
+  text-align: left;
+}
+
+.kibitzerCard .engineFieldValue {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.kibitzerCard .engineEvaluation {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.kibitzerCard .engineBoard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kibitzerCard .engineBoard .board {
+  width: var(--kibitzer-board-size);
+  height: var(--kibitzer-board-size);
+  aspect-ratio: 1 / 1;
+}
+
+.kibitzerCard .engineBoard .board > * {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kibitzerCard td:has(.engineBoard) {
+  vertical-align: top;
+}
+
+.kibitzerCard .movesWindow {
+  height: var(--kibitzer-movelist-height);
+}

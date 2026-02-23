@@ -102,7 +102,7 @@
 }
 
 .moveList .disagreementMove {
-  color: #fff;
+  color: #e53935;
 }
 
 @media (max-width: 768px) {

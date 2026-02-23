@@ -16,6 +16,7 @@ type EngineCardProps = {
   placeholder?: string;
   fen: string | undefined;
   opponentInfo?: CCCLiveInfo;
+  kibitzerLayout?: boolean;
 };
 
 export function formatLargeNumber(value?: string) {
@@ -37,7 +38,7 @@ export function formatTime(time: number) {
 }
 
 const EngineCard = memo(
-  ({ engine, info, time, placeholder, fen, opponentInfo }: EngineCardProps) => {
+  ({ engine, info, time, placeholder, fen, opponentInfo, kibitzerLayout }: EngineCardProps) => {
     const data = info?.info;
     const loading = !data || !engine || !info || !time;
 
@@ -50,7 +51,7 @@ const EngineCard = memo(
     }
 
     const pvDisagreementPoint = useMemo(() => {
-      return findPvDisagreementPoint(info, opponentInfo, fen);
+      return findPvDisagreementPoint(fen, info, opponentInfo);
     }, [info, opponentInfo, fen]);
 
     const moves = useMemo(() => {
@@ -98,7 +99,7 @@ const EngineCard = memo(
     const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
     return (
-      <div className={`engineComponent ${loading ? "loading" : ""}`}>
+      <div className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}>
         <div className="engineLeftSection">
           <div className="engineInfoHeader">
             {!engine ? (
@@ -116,7 +117,7 @@ const EngineCard = memo(
 
           <div className="engineInfoTable">
             {fields.map(([label, value]) => (
-              <div className="engineField" key={label}>
+              <div className={"engineField " + label?.replace(" ", "").toLowerCase()} key={label}>
                 {loading ? (
                   <SkeletonText width="100%" />
                 ) : (

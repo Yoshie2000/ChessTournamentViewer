@@ -6,6 +6,7 @@
   overflow: hidden;
   height: 100%;
   width: 100%;
+  max-height: var(--engine-card-height);
 }
 
 .engineComponent .engineLeftSection {
@@ -15,11 +16,6 @@
   padding: 0.25rem 1rem 0.125rem 0.5rem;
   width: var(--engine-card-info-width);
   min-width: var(--engine-card-info-width);
-}
-
-.engineComponent .engineLeftSection .engineLogo {
-  margin: 0 !important;
-  margin-left: 0.25rem !important;
 }
 
 .engineComponent .engineLeftSection > hr {
@@ -95,11 +91,6 @@
 .engineComponent .board cg-container {
   height: calc(var(--engine-board-width)) !important;
   width: calc(var(--engine-board-width)) !important;
-}
-
-.engineComponent .board cg-board {
-  background-color: #8ca2ad;
-  aspect-ratio: 1;
 }
 
 .engineComponent .movesWindow {

@@ -449,6 +449,7 @@ function App() {
           info={liveInfos.black.liveInfo}
           time={Number(clocks?.btime ?? 0)}
           placeholder={"Black"}
+          engine={liveInfos.black.engineInfo}
           className="borderRadiusTop"
         />
         <Board id="main-board" ref={boardHandle} animated={true} />
@@ -468,6 +469,7 @@ function App() {
           info={liveInfos.white.liveInfo}
           time={Number(clocks?.wtime ?? 0)}
           placeholder={"White"}
+          engine={liveInfos.white.engineInfo}
           className="borderRadiusBottom"
         />
 
