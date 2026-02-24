@@ -276,10 +276,13 @@ function App() {
     ws.current.send(message);
   }, []);
 
-  const setCurrentMoveNumber = useCallback((callback: ((previous: number) => number)) => {
-    currentMoveNumber.current = callback(currentMoveNumber.current);
-    updateBoard(true);
-  }, []);
+  const setCurrentMoveNumber = useCallback(
+    (callback: (previous: number) => number) => {
+      currentMoveNumber.current = callback(currentMoveNumber.current);
+      updateBoard(true);
+    },
+    []
+  );
 
   useEffect(() => {
     ws.current.disconnect();
@@ -452,7 +455,18 @@ function App() {
           engine={liveInfos.black.engineInfo}
           className="borderRadiusTop"
         />
-        <Board id="main-board" ref={boardHandle} animated={true} />
+        <div className="boardWrapper">
+          <Board id="main-board" ref={boardHandle} animated={true} />
+
+          {termination &&
+            result &&
+            result !== "*" &&
+            (currentMoveNumber.current === -1 ||
+              currentMoveNumber.current === game.current.length()) && (
+              <GameResultOverlay result={result} termination={termination} />
+            )}
+        </div>
+
         <MoveList
           startFen={game.current.getHeaders()["FEN"]}
           moves={moves}
@@ -472,14 +486,6 @@ function App() {
           engine={liveInfos.white.engineInfo}
           className="borderRadiusBottom"
         />
-
-        {termination &&
-          result &&
-          result !== "*" &&
-          (currentMoveNumber.current === -1 ||
-            currentMoveNumber.current === game.current.length()) && (
-            <GameResultOverlay result={result} termination={termination} />
-          )}
       </div>
 
       <div className="standingsWindow">

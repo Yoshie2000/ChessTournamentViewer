@@ -101,6 +101,10 @@
   overflow: hidden;
 }
 
+.boardWrapper {
+  position: relative;
+}
+
 .boardWindow {
   padding: 0;
   overflow: unset;
