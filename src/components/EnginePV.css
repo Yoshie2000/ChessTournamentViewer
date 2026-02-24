@@ -1,0 +1,24 @@
+.enginePV {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.enginePV .board {
+  width: var(--kibitzer-board-size);
+  height: var(--kibitzer-board-size);
+  aspect-ratio: 1 / 1;
+}
+
+.enginePV .movesWindow {
+  width: var(--kibitzer-board-size);
+}
+
+.enginePV .movesWindow table {
+  min-width: unset;
+}
+
+.enginePV .board > * {
+  border-radius: 4px;
+  overflow: hidden;
+}

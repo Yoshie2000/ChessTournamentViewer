@@ -1,0 +1,33 @@
+.engineStats .borderTop {
+  border-top: 1px solid #434343;
+}
+
+.engineStats .borderTop .engineFieldKey {
+    padding-top: 0.5rem;
+}
+
+.engineStats .borderBottom {
+  border-bottom: 1px solid #434343;
+}
+
+.engineStats .borderBottom .engineFieldKey {
+  padding-bottom: 0.5rem;;
+}
+
+.engineStats .engineFieldKey {
+  color: #a1a1a1;
+  font-size: 0.9rem;
+  width: 30px;
+  text-align: left;
+}
+
+.engineStats .engineFieldValue {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.engineStats .engineEvaluation {
+  font-weight: bold;
+  font-size: 1.2rem;
+}

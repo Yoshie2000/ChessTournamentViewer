@@ -1,6 +1,6 @@
-.kibitzerCard {
+.engineWindowMobile {
   display: grid;
-  grid-template-rows: 45px 1fr;
+  grid-template-rows: 45px 300px;
   border-radius: 8px;
   background: #343434;
   border: 1px solid #1a1a1a;
@@ -11,7 +11,7 @@
   padding-top: calc(0.5 * var(--padding));
 
   --kibitzer-board-size: min(
-    180px,
+    160px,
     calc(
       (var(--engine-card-width) - var(--gap) * var(--num-kibitzer-cards)) /
         var(--num-kibitzer-cards)
@@ -25,19 +25,15 @@
   overflow-x: auto;
 }
 
-.kibitzerCard table {
+.engineWindowMobile table {
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed;
   text-align: center;
-  min-width: 325px;
+  min-width: 380px;
 }
 
-.kibitzerCard .borderTop {
-  border-top: 1px solid #434343;
-}
-
-.kibitzerCard .engineHeader {
+.engineWindowMobile .engineHeader {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -46,105 +42,84 @@
   margin-bottom: calc(0.5 * var(--gap));
 }
 
-.kibitzerCard .engineFieldKey {
-  color: #a1a1a1;
-  font-size: 0.9rem;
-  width: 50px;
-  text-align: left;
-}
-
-.kibitzerCard .engineFieldValue {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.9rem;
-}
-
-.kibitzerCard .engineEvaluation {
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.kibitzerCard .engineBoard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.kibitzerCard .engineBoard .board {
-  width: var(--kibitzer-board-size);
-  height: var(--kibitzer-board-size);
-  aspect-ratio: 1 / 1;
-}
-
-.kibitzerCard .engineBoard .movesWindow {
-  width: var(--kibitzer-board-size);
-}
-
-.kibitzerCard .engineBoard .movesWindow table {
-  min-width: unset;
-}
-
-.kibitzerCard .engineBoard .board > * {
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.kibitzerCard td:has(.engineBoard) {
+.engineWindowMobile td:has(.enginePV) {
   vertical-align: top;
 }
 
-.kibitzerCard .movesWindow {
+.engineWindowMobile .movesWindow {
   height: var(--kibitzer-movelist-height);
 }
 
 @container (height < 300px) {
-  .kibitzerCard .engineBoard {
+  .engineWindowMobile .enginePV {
     --kibitzer-board-size: 100px;
     --kibitzer-movelist-height: calc(
       var(--graph-height) - var(--kibitzer-board-size) - 45px - 45px
     );
   }
 
-  .kibitzerCard .engineLogo {
+  .engineWindowMobile .engineLogo {
     display: none;
   }
 }
 
 @container (height < 250px) {
-  .kibitzerCard .engineBoard {
+  .engineWindowMobile .enginePV {
     --kibitzer-movelist-height: calc(var(--graph-height) - 45px - 45px);
   }
-  .kibitzerCard .engineBoard .board {
+  .engineWindowMobile .enginePV .board {
     display: none;
   }
 }
 
 @media (max-width: 1400px) {
-  .kibitzerCard {
+  .engineWindowMobile {
     border: none;
     padding-top: 0;
     padding-bottom: 0;
-    height: calc(100% - 44px);
     width: 100%;
 
     --kibitzer-board-size: min(
       180px,
       calc(
-        ((100vw - var(--board-wrapper-width) - 3 * var(--gap)) - 2 * var(--gap) * var(--num-kibitzer-cards)) /
+        (
+            (100vw - var(--board-wrapper-width) - 3 * var(--gap)) - 2 *
+              var(--gap) * var(--num-kibitzer-cards)
+          ) /
           var(--num-kibitzer-cards)
       )
     );
     --kibitzer-movelist-height: calc(
-      var(--board-size) - var(--kibitzer-board-size) - 45px - 100px
+      var(--board-size) - var(--kibitzer-board-size) - 45px - 100px - 60px
     );
   }
 
-  .kibitzerCard .moveList .move.right {
+  .engineWindowMobile .moveList .move.right {
     margin: 0 !important;
   }
 
-  .kibitzerCard .movesWindow {
+  .engineWindowMobile .movesWindow {
     padding-left: 0 !important;
     padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 775px) {
+  .engineWindowMobile:has(.board) {
+    height: 400px;
+    --kibitzer-board-size: 110px;
+    --kibitzer-movelist-height: 180px;
+  }
+
+  .engineWindowMobile:has(.board) table {
+    margin-top: var(--padding);
+  }
+
+  .engineWindowMobile:has(.board) .engineLogo {
+    display: none;
+  }
+
+  .engineWindowMobile .moveTable {
+    text-align: left;
   }
 }
