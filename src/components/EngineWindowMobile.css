@@ -1,0 +1,125 @@
+.engineWindowMobile {
+  display: grid;
+  grid-template-rows: 45px 300px;
+  border-radius: 8px;
+  background: #343434;
+  border: 1px solid #1a1a1a;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  padding: 0 var(--padding);
+  padding-top: calc(0.5 * var(--padding));
+
+  --kibitzer-board-size: min(
+    160px,
+    calc(
+      (var(--engine-card-width) - var(--gap) * var(--num-kibitzer-cards)) /
+        var(--num-kibitzer-cards)
+    )
+  );
+  --kibitzer-movelist-height: calc(
+    var(--graph-height) - var(--kibitzer-board-size) - 45px - 45px
+  );
+
+  container-type: size;
+  overflow-x: auto;
+}
+
+.engineWindowMobile table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  text-align: center;
+  min-width: 350px;
+}
+
+.engineWindowMobile .engineHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(0.5 * var(--gap));
+  margin-bottom: calc(0.5 * var(--gap));
+}
+
+.engineWindowMobile td:has(.enginePV) {
+  vertical-align: top;
+}
+
+.engineWindowMobile .movesWindow {
+  height: var(--kibitzer-movelist-height);
+}
+
+@container (height < 300px) {
+  .engineWindowMobile .enginePV {
+    --kibitzer-board-size: 100px;
+    --kibitzer-movelist-height: calc(
+      var(--graph-height) - var(--kibitzer-board-size) - 45px - 45px
+    );
+  }
+
+  .engineWindowMobile .engineLogo {
+    display: none;
+  }
+}
+
+@container (height < 250px) {
+  .engineWindowMobile .enginePV {
+    --kibitzer-movelist-height: calc(var(--graph-height) - 45px - 45px);
+  }
+  .engineWindowMobile .enginePV .board {
+    display: none;
+  }
+}
+
+@media (max-width: 1400px) {
+  .engineWindowMobile {
+    border: none;
+    padding-top: 0;
+    padding-bottom: 0;
+    width: 100%;
+
+    --kibitzer-board-size: min(
+      180px,
+      calc(
+        (
+            (100vw - var(--board-wrapper-width) - 3 * var(--gap)) - 2 *
+              var(--gap) * var(--num-kibitzer-cards)
+          ) /
+          var(--num-kibitzer-cards)
+      )
+    );
+    --kibitzer-movelist-height: calc(
+      var(--board-size) - var(--kibitzer-board-size) - 45px - 100px - 60px
+    );
+  }
+
+  .engineWindowMobile .moveList .move.right {
+    margin: 0 !important;
+  }
+
+  .engineWindowMobile .movesWindow {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 775px) {
+  .engineWindowMobile:has(.board) {
+    height: 400px;
+    --kibitzer-board-size: 110px;
+    --kibitzer-movelist-height: 180px;
+  }
+
+  .engineWindowMobile:has(.board) table {
+    margin-top: var(--padding);
+  }
+
+  .engineWindowMobile:has(.board) .engineLogo {
+    display: none;
+  }
+
+  .engineWindowMobile .moveTable {
+    text-align: left;
+  }
+}

@@ -1,7 +1,7 @@
 import type { DrawShape } from "@lichess-org/chessground/draw";
 import type { CCCEngine, CCCLiveInfo } from "../types";
 import { v4 as uuidv4 } from "uuid";
-import { extractLiveInfoFromInfoString } from "../LiveInfo";
+import { EmptyEngineDefinition, extractLiveInfoFromInfoString } from "../LiveInfo";
 
 export interface IEngineWorker {
   isReady(): boolean;
@@ -15,25 +15,6 @@ export type AnalysisResult = {
   fen: string;
   liveInfo: CCCLiveInfo;
   arrow: DrawShape | null;
-};
-
-const EmptyEngineDefinition: CCCEngine = {
-  authors: "",
-  config: { command: "", options: {}, timemargin: 0 },
-  country: "",
-  elo: "",
-  facts: "",
-  flag: "",
-  id: "",
-  imageUrl: "",
-  name: "",
-  perf: "",
-  points: "",
-  rating: "",
-  updatedAt: "",
-  version: "",
-  website: "",
-  year: "",
 };
 
 export type EngineSettings = {
@@ -141,7 +122,7 @@ export class EngineWorker {
       this.onMessage &&
       this.activeFen
     ) {
-      const parsed = extractLiveInfoFromInfoString(msg, this.activeFen);
+      const parsed = extractLiveInfoFromInfoString(msg, this.activeFen, "green");
       if (parsed) {
         this.onMessage({
           fen: this.activeFen,

@@ -1,5 +1,5 @@
 import { Line } from "react-chartjs-2";
-import type { CCCEngine, CCCLiveInfo } from "../types";
+import type { CCCLiveInfo } from "../types";
 import { useState } from "react";
 import "./GameGraph.css";
 import type { LiveInfoEntry } from "../LiveInfo";
@@ -9,11 +9,19 @@ import type { PointElement } from "chart.js";
 type GameGraphProps = {
   liveInfosWhite: LiveInfoEntry[];
   liveInfosBlack: LiveInfoEntry[];
-  liveInfosKibitzer: LiveInfoEntry[];
-  white: CCCEngine;
-  black: CCCEngine;
-  setCurrentMoveNumber: (moveNumber: number) => void;
+  liveInfosGreen: LiveInfoEntry[];
+  liveInfosRed: LiveInfoEntry[];
+  liveInfosBlue: LiveInfoEntry[];
+  setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   currentMoveNumber: number;
+};
+
+const COLORS = {
+  white: "rgba(255, 255, 255, 0.7)",
+  black: "rgba(0, 0, 0, 0.7)",
+  red: "rgba(255, 31, 31, 0.7)",
+  green: "rgba(23, 160, 29, 0.7)",
+  blue: "rgba(21, 101, 192, 0.7)",
 };
 
 const MODES = [
@@ -86,27 +94,30 @@ const MODES = [
 ];
 
 export function GameGraph({
-  liveInfosBlack,
   liveInfosWhite,
-  white,
-  black,
-  liveInfosKibitzer,
+  liveInfosBlack,
+  liveInfosGreen,
+  liveInfosRed,
+  liveInfosBlue,
   setCurrentMoveNumber,
   currentMoveNumber,
 }: GameGraphProps) {
+  const liveInfos = {
+    white: liveInfosWhite,
+    black: liveInfosBlack,
+    green: liveInfosGreen,
+    red: liveInfosRed,
+    blue: liveInfosBlue,
+  };
+
   const [mode, setMode] = useState(0);
 
-  const bookPlies = liveInfosWhite.findIndex((liveInfo) => !!liveInfo);
+  const bookPlies = liveInfos.white.findIndex((liveInfo) => !!liveInfo);
 
+  const colors = Object.keys(liveInfos) as (keyof typeof liveInfos)[];
+  const lengths = colors.map((color) => liveInfos[color].length);
   const labels = Array.from(
-    {
-      length:
-        Math.max(
-          liveInfosWhite.length,
-          liveInfosBlack.length,
-          liveInfosKibitzer.length
-        ) - bookPlies,
-    },
+    { length: Math.max(...lengths) - bookPlies },
     (_, i) => String(i + 1 + bookPlies)
   );
 
@@ -114,46 +125,19 @@ export function GameGraph({
     return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
   }
 
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: black.name,
-        data: liveInfosBlack
-          .slice(bookPlies)
-          .map(MODES[mode].map)
-          .map(scaleData),
-        dataLabels: liveInfosBlack.slice(bookPlies).map(MODES[mode].mapLabel),
-        borderColor: "rgba(0, 0, 0, 0.7)",
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        spanGaps: true,
-      },
-      {
-        label: white.name,
-        data: liveInfosWhite
-          .slice(bookPlies)
-          .map(MODES[mode].map)
-          .map(scaleData),
-        dataLabels: liveInfosWhite.slice(bookPlies).map(MODES[mode].mapLabel),
-        borderColor: "rgba(255, 255, 255, 0.7)",
-        backgroundColor: "rgba(255, 255, 255, 0.7)",
-        spanGaps: true,
-      },
-      {
-        label: "Kibitzer",
-        data: liveInfosKibitzer
-          .slice(bookPlies)
-          .map(MODES[mode].map)
-          .map(scaleData),
-        dataLabels: liveInfosKibitzer
-          .slice(bookPlies)
-          .map(MODES[mode].mapLabel),
-        borderColor: "rgba(21, 101, 192, 0.7)",
-        backgroundColor: "rgba(21, 101, 192, 0.7)",
-        spanGaps: true,
-      },
-    ],
-  };
+  const datasets = colors.map((color) => {
+    return {
+      label: color[0].toUpperCase() + color.slice(1).toLowerCase(),
+      data: liveInfos[color]
+        .slice(bookPlies)
+        .map(MODES[mode].map)
+        .map(scaleData),
+      dataLabels: liveInfos[color].slice(bookPlies).map(MODES[mode].mapLabel),
+      borderColor: COLORS[color],
+      backgroundColor: COLORS[color],
+      spanGaps: true,
+    };
+  });
 
   return (
     <div className="gameGraph">
@@ -214,7 +198,7 @@ export function GameGraph({
               },
             },
             onClick: (_, elements) => {
-              setCurrentMoveNumber(elements[0].index + bookPlies);
+              setCurrentMoveNumber(() => elements[0].index + bookPlies);
             },
             scales: {
               y: {
@@ -276,7 +260,7 @@ export function GameGraph({
               },
             },
           ]}
-          data={data}
+          data={{ labels, datasets }}
         />
       </div>
     </div>

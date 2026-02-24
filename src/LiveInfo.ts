@@ -1,15 +1,56 @@
 import type { DrawShape } from "@lichess-org/chessground/draw";
 import { Chess960, type Square } from "./chess.js/chess";
-import type { CCCLiveInfo } from "./types";
+import type { CCCEngine, CCCLiveInfo } from "./types";
 import { sanToUci, uciToSan } from "./utils";
 
 export type LiveInfoEntry = CCCLiveInfo | undefined;
+type LiveEngineDataObject = {
+  engineInfo: CCCEngine;
+  liveInfo: LiveInfoEntry[];
+};
+export type LiveEngineData = {
+  white: LiveEngineDataObject;
+  black: LiveEngineDataObject;
+  red: LiveEngineDataObject;
+  blue: LiveEngineDataObject;
+  green: LiveEngineDataObject;
+};
+export type LiveEngineDataEntryObject = {
+  engineInfo: CCCEngine;
+  liveInfo: LiveInfoEntry;
+};
+export type LiveEngineDataEntry = {
+  white: LiveEngineDataEntryObject;
+  black: LiveEngineDataEntryObject;
+  red: LiveEngineDataEntryObject;
+  blue: LiveEngineDataEntryObject;
+  green: LiveEngineDataEntryObject;
+};
+
+export const EmptyEngineDefinition: CCCEngine = {
+  authors: "",
+  config: { command: "", options: {}, timemargin: 0 },
+  country: "",
+  elo: "",
+  facts: "",
+  flag: "",
+  id: "",
+  imageUrl: "",
+  name: "",
+  perf: "",
+  points: "",
+  rating: "",
+  updatedAt: "",
+  version: "",
+  website: "",
+  year: "",
+};
 
 export function extractLiveInfoFromTCECComment(
   comment: string,
   fenBeforeMove: string,
-  ply: number
 ): LiveInfoEntry {
+  const ply = plyFromFen(fenBeforeMove);
   const data = comment.split(", ") ?? [];
 
   if (data[0] === "book") return;
@@ -59,12 +100,12 @@ function extractLiveInfoFromTCECGame(game: Chess960) {
   game
     .getComments()
     .slice(1)
-    .forEach((value, i, allValues) => {
-      const fenBeforeMove = allValues[i - 1]?.fen;
+    .forEach((value) => {
+      const ply = plyFromFen(value.fen);
+      const fenBeforeMove = game.fenAt(ply - 1);
       const liveInfo = extractLiveInfoFromTCECComment(
         value.comment ?? "",
         fenBeforeMove,
-        i + 1
       );
       if (!liveInfo) return;
 
@@ -105,7 +146,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
         hashfull: data[6].split("=")[1],
         name: "",
         nodes: data[3].split("=")[1],
-        ply: i + 1,
+        ply: i,
         pv: pvString,
         pvSan: sanPv,
         score,
@@ -152,7 +193,11 @@ export function plyFromFen(fen: string): number {
   return ply;
 }
 
-export function extractLiveInfoFromInfoString(raw: string, fen: string) {
+export function extractLiveInfoFromInfoString(
+  raw: string,
+  fen: string,
+  brush: string = ""
+) {
   let data = raw.split(" ");
   if (data.includes("string"))
     data = data.slice(0, data.indexOf("string") - 1);
@@ -185,7 +230,7 @@ export function extractLiveInfoFromInfoString(raw: string, fen: string) {
       ? {
           orig: bestmove.slice(0, 2) as Square,
           dest: bestmove.slice(2, 4) as Square,
-          brush: "kibitzer",
+          brush,
         }
       : null;
 
@@ -200,7 +245,9 @@ export function extractLiveInfoFromInfoString(raw: string, fen: string) {
       score,
       depth: data[data.indexOf("depth") + 1],
       name: "",
-      hashfull: data.includes("hashfull") ? data[data.indexOf("hashfull") + 1] : "-",
+      hashfull: data.includes("hashfull")
+        ? data[data.indexOf("hashfull") + 1]
+        : "-",
       multipv: data[data.indexOf("multipv") + 1],
       nodes: data[data.indexOf("nodes") + 1],
       pv: pvMoves.join(" "),

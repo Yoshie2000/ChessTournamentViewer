@@ -102,16 +102,23 @@
 }
 
 .moveList .disagreementMove {
-  color: #fff;
+  color: #e53935;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1150px) {
+  .moveTable .move.right {
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 775px) {
   .moveTable {
     display: block;
   }
 
   .moveTable tbody {
-    display: block;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 
   .moveTable tr {

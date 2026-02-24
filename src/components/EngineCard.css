@@ -5,6 +5,8 @@
   border: 1px solid #1a1a1a;
   overflow: hidden;
   height: 100%;
+  width: 100%;
+  max-height: var(--engine-card-height);
 }
 
 .engineComponent .engineLeftSection {
@@ -21,6 +23,7 @@
   border: none;
   height: 1px;
   margin: 0;
+  flex-shrink: 0;
 }
 
 .engineComponent .engineName {
@@ -90,11 +93,6 @@
   width: calc(var(--engine-board-width)) !important;
 }
 
-.engineComponent .board cg-board {
-  background-color: #8ca2ad;
-  aspect-ratio: 1;
-}
-
 .engineComponent .movesWindow {
   overflow-y: auto;
   width: var(--engine-card-movelist-width);
@@ -121,11 +119,23 @@
   color: #a1a1a1;
 }
 
+@media (max-width: 1750px) {
+  .engineComponent .engineField.hashfull {
+    display: none;
+  }
+}
+
 @media (max-width: 1600px) {
+  .engineComponent .engineField.tbhits {
+    display: none;
+  }
+
   .engineComponent .engineRightSection {
     flex-direction: column;
     height: calc(100% - 2 * var(--padding)) !important;
+    width: var(--engine-board-width);
     transform: translateY(var(--padding));
+    margin: 0 auto;
   }
 
   .engineComponent .movesWindow {
@@ -134,6 +144,14 @@
     padding-bottom: 0 !important;
     padding-right: 0 !important;
     padding-left: 0 !important;
+  }
+
+  .engineComponent .moveTable {
+    width: var(--engine-board-width) !important;
+  }
+
+  .engineComponent .moveTable .move.right {
+    margin: 0 !important;
   }
 }
 

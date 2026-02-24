@@ -29,7 +29,7 @@ export function uciToSan(fen: string, moves: string[]): string[] {
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
-    const game = new Chess960(fen);
+  const game = new Chess960(fen);
 
   const uciMoves: string[] = [];
   for (let i = 0; i < moves.length; i++) {
@@ -51,31 +51,23 @@ export function sanToUci(fen: string, moves: string[]): string[] {
   return uciMoves;
 }
 
-export function buildPvGame(fen: string, moves: string[], pvMoveNumber: number) {
-  const game = new Chess960();
-
-  try {
-    game.load(fen);
-  } catch {
-    return game;
-  }
+export function buildPvGame(
+  fen: string,
+  moves: string[],
+  pvMoveNumber: number
+) {
+  const game = new Chess960(fen);
 
   for (let i = 0; i < moves.length; i++) {
     if (pvMoveNumber !== -1 && i > pvMoveNumber) {
       break;
     }
 
-    const uci = moves[i];
-    if (!uci || uci.length < 4) {
-      break;
-    }
-
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion = uci[4];
+    const san = moves[i];
+    if (!san) break;
 
     try {
-      const result = game.move({ from, to, promotion: promotion as any });
+      const result = game.move(san, { strict: false });
 
       if (!result) {
         break;
@@ -99,33 +91,40 @@ export function normalizePv(
   const turn = fen.split(" ")[1];
   const turnColor = turn === "w" ? "white" : "black";
   const moves = pv.trim().split(/\s+/);
-  if (engineColor !== turnColor) {
+  if (
+    engineColor !== turnColor &&
+    !["red", "blue", "green"].includes(engineColor)
+  ) {
     return moves.slice(1);
   }
   return moves;
 }
 
 export function findPvDisagreementPoint(
-  myInfo: CCCLiveInfo | undefined,
-  opponentInfo: CCCLiveInfo | undefined,
-  fen: string | undefined
+  fen: string | undefined,
+  ...infos: (CCCLiveInfo | undefined)[]
 ): number {
-  if (!myInfo?.info || !opponentInfo?.info || !fen) return -1;
+  if (!fen || infos.length < 2) return -1;
 
-  const myData = myInfo.info;
-  const opponentData = opponentInfo.info;
+  // Normalize all PVs to start from the current position, then compare directly
+  const allMoves = infos
+    .map(item => {
+      const data = item?.info;
+      if (!data?.pv || !data?.color) return null;
+      return normalizePv(data.pv, data.color, fen).filter(Boolean);
+    })
+    .filter((moves) => moves !== null);
 
-  if (!myData.pv || !opponentData.pv || !myData.color || !opponentData.color)
-    return -1;
+  if (allMoves.length < 2) return -1;
 
-  // Normalize both PVs to start from the current position, then compare directly
-  const myMoves = normalizePv(myData.pv, myData.color, fen)
-    .filter(Boolean);
-  const opponentMoves = normalizePv(opponentData.pv, opponentData.color, fen)
-    .filter(Boolean);
+  const minLength = Math.min(...allMoves.map(m => m.length));
 
-  for (let i = 0; i < Math.min(myMoves.length, opponentMoves.length); i++) {
-    if (myMoves[i] !== opponentMoves[i]) {
+  for (let i = 0; i < minLength; i++) {
+    const firstEngineMove = allMoves[0][i];
+    
+    const allAgree = allMoves.every(moveList => moveList[i] === firstEngineMove);
+
+    if (!allAgree) {
       return i;
     }
   }
