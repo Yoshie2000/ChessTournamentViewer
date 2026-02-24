@@ -12,7 +12,7 @@ type GameGraphProps = {
   liveInfosKibitzer: LiveInfoEntry[];
   white: CCCEngine;
   black: CCCEngine;
-  setCurrentMoveNumber: (moveNumber: number) => void;
+  setCurrentMoveNumber: (moveNumber: number | ((prev: number) => number)) => void;
   currentMoveNumber: number;
 };
 

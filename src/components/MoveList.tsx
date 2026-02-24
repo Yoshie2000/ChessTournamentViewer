@@ -20,7 +20,7 @@ type MoveListProps = {
   downloadURL?: string;
   currentMoveNumber: number;
   moveNumberOffset?: number;
-  setCurrentMoveNumber: (moveNumber: number) => void;
+  setCurrentMoveNumber: (moveNumber: number | ((prev: number) => number)) => void;
   controllers: boolean;
   disagreementMoveIndex?: number;
 };
@@ -124,20 +124,24 @@ const MoveList = memo(
       }
     }
     function undoMove() {
-      if (currentMoveNumber === 0) return;
-      if (currentMoveNumber === -1) {
-        setCurrentMoveNumber(moves.length - 1);
-      } else {
-        setCurrentMoveNumber(currentMoveNumber - 1);
-      }
+      setCurrentMoveNumber((prev) => {
+        if (prev === 0) return prev;
+        if (prev === -1) {
+          return moves.length - 1;
+        } else {
+          return prev - 1;
+        }
+      });
     }
     function redoMove() {
-      if (currentMoveNumber === -1) return;
-      if (currentMoveNumber + 1 >= moves.length) {
-        setCurrentMoveNumber(-1);
-      } else {
-        setCurrentMoveNumber(currentMoveNumber + 1);
-      }
+      setCurrentMoveNumber((prev) => {
+        if (prev === -1) return prev;
+        if (prev + 1 >= moves.length) {
+          return -1;
+        } else {
+          return prev + 1;
+        }
+      });
     }
 
     function copyFen() {

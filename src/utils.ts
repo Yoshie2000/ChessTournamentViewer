@@ -29,7 +29,7 @@ export function uciToSan(fen: string, moves: string[]): string[] {
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
-    const game = new Chess960(fen);
+  const game = new Chess960(fen);
 
   const uciMoves: string[] = [];
   for (let i = 0; i < moves.length; i++) {
@@ -51,7 +51,11 @@ export function sanToUci(fen: string, moves: string[]): string[] {
   return uciMoves;
 }
 
-export function buildPvGame(fen: string, moves: string[], pvMoveNumber: number) {
+export function buildPvGame(
+  fen: string,
+  moves: string[],
+  pvMoveNumber: number
+) {
   const game = new Chess960();
 
   try {
@@ -61,25 +65,14 @@ export function buildPvGame(fen: string, moves: string[], pvMoveNumber: number) 
   }
 
   for (let i = 0; i < moves.length; i++) {
-    if (pvMoveNumber !== -1 && i > pvMoveNumber) {
-      break;
-    }
+    if (pvMoveNumber !== -1 && i > pvMoveNumber) break;
 
-    const uci = moves[i];
-    if (!uci || uci.length < 4) {
-      break;
-    }
-
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion = uci[4];
+    const san = moves[i];
+    if (!san) break;
 
     try {
-      const result = game.move({ from, to, promotion: promotion as any });
-
-      if (!result) {
-        break;
-      }
+      const result = game.move(san, { strict: false });
+      if (!result) break;
     } catch {
       break;
     }
@@ -119,10 +112,12 @@ export function findPvDisagreementPoint(
     return -1;
 
   // Normalize both PVs to start from the current position, then compare directly
-  const myMoves = normalizePv(myData.pv, myData.color, fen)
-    .filter(Boolean);
-  const opponentMoves = normalizePv(opponentData.pv, opponentData.color, fen)
-    .filter(Boolean);
+  const myMoves = normalizePv(myData.pv, myData.color, fen).filter(Boolean);
+  const opponentMoves = normalizePv(
+    opponentData.pv,
+    opponentData.color,
+    fen
+  ).filter(Boolean);
 
   for (let i = 0; i < Math.min(myMoves.length, opponentMoves.length); i++) {
     if (myMoves[i] !== opponentMoves[i]) {

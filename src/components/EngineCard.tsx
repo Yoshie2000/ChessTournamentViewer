@@ -73,8 +73,12 @@ const EngineCard = memo(
     }, [moves]);
 
     const setPvMoveNumber = useCallback(
-      (moveNumber: number) => {
-        pvMoveNumber.current = moveNumber;
+      (moveNumber: number | ((prev: number) => number)) => {
+        const newValue =
+          typeof moveNumber === "function"
+            ? moveNumber(pvMoveNumber.current)
+            : moveNumber;
+        pvMoveNumber.current = newValue;
         updateBoard();
       },
       [moves?.length, fen]

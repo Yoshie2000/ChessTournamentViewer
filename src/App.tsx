@@ -235,10 +235,17 @@ function App() {
     ws.current.send(message);
   }, []);
 
-  const setCurrentMoveNumber = useCallback((moveNumber: number) => {
-    currentMoveNumber.current = moveNumber;
-    updateBoard(true);
-  }, []);
+  const setCurrentMoveNumber = useCallback(
+    (moveNumber: number | ((prev: number) => number)) => {
+      const newValue =
+        typeof moveNumber === "function"
+          ? moveNumber(currentMoveNumber.current)
+          : moveNumber;
+      currentMoveNumber.current = newValue;
+      updateBoard(true);
+    },
+    []
+  );
 
   useEffect(() => {
     ws.current.disconnect();
