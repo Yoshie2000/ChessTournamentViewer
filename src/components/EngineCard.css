@@ -119,11 +119,23 @@
   color: #a1a1a1;
 }
 
+@media (max-width: 1750px) {
+  .engineComponent .engineField.hashfull {
+    display: none;
+  }
+}
+
 @media (max-width: 1600px) {
+  .engineComponent .engineField.tbhits {
+    display: none;
+  }
+
   .engineComponent .engineRightSection {
     flex-direction: column;
     height: calc(100% - 2 * var(--padding)) !important;
+    width: var(--engine-board-width);
     transform: translateY(var(--padding));
+    margin: 0 auto;
   }
 
   .engineComponent .movesWindow {
@@ -132,6 +144,14 @@
     padding-bottom: 0 !important;
     padding-right: 0 !important;
     padding-left: 0 !important;
+  }
+
+  .engineComponent .moveTable {
+    width: var(--engine-board-width) !important;
+  }
+
+  .engineComponent .moveTable .move.right {
+    margin: 0 !important;
   }
 }
 

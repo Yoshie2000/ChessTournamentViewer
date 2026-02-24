@@ -9,13 +9,17 @@
 
 .engineWindow {
   display: grid;
-  grid-template-rows: repeat(2, var(--engine-card-height)) 1fr;
+  grid-template-rows: repeat(3, var(--engine-card-height));
   grid-template-columns: 1fr;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 1rem;
   max-width: 100%;
-  overflow: hidden;
+  overflow: auto;
+}
+
+.engineWindow:has(.kibitzerCard) {
+  grid-template-rows: repeat(2, var(--engine-card-height)) 1fr;
 }
 
 @media (max-width: 1150px) {

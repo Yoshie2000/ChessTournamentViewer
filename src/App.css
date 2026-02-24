@@ -49,8 +49,9 @@
 @media (max-width: 1920px) {
   :root {
     --engine-board-padding: calc((1920px - 100vw) / 6);
-    --engine-board-width: calc(
-      var(--engine-card-height) - 2 * var(--engine-board-padding)
+    --engine-board-width: max(
+      100px,
+      calc(var(--engine-card-height) - 2 * var(--engine-board-padding))
     );
   }
 }
@@ -58,8 +59,12 @@
 @media (max-width: 1600px) {
   :root {
     --engine-board-padding: calc((1920px - 1600px) / 6);
-    --engine-card-width: calc(
-      var(--engine-card-info-width) + var(--engine-board-width) + var(--padding)
+    --engine-card-width: max(
+      calc(75px + 100px * var(--num-kibitzer-cards)),
+      calc(
+        var(--engine-card-info-width) + var(--engine-board-width) +
+          var(--padding)
+      )
     );
   }
 }
@@ -153,17 +158,14 @@
 @media (max-width: 1400px) {
   :root {
     --graph-height: 20rem;
-    --board-size: calc(100vw - 35rem);
+    --board-size: calc(100vw - 45rem);
   }
 
   .app {
-    --engine-minimal-height: max(340px, calc((var(--board-size) - var(--padding)) / 2));
-    --standings-height: calc(var(--board-size) - var(--engine-minimal-height) - var(--padding));
-
     grid-template-columns: var(--board-wrapper-width) 1fr;
     grid-template-rows:
-      var(--topbar-height) var(--engine-minimal-height) var(--standings-height) var(--graph-height)
-      400px;
+      var(--topbar-height) var(--board-size)
+      400px fit-content fit-content;
     height: auto;
     overflow-y: auto;
   }
@@ -175,7 +177,8 @@
 
   .boardWindow {
     grid-column: 1 / 2;
-    grid-row: 2 / 4;
+    grid-row: 2 / 3;
+    height: var(--board-size);
   }
 
   .engineWindow {
@@ -184,18 +187,20 @@
   }
 
   .standingsWindow {
-    grid-column: 2 / 3;
-    grid-row: 3 / 4;
+    grid-column: 1 / 3;
+    grid-row: 5 / 6;
+    max-height: 400px;
   }
 
   .graphWindow {
     grid-column: 1 / 3;
-    grid-row: 4 / 5;
+    grid-row: 3 / 4;
   }
 
   .scheduleWindow {
     grid-column: 1 / 3;
-    grid-row: 5 / 6;
+    grid-row: 4 / 5;
+    max-height: 400px;
   }
 }
 
@@ -204,15 +209,15 @@
     --engine-card-width: calc(
       (100vw - 2 * var(--padding) - 2 * var(--gap)) / 3
     );
-    --board-size: 48vw;
-    --movelist-width: 14vw;
+    --board-size: 44vw;
+    --movelist-width: max(140px, 14vw);
   }
 
   .app {
     grid-template-columns: calc(var(--board-size) + var(--movelist-width)) 1fr;
     grid-template-rows:
       var(--topbar-height) var(--board-size) calc(var(--graph-height) - 6rem)
-      300px 300px;
+      fit-content fit-content;
     height: auto;
     overflow-y: auto;
   }
@@ -302,6 +307,7 @@
     display: grid;
     grid-template-columns: minmax(var(--board-size), var(--board-size));
     grid-template-rows: auto var(--board-size) auto var(--padding) auto auto;
+    height: auto;
   }
 
   .boardWindow > .engineMinimal:first-child {
@@ -328,13 +334,11 @@
   .standingsWindow {
     grid-row: 6 / 7;
     grid-column: 1 / 2;
-    max-height: 600px;
   }
 
   .scheduleWindow {
     grid-column: 1 / 2;
     grid-row: 5 / 6;
-    max-height: 600px;
   }
 
   .graphWindow {
