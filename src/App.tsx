@@ -495,7 +495,7 @@ function App() {
             <button onClick={() => setPopupState("crosstable")}>
               Show Crosstable
             </button>
-            <StandingsTable engines={engines} />
+            <StandingsTable engines={engines} cccEvent={cccEvent.current} />
           </>
         ) : (
           <div className="sectionSpinner">

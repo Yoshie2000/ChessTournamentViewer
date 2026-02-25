@@ -1,18 +1,33 @@
-import type { CCCEngine } from "../types";
+import { memo } from "react";
+import type { CCCEngine, CCCEventUpdate } from "../types";
 import { EngineLogo } from "./EngineLogo";
 import "./StandingsTable.css";
 
-type StandingsTableProps = { engines: CCCEngine[] };
+type StandingsTableProps = { engines: CCCEngine[]; cccEvent: CCCEventUpdate };
 
-export function StandingsTable({ engines }: StandingsTableProps) {
+export const StandingsTable = memo(function ({
+  engines,
+  cccEvent,
+}: StandingsTableProps) {
+  function findEveryParticipation(engine: CCCEngine) {
+    let count = 0;
+
+    cccEvent?.tournamentDetails?.schedule.past.forEach((el) => {
+      if (el.blackId === engine.id || el.whiteId === engine.id) {
+        count++;
+      }
+    });
+
+    return count;
+  }
+
   return (
     <div className="standingsWrapper">
       <table className="standings">
         <tbody>
           {engines.map((engine, index) => {
-            const playedGames = Math.round(
-              (100 * Number(engine.points)) / Number(engine.perf)
-            ).toFixed(1);
+            const playedGames = findEveryParticipation(engine);
+
             return (
               <tr key={engine.id} className="standingsEntry">
                 <td className="placement">#{index + 1}</td>
@@ -32,4 +47,4 @@ export function StandingsTable({ engines }: StandingsTableProps) {
       </table>
     </div>
   );
-}
+});
