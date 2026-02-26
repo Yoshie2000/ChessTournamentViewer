@@ -16,6 +16,10 @@ function formatDuration(value: number) {
   return `in ${(value / 60).toFixed(0)} hours`;
 }
 
+function formatOutcome(outcome: string) {
+    return outcome.replace(/-/, "\u2013"); // en dash
+}
+
 const Schedule = memo(
   ({ engines, event, selectedGame, requestEvent }: ScheduleProps) => {
     const scheduleRef = useRef<HTMLDivElement>(null);
@@ -140,7 +144,7 @@ const Schedule = memo(
             const vsText = isCurrentGame
               ? "vs."
               : game.outcome
-                ? `${game.outcome}`
+                ? formatOutcome(game.outcome)
                 : formatDuration(averageDuration * (i - currentGameIdx));
 
             return (
