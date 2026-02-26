@@ -87,6 +87,7 @@ function App() {
   const [kibitzerSettings, setKibitzerSettings] = useState<EngineSettings>(
     getDefaultKibitzerSettings()
   );
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const currentMoveNumber = useRef(-1);
   const liveInfosRef = useRef<LiveEngineData>({
@@ -514,6 +515,7 @@ function App() {
             liveInfosBlue={liveInfosRef.current.blue.liveInfo}
             setCurrentMoveNumber={setCurrentMoveNumber}
             currentMoveNumber={currentMoveNumber.current}
+            reducedMotion={prefersReducedMotion}
           />
         ) : (
           <>
