@@ -21,9 +21,22 @@ type Tab = (typeof TABS)[number];
 const PLAYING_ENGINES = ["white", "black"] as const;
 
 export function EngineWindow({ liveInfos, clocks, fen }: EngineWindowProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
   const activeKibitzers = (["green", "blue", "red"] as const).filter(
-    (color) => !!liveInfos[color].liveInfo
+      (color) => !!liveInfos[color].liveInfo
   );
+  const kibitzerDisagreement = useMemo(() => {
+    const kibitzerLiveInfos = activeKibitzers.map(
+        (color) => liveInfos[color].liveInfo
+    );
+    return findPvDisagreementPoint(fen, ...kibitzerLiveInfos);
+  }, [fen, JSON.stringify(activeKibitzers)]);
+  const [wtime, btime] = useMemo(() => {
+    const wtime = Number(clocks?.wtime ?? 0);
+    const btime = Number(clocks?.btime ?? 0);
+    return [wtime, btime];
+  }, [clocks?.wtime, clocks?.btime]);
+
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--num-kibitzer-cards",
@@ -35,26 +48,11 @@ export function EngineWindow({ liveInfos, clocks, fen }: EngineWindowProps) {
   const isMobile = useMediaQuery({ maxWidth: 1400 });
   if (isMobile) return <EngineWindowMobile fen={fen} liveInfos={liveInfos} />;
 
-  const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
-
-  const kibitzerDisagreement = useMemo(() => {
-    const kibitzerLiveInfos = activeKibitzers.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    return findPvDisagreementPoint(fen, ...kibitzerLiveInfos);
-  }, [fen, JSON.stringify(activeKibitzers)]);
-
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES
     : activeKibitzers;
 
   const firstColumn = activeTab === "Kibitzers";
-
-  const [wtime, btime] = useMemo(() => {
-    const wtime = Number(clocks?.wtime ?? 0);
-    const btime = Number(clocks?.btime ?? 0);
-    return [wtime, btime];
-  }, [clocks?.wtime, clocks?.btime]);
 
   const kibitzerWindow =
     activeKibitzers.length === 0 ? null : activeKibitzers.length === 1 ? (
