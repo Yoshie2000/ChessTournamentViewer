@@ -1814,8 +1814,13 @@ export class Chess {
   }
 
   public moveAt(idx: number) {
-    if (idx !== -1)
+    if (idx === 0) {
+      return undefined
+    }
+
+    if (idx !== -1) {
       idx -= 1;
+    }
 
     const move = this._history.at(idx)?.move;
     if (!move) return undefined;
