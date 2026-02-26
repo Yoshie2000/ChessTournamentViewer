@@ -27,7 +27,30 @@ export const useEventStore = create<EventContext>((set) => {
         return;
       }
 
-      set({ cccEvent });
+      set((state) => {
+        // checks below needed to prevent unnecessary state updates
+        // that would trigger re-renders on all state subs
+
+        const prevTournamentLen: number =
+          state.cccEvent?.tournamentDetails.schedule.past.length || -1;
+        const incomingTournamentLen: number =
+          cccEvent.tournamentDetails.schedule.past.length || -2;
+
+        const prevTournamentName: string =
+          state.cccEvent?.tournamentDetails.name || "_A";
+        const incomingTournamentName: string =
+          cccEvent.tournamentDetails.name || "_B";
+
+        const tournamentDidUpdate =
+          prevTournamentLen !== incomingTournamentLen ||
+          prevTournamentName !== incomingTournamentName;
+
+        if (!tournamentDidUpdate) {
+          return state;
+        }
+
+        return { cccEvent };
+      });
     },
     setGame: (game) => {
       if (game === null) {
@@ -42,10 +65,10 @@ export const useEventStore = create<EventContext>((set) => {
       }
 
       set((state) => {
-        const eventListNotChanged =
+        const eventListChanged =
           state.cccEventList?.events.length === eventList.events.length;
 
-        if (eventListNotChanged) {
+        if (!eventListChanged) {
           return state;
         }
 

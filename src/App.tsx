@@ -73,13 +73,13 @@ function App() {
   const [fen, setFen] = useState(game.current.fen());
   const [moves, setMoves] = useState<string[]>([]);
 
-  const cccEvent = useEventStore((state) => state.cccEvent);
-  const cccGame = useEventStore((state) => state.cccGame);
-  const cccEventList = useEventStore((state) => state.cccEventList);
-
   const setEvent = useEventStore((state) => state.setEvent);
   const setGame = useEventStore((state) => state.setGame);
   const setEventList = useEventStore((state) => state.setEventList);
+
+  const cccEvent = useEventStore((state) => state.cccEvent);
+  const cccGame = useEventStore((state) => state.cccGame);
+  const cccEventList = useEventStore((state) => state.cccEventList);
 
   const [popupState, setPopupState] = useState<string>();
   const [clocks, setClocks] = useState<CCCClocks>({
@@ -196,6 +196,7 @@ function App() {
       switch (msg.type) {
         case "eventUpdate":
           setEvent(msg);
+
           break;
 
         case "gameUpdate": {
@@ -205,15 +206,16 @@ function App() {
             game.current
           );
           liveInfosRef.current.white.liveInfo = liveInfosWhite;
+
           liveInfosRef.current.white.engineInfo =
             cccEvent?.tournamentDetails.engines.find(
               (engine) => engine.name === game.current.getHeaders()["White"]
-            )!;
+            );
           liveInfosRef.current.black.liveInfo = liveInfosBlack;
           liveInfosRef.current.black.engineInfo =
             cccEvent?.tournamentDetails.engines.find(
               (engine) => engine.name === game.current.getHeaders()["Black"]
-            )!;
+            );
 
           liveInfosRef.current.green.liveInfo = cccEvent
             ? loadLiveInfos(cccEvent, msg)
@@ -222,6 +224,7 @@ function App() {
           liveInfosRef.current.red.liveInfo = [];
 
           currentMoveNumber.current = -1;
+
           updateBoard();
 
           setGame(msg);
@@ -279,7 +282,7 @@ function App() {
           updateBoard(true);
       }
     },
-    [cccEvent, setEvent, setEventList, setGame, updateBoard]
+    [setEvent, updateBoard, setEventList, cccEvent, setGame]
   );
 
   const requestEvent = useCallback((gameNr?: string, eventNr?: string) => {
@@ -299,8 +302,16 @@ function App() {
   );
 
   useEffect(() => {
-    ws.current.disconnect();
-    ws.current.connect(handleMessage);
+    if (!ws.current) {
+      return;
+    }
+
+    const wsInstance = ws.current;
+    wsInstance.connect(handleMessage);
+
+    return () => {
+      wsInstance.disconnect();
+    };
   }, [handleMessage]);
 
   useEffect(() => {

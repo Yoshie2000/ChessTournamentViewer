@@ -123,6 +123,8 @@ export type CCCMessage =
   | CCCResult
   | CCCKibitzer;
 
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
 export type Nullish<T extends object> = {
   [K in keyof T]: T[K] extends (arg: infer Params) => infer Return
     ? (args: Params | null) => Return

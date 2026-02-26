@@ -10,7 +10,11 @@ export class CCCWebSocket implements TournamentWebSocket {
   private url: string = "wss://ccc-api.gcp-prod.chess.com/ws";
   private ws: WebSocket | null = null;
 
+  private cb: (message: CCCMessage) => void = () => {};
+
   connect(onMessage: (message: CCCMessage) => void) {
+    this.cb = onMessage;
+
     this.ws = new WebSocket(this.url);
 
     this.ws.onopen = () => {
@@ -20,12 +24,12 @@ export class CCCWebSocket implements TournamentWebSocket {
 
     this.ws.onmessage = (e) => {
       const messages = JSON.parse(e.data) as CCCMessage[];
-      for (const msg of messages) onMessage(msg);
+      for (const msg of messages) this.cb(msg);
     };
 
     this.ws.onclose = () => {
       this.ws = null;
-      setTimeout(() => this.connect(onMessage), 1000);
+      setTimeout(() => this.connect(this.cb), 1000);
     };
 
     this.ws.onerror = () => {
