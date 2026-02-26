@@ -119,7 +119,7 @@ function App() {
     if (turn === "w") {
       const white = liveInfosRef.current.white.liveInfo.at(moveNumber);
       const black = liveInfosRef.current.black.liveInfo.at(
-        moveNumber === -1 ? -1 : moveNumber - 1
+        moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
       );
 
       return {
@@ -137,7 +137,7 @@ function App() {
       };
     } else {
       const white = liveInfosRef.current.white.liveInfo.at(
-        moveNumber === -1 ? -1 : moveNumber - 1
+        moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
       );
       const black = liveInfosRef.current.black.liveInfo.at(moveNumber);
 

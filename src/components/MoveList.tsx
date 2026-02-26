@@ -130,7 +130,7 @@ const MoveList = memo(
         if (previous === 0) return previous;
         if (previous === -1) return moves.length - 1;
         return previous - 1;
-      })
+      });
     }
     function redoMove() {
       if (currentMoveNumber === -1) return;
@@ -139,7 +139,7 @@ const MoveList = memo(
         if (previous === -1) return previous;
         if (previous + 1 >= moves.length) return -1;
         return previous + 1;
-      })
+      });
     }
 
     function copyFen() {

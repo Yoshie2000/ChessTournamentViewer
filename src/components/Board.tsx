@@ -125,7 +125,9 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           shapes: arrows,
         },
         fen,
-        ...(lastMove ? { lastMove: [lastMove.from, lastMove.to] } : {}),
+        ...(lastMove
+          ? { lastMove: [lastMove.from, lastMove.to] }
+          : { lastMove: [] }),
       };
 
       requestAnimationFrame(() => {
