@@ -277,6 +277,19 @@ const MoveList = memo(
   }
 );
 
+type MoveRowProps = {
+  moveIndex: number;
+  moveNumber: number;
+  whiteMove: string;
+  blackMove: string;
+  whiteActive: boolean;
+  blackActive: boolean;
+  rowActive: boolean;
+  disagreementWhite: boolean;
+  disagreementBlack: boolean;
+  setCurrentMoveNumber: (callback: (n: number) => number) => void;
+}
+
 const MoveRow = memo(
   ({
     moveIndex,
@@ -289,18 +302,18 @@ const MoveRow = memo(
     disagreementWhite,
     disagreementBlack,
     setCurrentMoveNumber,
-  }: any) => {
+  }: MoveRowProps) => {
     return (
       <tr>
         <th
           className={"move right" + (rowActive ? " currentMove" : "")}
-          onClick={() => setCurrentMoveNumber(moveIndex + 1)}
+          onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
         >
           {moveNumber}.
         </th>
         <td
           className={moveClass(whiteActive, disagreementWhite)}
-          onClick={() => setCurrentMoveNumber(moveIndex + 1)}
+          onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
         >
           {whiteMove}
         </td>
@@ -308,7 +321,7 @@ const MoveRow = memo(
           {blackMove && (
             <span
               className={moveClass(blackActive, disagreementBlack)}
-              onClick={() => setCurrentMoveNumber(moveIndex + 2)}
+              onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
             >
               {blackMove}
             </span>
