@@ -14,6 +14,7 @@ type GameGraphProps = {
   liveInfosBlue: LiveInfoEntry[];
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   currentMoveNumber: number;
+  reducedMotion: boolean;
 };
 
 const COLORS = {
@@ -101,6 +102,7 @@ export function GameGraph({
   liveInfosBlue,
   setCurrentMoveNumber,
   currentMoveNumber,
+  reducedMotion,
 }: GameGraphProps) {
   const liveInfos = {
     white: liveInfosWhite,
@@ -158,6 +160,7 @@ export function GameGraph({
             responsive: true,
             maintainAspectRatio: false,
             elements: { line: { tension: 0 } },
+            animation: { duration: reducedMotion ? 0 : undefined /* default */ },
             animations: {
               y: {
                 from: (ctx: any) => {
