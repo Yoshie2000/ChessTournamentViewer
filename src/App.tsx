@@ -491,7 +491,7 @@ function App() {
 
       <div className="standingsWindow">
         <h4>Standings</h4>
-        {cccEvent && cccGame ? (
+        {cccEvent.current && cccGame ? (
           <>
             <button onClick={() => setPopupState("crosstable")}>
               Show Crosstable
