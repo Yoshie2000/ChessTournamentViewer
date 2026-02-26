@@ -105,6 +105,10 @@
   color: #e53935;
 }
 
+.moveList .bookMove {
+  color: #6699ff;
+}
+
 @media (max-width: 1150px) {
   .moveTable .move.right {
     margin: 0 !important;

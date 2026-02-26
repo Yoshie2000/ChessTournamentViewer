@@ -71,6 +71,7 @@ function App() {
   const kibitzer = useRef<EngineWorker[]>(null);
   const [fen, setFen] = useState(game.current.fen());
   const [moves, setMoves] = useState<string[]>([]);
+  const [bookMovesCount, setBookMovesCount] = useState(0);
 
   const [popupState, setPopupState] = useState<string>();
   const [cccEventList, setCccEventList] = useState<CCCEventsListUpdate>();
@@ -213,6 +214,17 @@ function App() {
 
         currentMoveNumber.current = -1;
         updateBoard();
+
+        let opening = msg.gameDetails.opening;
+        if (opening) {
+          // Remove junk before first move
+          opening = opening.slice(opening.indexOf("1."));
+          // Count plies by filtering out "2.", etc.
+          const plies = opening
+              .split(/\s+/)
+              .reduce((cnt, item) => cnt + Number(!/^[0-9]+\.$/.test(item)), 0);
+          setBookMovesCount(plies);
+        }
 
         setCccGame(msg);
         setFen(game.current.fen());
@@ -470,6 +482,7 @@ function App() {
         <MoveList
           startFen={game.current.getHeaders()["FEN"]}
           moves={moves}
+          bookExit={bookMovesCount}
           currentMoveNumber={currentMoveNumber.current}
           setCurrentMoveNumber={setCurrentMoveNumber}
           downloadURL={
