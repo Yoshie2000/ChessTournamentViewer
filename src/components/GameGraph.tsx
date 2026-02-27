@@ -192,6 +192,7 @@ export function GameGraph({
             key={m.name}
             onClick={() => setMode(i)}
             className={"modeSelector" + (mode === i ? " active" : "")}
+            title={m.name}
           >
             {m.name}
           </button>

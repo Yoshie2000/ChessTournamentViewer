@@ -43,7 +43,7 @@ export function Settings({
     <div className="settings">
       <div className="settingsHeader">
         <h4>Kibitzer Settings</h4>
-        <button className="closeButton" onClick={onClose}>
+        <button className="closeButton" onClick={onClose} title="Close">
           <MdOutlineClose />
         </button>
       </div>

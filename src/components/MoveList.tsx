@@ -241,34 +241,63 @@ const MoveList = memo(
         {controllers && (
           <div className="moveButtonsWrapper">
             <div className="moveButtons">
-              <button onClick={undoAllMoves} disabled={currentMoveNumber === 0}>
+              <button
+                onClick={undoAllMoves}
+                disabled={currentMoveNumber === 0}
+                title="Go to start (↑)"
+              >
                 <MdKeyboardDoubleArrowLeft />
               </button>
-              <button onClick={undoMove} disabled={currentMoveNumber === 0}>
+              <button
+                onClick={undoMove}
+                disabled={currentMoveNumber === 0}
+                title="Previous move (←)"
+              >
                 <MdKeyboardArrowLeft />
               </button>
-              <button onClick={redoMove} disabled={currentMoveNumber === -1}>
+              <button
+                onClick={redoMove}
+                disabled={currentMoveNumber === -1}
+                title="Next move (→)"
+              >
                 <MdKeyboardArrowRight />
               </button>
               <button
                 onClick={redoAllMoves}
                 disabled={currentMoveNumber === -1}
+                title="Go to end (↓)"
               >
                 <MdKeyboardDoubleArrowRight />
               </button>
             </div>
             <div className="moveButtons">
-              <button onClick={copyFen} style={{ fontSize: "1rem" }}>
+              <button
+                onClick={copyFen}
+                style={{ fontSize: "1rem" }}
+                title="Copy FEN to clipboard"
+              >
                 <LuClipboard />
               </button>
-              <button onClick={copyPgn} style={{ fontSize: "1rem" }}>
+              <button
+                onClick={copyPgn}
+                style={{ fontSize: "1rem" }}
+                title="Copy PGN to clipboard"
+              >
                 <LuClipboardList />
               </button>
-              <button onClick={openChessDB} style={{ fontSize: "1rem" }}>
+              <button
+                onClick={openChessDB}
+                style={{ fontSize: "1rem" }}
+                title="Analyse on ChessDB"
+              >
                 <LuDatabase />
               </button>
               {downloadURL && (
-                <button onClick={downloadLogs} style={{ fontSize: "1rem" }}>
+                <button
+                  onClick={downloadLogs}
+                  style={{ fontSize: "1rem" }}
+                  title="Download logs"
+                >
                   <LuDownload />
                 </button>
               )}

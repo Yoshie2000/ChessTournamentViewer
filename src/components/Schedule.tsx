@@ -183,7 +183,11 @@ const Schedule = memo(
         </div>
         {String(selectedGame.gameDetails.gameNr) !==
           event.tournamentDetails.schedule.present?.gameNr && (
-          <button className="closeButton" onClick={() => requestEvent()}>
+          <button
+            className="closeButton"
+            onClick={() => requestEvent()}
+            title="Return to live game"
+          >
             <MdOutlineClose />
           </button>
         )}
