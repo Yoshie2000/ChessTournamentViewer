@@ -466,9 +466,9 @@ function App() {
         </div>
         <div className="settingsRow">
           <EventList
-            eventList={cccEventList || undefined}
+            eventList={cccEventList}
             requestEvent={requestEvent}
-            selectedEvent={cccEvent || undefined}
+            selectedEvent={cccEvent}
           />
           <button onClick={() => setPopupState("settings")}>
             <LuSettings />

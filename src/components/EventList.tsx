@@ -2,8 +2,8 @@ import type { CCCEventsListUpdate, CCCEventUpdate } from "../types";
 import "./EventList.css";
 
 type EventListProps = {
-  eventList: CCCEventsListUpdate | undefined;
-  selectedEvent: CCCEventUpdate | undefined;
+  eventList: CCCEventsListUpdate | undefined | null;
+  selectedEvent: CCCEventUpdate | undefined | null;
   requestEvent: (gameNr?: string, eventNr?: string) => void;
 };
 
