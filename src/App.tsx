@@ -87,7 +87,9 @@ function App() {
   const [kibitzerSettings, setKibitzerSettings] = useState<EngineSettings>(
     getDefaultKibitzerSettings()
   );
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
 
   const currentMoveNumber = useRef(-1);
   const liveInfosRef = useRef<LiveEngineData>({
@@ -440,7 +442,7 @@ function App() {
             requestEvent={requestEvent}
             selectedEvent={cccEvent.current}
           />
-          <button onClick={() => setPopupState("settings")}>
+          <button onClick={() => setPopupState("settings")} title="Settings">
             <LuSettings />
           </button>
         </div>
@@ -493,7 +495,10 @@ function App() {
         <h4>Standings</h4>
         {cccEvent.current && cccGame ? (
           <>
-            <button onClick={() => setPopupState("crosstable")}>
+            <button
+              onClick={() => setPopupState("crosstable")}
+              title="View head-to-head results between all engines"
+            >
               Show Crosstable
             </button>
             <StandingsTable engines={engines} cccEvent={cccEvent.current} />

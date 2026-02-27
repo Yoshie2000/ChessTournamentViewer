@@ -17,7 +17,7 @@ function formatDuration(value: number) {
 }
 
 function formatOutcome(outcome: string) {
-    return outcome.replace(/-/, "\u2013"); // en dash
+  return outcome.replace(/-/, "\u2013"); // en dash
 }
 
 const Schedule = memo(
@@ -172,7 +172,11 @@ const Schedule = memo(
         </div>
         {String(selectedGame.gameDetails.gameNr) !==
           event.tournamentDetails.schedule.present?.gameNr && (
-          <button className="closeButton" onClick={() => requestEvent()}>
+          <button
+            className="closeButton"
+            onClick={() => requestEvent()}
+            title="Return to live game"
+          >
             <MdOutlineClose />
           </button>
         )}

@@ -228,7 +228,7 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
       <tbody>
         <tr>
           <td>
-            <button className="closeButton" onClick={onClose}>
+            <button className="closeButton" onClick={onClose} title="close">
               <MdOutlineClose />
             </button>
           </td>

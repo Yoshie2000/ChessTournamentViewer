@@ -149,6 +149,7 @@ export function GameGraph({
             key={m.name}
             onClick={() => setMode(i)}
             className={"modeSelector" + (mode === i ? " active" : "")}
+            title={m.name}
           >
             {m.name}
           </button>
@@ -160,7 +161,9 @@ export function GameGraph({
             responsive: true,
             maintainAspectRatio: false,
             elements: { line: { tension: 0 } },
-            animation: { duration: reducedMotion ? 0 : undefined /* default */ },
+            animation: {
+              duration: reducedMotion ? 0 : undefined /* default */,
+            },
             animations: {
               y: {
                 from: (ctx: any) => {
