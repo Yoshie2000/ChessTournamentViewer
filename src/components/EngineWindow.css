@@ -104,6 +104,19 @@
   }
 }
 
+@media (min-resolution: 1.25dppx) and (min-width: 1150px) {
+  .kibitzerWindow .enginePV {
+    --kibitzer-board-size: 160px;
+    --kibitzer-movelist-height: calc(
+      var(--graph-height) - 45px - 25px
+    );
+  }
+
+  .kibitzerWindow .enginePV .movesWindow {
+    padding-top: 0 !important;
+  }
+}
+
 @media (max-width: 1150px) {
   .engineWindow {
     grid-template-columns: repeat(3, 1fr);

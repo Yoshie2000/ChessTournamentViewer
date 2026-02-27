@@ -69,6 +69,24 @@
   }
 }
 
+@media (min-resolution: 1.25dppx) {
+  :root {
+    --board-size: 26vw;
+  }
+}
+
+@media (max-width: 1600px) and (min-resolution: 1.25dppx) {
+  :root {
+    --engine-card-width: max(
+      calc(75px + 150px * var(--num-kibitzer-cards)),
+      calc(
+        var(--engine-card-info-width) + var(--engine-board-width) +
+          var(--padding)
+      )
+    );
+  }
+}
+
 @media (max-width: 1500px) {
   :root {
     --engine-board-padding: calc((1920px - 100vw) / 6);
