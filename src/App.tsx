@@ -422,6 +422,7 @@ function App() {
               engines={engines}
               cccEvent={cccEvent.current}
               onClose={() => setPopupState(undefined)}
+              requestEvent={requestEvent}
             />
           )}
           {popupState === "settings" && (
