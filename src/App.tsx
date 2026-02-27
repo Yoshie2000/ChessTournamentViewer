@@ -87,7 +87,9 @@ function App() {
   const [kibitzerSettings, setKibitzerSettings] = useState<EngineSettings>(
     getDefaultKibitzerSettings()
   );
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
 
   const currentMoveNumber = useRef(-1);
   const liveInfosRef = useRef<LiveEngineData>({
@@ -415,6 +417,7 @@ function App() {
               engines={engines}
               cccEvent={cccEvent.current}
               onClose={() => setPopupState(undefined)}
+              requestEvent={requestEvent}
             />
           )}
           {popupState === "settings" && (
