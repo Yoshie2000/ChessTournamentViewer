@@ -37,7 +37,7 @@ import { type EngineSettings, EngineWorker } from "./engine/EngineWorker";
 import { StockfishWorker } from "./engine/StockfishWorker";
 import { EngineWindow } from "./components/EngineWindow";
 import { EngineMinimal } from "./components/EngineMinimal";
-import { Chess960, type Square } from "./chess.js/chess";
+import { Chess, Chess960, type Square } from "./chess.js/chess";
 import { GameResultOverlay } from "./components/GameResultOverlay";
 import { LuSettings } from "react-icons/lu";
 import { getDefaultKibitzerSettings, Settings } from "./components/Settings";
@@ -469,7 +469,7 @@ function App() {
         </div>
 
         <MoveList
-          startFen={game.current.getHeaders()["FEN"]}
+          startFen={game.current.getHeaders()["FEN"] ?? new Chess().fen()}
           moves={moves}
           currentMoveNumber={currentMoveNumber.current}
           setCurrentMoveNumber={setCurrentMoveNumber}
