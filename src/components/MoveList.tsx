@@ -31,9 +31,8 @@ export function getGameAtMoveNumber(
   moveNumber: number
 ) {
   const game = new Chess960(fen);
-  if (moveNumber === -1) return game;
 
-  for (let i = 0; i < moveNumber && i < moves.length; i++) {
+  for (let i = 0; (i < moveNumber || moveNumber === -1) && i < moves.length; i++) {
     game.move(moves[i], { strict: false });
   }
   return game;
