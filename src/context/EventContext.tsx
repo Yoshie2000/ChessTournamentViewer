@@ -65,14 +65,18 @@ export const useEventStore = create<EventContext>((set) => {
       }
 
       set((state) => {
-        const eventListChanged =
-          state.cccEventList?.events.length === eventList.events.length;
-
-        if (!eventListChanged) {
-          return state;
+        if (state.cccEventList === null) {
+          return { cccEventList: eventList };
         }
 
-        return { cccEventList: eventList };
+        const eventListChangedLength =
+          state.cccEventList.events.length !== eventList.events.length;
+
+        if (eventListChangedLength) {
+          return { cccEventList: eventList };
+        }
+
+        return state;
       });
     },
   };
