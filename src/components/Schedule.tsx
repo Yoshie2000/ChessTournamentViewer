@@ -153,7 +153,7 @@ const Schedule = memo(
                 ref={ref}
                 key={game.gameNr}
                 onClick={
-                  game.outcome || isCurrentGame
+                  game.outcome || (isCurrentGame && !isSelectedGame)
                     ? () => requestEvent(game.gameNr)
                     : undefined
                 }
