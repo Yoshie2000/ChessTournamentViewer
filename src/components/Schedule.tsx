@@ -147,13 +147,15 @@ const Schedule = memo(
                 ? formatOutcome(game.outcome)
                 : formatDuration(averageDuration * (i - currentGameIdx));
 
+            const ongoingAndNotSelectedGame = isCurrentGame && !isSelectedGame;
+
             return (
               <div
                 className={"game" + gameClass}
                 ref={ref}
                 key={game.gameNr}
                 onClick={
-                  game.outcome || (isCurrentGame && !isSelectedGame)
+                  game.outcome || ongoingAndNotSelectedGame
                     ? () => requestEvent(game.gameNr)
                     : undefined
                 }
