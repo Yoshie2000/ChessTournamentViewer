@@ -37,6 +37,13 @@ const MODES = [
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return liveInfo?.info.score ?? "-";
     },
+    scaling: function (value: number) {
+      return  Math.sign(value) *
+              Math.pow(Math.abs(value), 2);
+    },
+    scaleData: function(value: number) {
+      return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
+    },
   },
   {
     name: "Depth",
@@ -45,6 +52,12 @@ const MODES = [
     },
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return liveInfo?.info.depth ?? "-";
+    },
+    scaling: function (value: number) {
+      return value;
+    },
+    scaleData: function(value: number) {
+      return value;
     },
   },
   {
@@ -55,6 +68,13 @@ const MODES = [
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return formatLargeNumber(liveInfo?.info.nodes);
     },
+    scaling: function (value: number) {
+      return  Math.sign(value) *
+              Math.pow(Math.abs(value), 2);
+    },
+    scaleData: function(value: number) {
+      return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
+    },
   },
   {
     name: "Time",
@@ -63,6 +83,12 @@ const MODES = [
     },
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return liveInfo ? formatTime(Number(liveInfo.info.time)) : "-";
+    },
+    scaling: function (value: number) {
+      return value;
+    },
+    scaleData: function(value: number) {
+      return value;
     },
   },
   {
@@ -73,6 +99,13 @@ const MODES = [
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return formatLargeNumber(liveInfo?.info.speed);
     },
+    scaling: function (value: number) {
+      return  Math.sign(value) *
+              Math.pow(Math.abs(value), 2);
+    },
+    scaleData: function(value: number) {
+      return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
+    },
   },
   {
     name: "TB Hits",
@@ -82,6 +115,13 @@ const MODES = [
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return formatLargeNumber(liveInfo?.info.tbhits);
     },
+    scaling: function (value: number) {
+      return  Math.sign(value) *
+              Math.pow(Math.abs(value), 2);
+    },
+    scaleData: function (value: number) {
+      return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
+    },
   },
   {
     name: "Hashfull",
@@ -90,6 +130,12 @@ const MODES = [
     },
     mapLabel: function (liveInfo?: CCCLiveInfo) {
       return liveInfo?.info.hashfull ?? "-";
+    },
+    scaling: function (value: number) {
+      return value;
+    },
+    scaleData: function (value: number) {
+      return value;
     },
   },
 ];
@@ -123,17 +169,13 @@ export function GameGraph({
     (_, i) => String(i + 1 + bookPlies)
   );
 
-  function scaleData(value: number) {
-    return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
-  }
-
   const datasets = colors.map((color) => {
     return {
       label: color[0].toUpperCase() + color.slice(1).toLowerCase(),
       data: liveInfos[color]
         .slice(bookPlies)
         .map(MODES[mode].map)
-        .map(scaleData),
+        .map(MODES[mode].scaleData),
       dataLabels: liveInfos[color].slice(bookPlies).map(MODES[mode].mapLabel),
       borderColor: COLORS[color],
       backgroundColor: COLORS[color],
@@ -207,9 +249,7 @@ export function GameGraph({
               y: {
                 ticks: {
                   callback: (value) => {
-                    const scaledValue =
-                      Math.sign(Number(value)) *
-                      Math.pow(Math.abs(Number(value)), 2);
+                    const scaledValue = MODES[mode].scaling(Number(value));
                     switch (mode) {
                       case 0:
                         if (scaledValue >= 64) return "Mate";
