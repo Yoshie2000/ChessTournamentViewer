@@ -38,8 +38,8 @@ const MODES = [
       return liveInfo?.info.score ?? "-";
     },
     scaling: function (value: number) {
-      if (value == 1.6)return 64;
-      else if (value == -1.6)return -64;
+      if (value >= 1.6)return 64;
+      else if (value <= -1.6)return -64;
       return Math.tan(value);
     },
     scaleData: function(value: number) {
