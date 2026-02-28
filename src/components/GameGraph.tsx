@@ -38,11 +38,10 @@ const MODES = [
       return liveInfo?.info.score ?? "-";
     },
     scaling: function (value: number) {
-      return  Math.sign(value) *
-              Math.pow(Math.abs(value), 2);
+      return Math.tan(value);
     },
     scaleData: function(value: number) {
-      return Math.sign(value) * Math.pow(Math.abs(value), 1 / 2);
+      return Math.atan(value);
     },
   },
   {
