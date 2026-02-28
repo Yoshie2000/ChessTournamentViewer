@@ -24,7 +24,8 @@ const COLORS = {
   green: "rgba(23, 160, 29, 0.7)",
   blue: "rgba(21, 101, 192, 0.7)",
 };
-const evalScale=0.6;
+const evalScale=0.45;
+const mateScaled=3.8;
 const MODES = [
   {
     name: "Eval",
@@ -38,13 +39,13 @@ const MODES = [
       return liveInfo?.info.score ?? "-";
     },
     scaling: function (value: number) {
-      if (value >= 3)return 64;
-      else if (value <= -3)return -64;
+      if (value >= mateScaled)return 64;
+      else if (value <= -mateScaled)return -64;
       return Math.tan(value*Math.atan(evalScale))/evalScale;
     },
     scaleData: function(value: number) {
-      if(value == 64)return 3;
-      else if(value == -64) return -3;
+      if(value == 64)return mateScaled;
+      else if(value == -64) return -mateScaled;
       return Math.atan(value*evalScale)/Math.atan(evalScale);
     },
   },
