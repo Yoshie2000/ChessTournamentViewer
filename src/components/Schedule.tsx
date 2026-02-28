@@ -17,7 +17,7 @@ function formatDuration(value: number) {
 }
 
 function formatOutcome(outcome: string) {
-    return outcome.replace(/-/, "\u2013"); // en dash
+  return outcome.replace(/-/, "\u2013"); // en dash
 }
 
 const Schedule = memo(
@@ -135,7 +135,7 @@ const Schedule = memo(
                 : null;
 
             let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
-            gameClass += !game.outcome ? " future" : "";
+            gameClass += !game.outcome && !isCurrentGame ? " future" : "";
             gameClass +=
               game.roundNr !== gamesList.at(i + 1)?.roundNr
                 ? " lastOfRound"
@@ -153,7 +153,9 @@ const Schedule = memo(
                 ref={ref}
                 key={game.gameNr}
                 onClick={
-                  game.outcome ? () => requestEvent(game.gameNr) : undefined
+                  game.outcome || isCurrentGame
+                    ? () => requestEvent(game.gameNr)
+                    : undefined
                 }
               >
                 <span className="round">#{i + 1}</span>
