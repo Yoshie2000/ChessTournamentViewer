@@ -20,4 +20,4 @@ jobs:
         uses: creyD/prettier_action@v4.6
         with:
           dry: True
-          prettier_options: --check "src/**/*.{js,jsx,ts,tsx,css,md,json}" --diff
+          prettier_options: --check "src/**/*.{js,jsx,ts,tsx,css,md,json}"

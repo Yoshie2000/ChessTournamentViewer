@@ -108,7 +108,7 @@ export function findPvDisagreementPoint(
 
   // Normalize all PVs to start from the current position, then compare directly
   const allMoves = infos
-    .map(item => {
+    .map((item) => {
       const data = item?.info;
       if (!data?.pv || !data?.color) return null;
       return normalizePv(data.pv, data.color, fen).filter(Boolean);
@@ -117,12 +117,14 @@ export function findPvDisagreementPoint(
 
   if (allMoves.length < 2) return -1;
 
-  const minLength = Math.min(...allMoves.map(m => m.length));
+  const minLength = Math.min(...allMoves.map((m) => m.length));
 
   for (let i = 0; i < minLength; i++) {
     const firstEngineMove = allMoves[0][i];
-    
-    const allAgree = allMoves.every(moveList => moveList[i] === firstEngineMove);
+
+    const allAgree = allMoves.every(
+      (moveList) => moveList[i] === firstEngineMove
+    );
 
     if (!allAgree) {
       return i;

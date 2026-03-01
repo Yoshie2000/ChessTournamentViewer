@@ -19,9 +19,10 @@ export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
         margin: `${size / 6}px`,
       }}
       className="engineLogo"
-      onError={event => {
+      onError={(event) => {
         // Safe fallback that will never change
-        (event.target as HTMLImageElement).src = "https://images.chesscomfiles.com/chess-themes/computer_chess_championship/avatars/heimdall.png";
+        (event.target as HTMLImageElement).src =
+          "https://images.chesscomfiles.com/chess-themes/computer_chess_championship/avatars/heimdall.png";
       }}
     />
   );

@@ -7,10 +7,7 @@ type EngineStatsProps = {
   liveInfos: LiveEngineDataEntry;
 };
 
-export function EngineStats({
-  colors,
-  liveInfos,
-}: EngineStatsProps) {
+export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
   return (
     <tbody className="engineStats">
       <tr className="borderTop">

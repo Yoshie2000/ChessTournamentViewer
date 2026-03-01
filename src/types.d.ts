@@ -111,11 +111,7 @@ type CCCResult = {
   blackName;
 };
 
-type CCCKibitzer = {
-  type: "kibitzer";
-  engine: CCCEngine;
-  color: string;
-}
+type CCCKibitzer = { type: "kibitzer"; engine: CCCEngine; color: string };
 
 export type CCCMessage =
   | CCCLiveInfo

@@ -26,7 +26,7 @@ export class StockfishWorker implements IEngineWorker {
     this.callback = (e) => {
       const data = e.data.replace(" Multithreaded", "");
       callback(data);
-    }
+    };
     this.worker.onmessage = this.callback;
   }
 

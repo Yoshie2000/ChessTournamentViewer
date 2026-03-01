@@ -30,9 +30,9 @@ export class TCECSocket implements TournamentWebSocket {
       const eventNr: string | undefined = msg.eventNr;
 
       if (gameNr) {
-        const safeEventNr = (
-          eventNr ?? this.game.getHeaders()["Event"]
-        ).replaceAll(" ", "_");
+        const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
+          .replaceAll(" ", "_")
+          .replaceAll("DivP", "Divp");
         fetch(
           `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
         )
