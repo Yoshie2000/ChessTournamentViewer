@@ -424,6 +424,7 @@ export class TCECSocket implements TournamentWebSocket {
                 ".png",
               name: correctName,
               perf: String(engineData.Performance),
+              playedGames: "",
               points: String(engineData.Score),
               rating: String(engineData.Rating),
               updatedAt: "",

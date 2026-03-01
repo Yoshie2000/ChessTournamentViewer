@@ -241,8 +241,12 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
         {engines.map((engine, i) => (
           <tr key={engine.id}>
             <td>
-              <p className="engineName">#{i + 1}. {engine.name}</p>
-              <p className="engineStats">{engine.points} / {engine.playedGames} ({engine.perf}%)</p>
+              <p className="engineName">
+                #{i + 1}. {engine.name}
+              </p>
+              <p className="engineStats">
+                {engine.points} / {engine.playedGames} ({engine.perf}%)
+              </p>
             </td>
             {engines.map((engine2) => {
               if (engine.id === engine2.id) {
