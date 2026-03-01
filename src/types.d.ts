@@ -17,6 +17,7 @@ type CCCEngine = {
   imageUrl: string;
   name: string;
   perf: string;
+  playedGames: string;
   points: string;
   rating: string;
   updatedAt: string;

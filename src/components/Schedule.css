@@ -46,7 +46,7 @@
 }
 
 .schedule .game.active {
-  background: #4d4d4d;
+  background: #4d4d4d !important;
 }
 
 .schedule .game.active .engineName {

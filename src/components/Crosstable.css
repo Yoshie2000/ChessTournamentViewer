@@ -46,6 +46,15 @@
   text-wrap: nowrap;
 }
 
+.crosstable .engineName,
+.crosstable .engineStats {
+  margin: 0;
+}
+
+.crosstable .engineStats {
+  color: #a1a1a1;
+}
+
 .crosstable .h2h {
   display: grid;
   grid-template-columns: repeat(4, auto);

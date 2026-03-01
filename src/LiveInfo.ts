@@ -38,6 +38,7 @@ export const EmptyEngineDefinition: CCCEngine = {
   imageUrl: "",
   name: "",
   perf: "",
+  playedGames: "",
   points: "",
   rating: "",
   updatedAt: "",
