@@ -38,7 +38,15 @@ export function formatTime(time: number) {
 }
 
 const EngineCard = memo(
-  ({ engine, info, time, placeholder, fen, opponentInfo, kibitzerLayout }: EngineCardProps) => {
+  ({
+    engine,
+    info,
+    time,
+    placeholder,
+    fen,
+    opponentInfo,
+    kibitzerLayout,
+  }: EngineCardProps) => {
     const data = info?.info;
     const loading = !data || !engine || !info || !time;
 
@@ -73,7 +81,8 @@ const EngineCard = memo(
       return () => clearTimeout(timeout);
     }, [moves]);
 
-    const setPvMoveNumber = useCallback((callback: ((previous: number) => number)) => {
+    const setPvMoveNumber = useCallback(
+      (callback: (previous: number) => number) => {
         pvMoveNumber.current = callback(pvMoveNumber.current);
         updateBoard();
       },
@@ -99,7 +108,9 @@ const EngineCard = memo(
     const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
     return (
-      <div className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}>
+      <div
+        className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}
+      >
         <div className="engineLeftSection">
           <div className="engineInfoHeader">
             {!engine ? (
@@ -117,7 +128,12 @@ const EngineCard = memo(
 
           <div className="engineInfoTable">
             {fields.map(([label, value]) => (
-              <div className={"engineField " + label?.replace(" ", "").toLowerCase()} key={label}>
+              <div
+                className={
+                  "engineField " + label?.replace(" ", "").toLowerCase()
+                }
+                key={label}
+              >
                 {loading ? (
                   <SkeletonText width="100%" />
                 ) : (

@@ -23,11 +23,11 @@ const PLAYING_ENGINES = ["white", "black"] as const;
 export function EngineWindow({ liveInfos, clocks, fen }: EngineWindowProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
   const activeKibitzers = (["green", "blue", "red"] as const).filter(
-      (color) => !!liveInfos[color].liveInfo
+    (color) => !!liveInfos[color].liveInfo
   );
   const kibitzerDisagreement = useMemo(() => {
     const kibitzerLiveInfos = activeKibitzers.map(
-        (color) => liveInfos[color].liveInfo
+      (color) => liveInfos[color].liveInfo
     );
     return findPvDisagreementPoint(fen, ...kibitzerLiveInfos);
   }, [fen, JSON.stringify(activeKibitzers)]);

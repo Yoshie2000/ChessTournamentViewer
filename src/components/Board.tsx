@@ -106,7 +106,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
               opacity: 1,
               lineWidth: 10,
             },
-            red: { key: "red", color: "#ff1f1f", opacity: 0.75, lineWidth: 4, },
+            red: { key: "red", color: "#ff1f1f", opacity: 0.75, lineWidth: 4 },
             blue: {
               key: "blue",
               color: "#0D47A1",

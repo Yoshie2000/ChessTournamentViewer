@@ -48,7 +48,7 @@ export const EmptyEngineDefinition: CCCEngine = {
 
 export function extractLiveInfoFromTCECComment(
   comment: string,
-  fenBeforeMove: string,
+  fenBeforeMove: string
 ): LiveInfoEntry {
   const ply = plyFromFen(fenBeforeMove);
   const data = comment.split(", ") ?? [];
@@ -105,7 +105,7 @@ function extractLiveInfoFromTCECGame(game: Chess960) {
       const fenBeforeMove = game.fenAt(ply - 1);
       const liveInfo = extractLiveInfoFromTCECComment(
         value.comment ?? "",
-        fenBeforeMove,
+        fenBeforeMove
       );
       if (!liveInfo) return;
 
@@ -135,7 +135,10 @@ export function extractLiveInfoFromGame(game: Chess960) {
     }
 
     const pvString = data[8].replace("pv=", "").replaceAll('"', "");
-    const sanPv = uciToSan(allValues[i - 1].fen ?? "", pvString.split(" ")).join(" ")
+    const sanPv = uciToSan(
+      allValues[i - 1].fen ?? "",
+      pvString.split(" ")
+    ).join(" ");
 
     const liveInfo: CCCLiveInfo = {
       type: "liveInfo",
@@ -199,8 +202,7 @@ export function extractLiveInfoFromInfoString(
   brush: string = ""
 ) {
   let data = raw.split(" ");
-  if (data.includes("string"))
-    data = data.slice(0, data.indexOf("string") - 1);
+  if (data.includes("string")) data = data.slice(0, data.indexOf("string") - 1);
 
   const color = fen.includes(" w ") ? "white" : "black";
   const ply = plyFromFen(fen);

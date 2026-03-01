@@ -32,7 +32,11 @@ export function getGameAtMoveNumber(
 ) {
   const game = new Chess960(fen);
 
-  for (let i = 0; (i < moveNumber || moveNumber === -1) && i < moves.length; i++) {
+  for (
+    let i = 0;
+    (i < moveNumber || moveNumber === -1) && i < moves.length;
+    i++
+  ) {
     game.move(moves[i], { strict: false });
   }
   return game;
@@ -287,7 +291,7 @@ type MoveRowProps = {
   disagreementWhite: boolean;
   disagreementBlack: boolean;
   setCurrentMoveNumber: (callback: (n: number) => number) => void;
-}
+};
 
 const MoveRow = memo(
   ({

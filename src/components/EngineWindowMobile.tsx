@@ -41,7 +41,9 @@ export function EngineWindowMobile({ fen, liveInfos }: EngineWindowProps) {
   return (
     <div className="engineWindowMobile">
       <div className="engineTabs">
-        {TABS.filter((tab) => !tab.includes("Kibitzer") || activeKibitzers.length > 0).map((tab) => (
+        {TABS.filter(
+          (tab) => !tab.includes("Kibitzer") || activeKibitzers.length > 0
+        ).map((tab) => (
           <button
             key={tab}
             className={activeTab === tab ? "active" : ""}
