@@ -135,7 +135,7 @@ const Schedule = memo(
                 : null;
 
             let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
-            gameClass += !game.outcome ? " future" : "";
+            gameClass += !game.outcome && !isCurrentGame ? " future" : "";
             gameClass +=
               game.roundNr !== gamesList.at(i + 1)?.roundNr
                 ? " lastOfRound"
@@ -147,13 +147,17 @@ const Schedule = memo(
                 ? formatOutcome(game.outcome)
                 : formatDuration(averageDuration * (i - currentGameIdx));
 
+            const ongoingAndNotSelectedGame = isCurrentGame && !isSelectedGame;
+
             return (
               <div
                 className={"game" + gameClass}
                 ref={ref}
                 key={game.gameNr}
                 onClick={
-                  game.outcome ? () => requestEvent(game.gameNr) : undefined
+                  game.outcome || ongoingAndNotSelectedGame
+                    ? () => requestEvent(game.gameNr)
+                    : undefined
                 }
               >
                 <span className="round">#{i + 1}</span>
