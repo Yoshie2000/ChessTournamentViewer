@@ -94,6 +94,9 @@ const Schedule = memo(
       60;
     const currentGameIdx = event.tournamentDetails.schedule.past.length;
 
+    const isTCEC = window.location.search.includes("tcec");
+    const gamesPerRound = engines.length * (engines.length - 1);
+
     return (
       <>
         <div className="schedule" ref={scheduleRef}>
@@ -136,10 +139,15 @@ const Schedule = memo(
 
             let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
             gameClass += !game.outcome && !isCurrentGame ? " future" : "";
-            gameClass +=
-              game.roundNr !== gamesList.at(i + 1)?.roundNr
-                ? " lastOfRound"
-                : "";
+
+            if (!isTCEC) {
+              gameClass += (i + 1) % gamesPerRound === 0 ? " lastOfRound" : "";
+            } else {
+              gameClass +=
+                game.roundNr !== gamesList.at(i + 1)?.roundNr
+                  ? " lastOfRound"
+                  : "";
+            }
 
             const vsText = isCurrentGame
               ? "vs."
