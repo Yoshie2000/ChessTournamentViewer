@@ -27,12 +27,6 @@ function getImageUrl(engine?: CCCEngine) {
 export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
   const src = getImageUrl(engine);
 
-  // const src1 = engine?.imageUrl.includes("https")
-  //   ? engine.imageUrl
-  //   : "https://images.chesscomfiles.com/chess-themes/computer_chess_championship/avatars/" +
-  //     engine.imageUrl +
-  //     ".png";
-
   return (
     <img
       src={src}
