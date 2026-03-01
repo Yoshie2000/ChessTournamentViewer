@@ -20,7 +20,14 @@ export class CCCWebSocket implements TournamentWebSocket {
 
     this.ws.onmessage = (e) => {
       const messages = JSON.parse(e.data) as CCCMessage[];
-      for (const msg of messages) onMessage(msg);
+      for (let msg of messages) {
+        if (msg.type === "eventUpdate") {
+          msg.tournamentDetails.hasGamePairs = true;
+          msg.tournamentDetails.isRoundRobin = true;
+        }
+
+        onMessage(msg);
+      }
     };
 
     this.ws.onclose = () => {

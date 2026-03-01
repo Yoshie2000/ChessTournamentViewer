@@ -51,6 +51,8 @@ type CCCEventUpdate = {
     tc: TimeControl;
     schedule: { past: CCCGame[]; present?: CCCGame; future: CCCGame[] };
     engines: CCCEngine[];
+    hasGamePairs: boolean;
+    isRoundRobin: boolean;
   };
 };
 
