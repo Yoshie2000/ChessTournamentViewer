@@ -25,7 +25,7 @@ const COLORS = {
   blue: "rgba(21, 101, 192, 0.7)",
 };
 const evalScale = 0.45;
-const mateScaled = 3.8;
+const mateScaled = 4;
 const MODES = [
   {
     name: "Eval",
