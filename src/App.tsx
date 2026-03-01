@@ -394,7 +394,12 @@ function App() {
           }
         }, 0);
         const perf = (100 * points) / playedGames.length;
-        return { ...engine, perf: perf.toFixed(1), points: points.toFixed(1) };
+        return {
+          ...engine,
+          perf: perf.toFixed(1),
+          points: points.toFixed(1),
+          playedGames: playedGames.length.toFixed(1),
+        };
       })
       .sort((a, b) => Number(b.perf) - Number(a.perf));
   }, [cccEvent.current]);
@@ -498,7 +503,7 @@ function App() {
             <button onClick={() => setPopupState("crosstable")}>
               Show Crosstable
             </button>
-            <StandingsTable engines={engines} cccEvent={cccEvent.current} />
+            <StandingsTable engines={engines} />
           </>
         ) : (
           <div className="sectionSpinner">
