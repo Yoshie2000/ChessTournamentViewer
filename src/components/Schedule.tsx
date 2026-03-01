@@ -100,10 +100,10 @@ const Schedule = memo(
           {gamesList.map((game, i) => {
             const gameWhite = engines.find(
               (engine) => engine.id === game.whiteId
-            )!!;
+            );
             const gameBlack = engines.find(
               (engine) => engine.id === game.blackId
-            )!!;
+            );
 
             const whiteClass =
               game.outcome === "1-0"
@@ -163,11 +163,11 @@ const Schedule = memo(
                 <span className="round">#{i + 1}</span>
                 <EngineLogo engine={gameWhite} size={28} />
                 <span className={"engineName " + whiteClass}>
-                  {gameWhite.name}
+                  {gameWhite?.name}
                 </span>
                 <span className="vs">{vsText}</span>
                 <span className={"engineName " + blackClass}>
-                  {gameBlack.name}
+                  {gameBlack?.name}
                 </span>
                 <EngineLogo engine={gameBlack} size={28} />
               </div>
