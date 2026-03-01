@@ -487,6 +487,48 @@ export class TCECSocket implements TournamentWebSocket {
           .filter((game) => !game.Result && game.Termination !== "in progress")
           .map(toCccGame);
 
+        const allGames = [...past, ...(present ? [present] : []), ...future];
+
+        // Create an empty set of opponents per engine
+        const opponentsPerEngine = engines.reduce(
+          (prev, cur) => ({ ...prev, [cur.id]: new Set<string>() }),
+          {} as Record<string, Set<string>>
+        );
+
+        // Check that each pair of consecutive games has switched opponents
+        const hasGamePairs = allGames
+          .map((_, idx) => {
+            const pairStart = 2 * Math.floor(idx / 2);
+            const first = allGames[pairStart];
+            const second = allGames[pairStart + 1];
+
+            // Ignore games without valid engines
+            if (
+              opponentsPerEngine[first.blackId] === undefined ||
+              opponentsPerEngine[first.whiteId] === undefined ||
+              opponentsPerEngine[second.blackId] === undefined ||
+              opponentsPerEngine[second.whiteId] === undefined
+            ) {
+              return true;
+            }
+
+            opponentsPerEngine[first.blackId].add(first.whiteId);
+            opponentsPerEngine[first.whiteId].add(first.blackId);
+            opponentsPerEngine[second.blackId].add(second.whiteId);
+            opponentsPerEngine[second.whiteId].add(second.blackId);
+
+            return (
+              first.blackId === second.whiteId &&
+              first.whiteId === second.blackId
+            );
+          })
+          .every((value) => value);
+
+        // Check that all engines are playing each other
+        const isRoundRobin = engines.every(
+          (engine) => opponentsPerEngine[engine.id].size === engines.length - 1
+        );
+
         const event: CCCEventUpdate = {
           type: "eventUpdate",
           tournamentDetails: {
@@ -495,6 +537,8 @@ export class TCECSocket implements TournamentWebSocket {
             tc: { incr: 0, init: 0 },
             engines,
             schedule: { past, future, present },
+            hasGamePairs,
+            isRoundRobin,
           },
         };
         this.onMessage?.(event);

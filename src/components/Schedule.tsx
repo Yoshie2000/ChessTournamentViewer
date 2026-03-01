@@ -94,12 +94,14 @@ const Schedule = memo(
       60;
     const currentGameIdx = event.tournamentDetails.schedule.past.length;
 
-    const isTCEC = window.location.search.includes("tcec");
     const gamesPerRound = engines.length * (engines.length - 1);
+    const scheduleClass = event.tournamentDetails.hasGamePairs
+      ? " gamePairs"
+      : "";
 
     return (
       <>
-        <div className="schedule" ref={scheduleRef}>
+        <div className={"schedule" + scheduleClass} ref={scheduleRef}>
           {gamesList.map((game, i) => {
             const gameWhite = engines.find(
               (engine) => engine.id === game.whiteId
@@ -140,14 +142,11 @@ const Schedule = memo(
             let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
             gameClass += !game.outcome && !isCurrentGame ? " future" : "";
 
-            if (!isTCEC) {
-              gameClass += (i + 1) % gamesPerRound === 0 ? " lastOfRound" : "";
-            } else {
-              gameClass +=
-                game.roundNr !== gamesList.at(i + 1)?.roundNr
-                  ? " lastOfRound"
-                  : "";
-            }
+            const isLastOfRound =
+              event.tournamentDetails.isRoundRobin &&
+              gamesPerRound > 2 &&
+              (i + 1) % gamesPerRound === 0;
+            gameClass += isLastOfRound ? " lastOfRound" : "";
 
             const vsText = isCurrentGame
               ? "vs."

@@ -20,13 +20,21 @@
   border-bottom: none !important;
 }
 
-.schedule .game:nth-child(4n + 1),
-.schedule .game:nth-child(4n + 2) {
+.schedule .game:nth-child(2n + 1) {
   background: #2a2a2a;
 }
 
-.schedule .game:nth-child(4n + 3),
-.schedule .game:nth-child(4n + 4) {
+.schedule .game:nth-child(2n + 2) {
+  background: #343434;
+}
+
+.schedule.gamePairs .game:nth-child(4n + 1),
+.schedule.gamePairs .game:nth-child(4n + 2) {
+  background: #2a2a2a;
+}
+
+.schedule.gamePairs .game:nth-child(4n + 3),
+.schedule.gamePairs .game:nth-child(4n + 4) {
   background: #343434;
 }
 
