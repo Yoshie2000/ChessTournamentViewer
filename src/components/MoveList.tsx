@@ -32,7 +32,11 @@ export function getGameAtMoveNumber(
 ) {
   const game = new Chess960(fen);
 
-  for (let i = 0; (i < moveNumber || moveNumber === -1) && i < moves.length; i++) {
+  for (
+    let i = 0;
+    (i < moveNumber || moveNumber === -1) && i < moves.length;
+    i++
+  ) {
     game.move(moves[i], { strict: false });
   }
   return game;
@@ -237,34 +241,63 @@ const MoveList = memo(
         {controllers && (
           <div className="moveButtonsWrapper">
             <div className="moveButtons">
-              <button onClick={undoAllMoves} disabled={currentMoveNumber === 0}>
+              <button
+                onClick={undoAllMoves}
+                disabled={currentMoveNumber === 0}
+                title="Go to start (↑)"
+              >
                 <MdKeyboardDoubleArrowLeft />
               </button>
-              <button onClick={undoMove} disabled={currentMoveNumber === 0}>
+              <button
+                onClick={undoMove}
+                disabled={currentMoveNumber === 0}
+                title="Previous move (←)"
+              >
                 <MdKeyboardArrowLeft />
               </button>
-              <button onClick={redoMove} disabled={currentMoveNumber === -1}>
+              <button
+                onClick={redoMove}
+                disabled={currentMoveNumber === -1}
+                title="Next move (→)"
+              >
                 <MdKeyboardArrowRight />
               </button>
               <button
                 onClick={redoAllMoves}
                 disabled={currentMoveNumber === -1}
+                title="Go to end (↓)"
               >
                 <MdKeyboardDoubleArrowRight />
               </button>
             </div>
             <div className="moveButtons">
-              <button onClick={copyFen} style={{ fontSize: "1rem" }}>
+              <button
+                onClick={copyFen}
+                style={{ fontSize: "1rem" }}
+                title="Copy FEN to clipboard"
+              >
                 <LuClipboard />
               </button>
-              <button onClick={copyPgn} style={{ fontSize: "1rem" }}>
+              <button
+                onClick={copyPgn}
+                style={{ fontSize: "1rem" }}
+                title="Copy PGN to clipboard"
+              >
                 <LuClipboardList />
               </button>
-              <button onClick={openChessDB} style={{ fontSize: "1rem" }}>
+              <button
+                onClick={openChessDB}
+                style={{ fontSize: "1rem" }}
+                title="Analyse on ChessDB"
+              >
                 <LuDatabase />
               </button>
               {downloadURL && (
-                <button onClick={downloadLogs} style={{ fontSize: "1rem" }}>
+                <button
+                  onClick={downloadLogs}
+                  style={{ fontSize: "1rem" }}
+                  title="Download logs"
+                >
                   <LuDownload />
                 </button>
               )}
@@ -287,7 +320,7 @@ type MoveRowProps = {
   disagreementWhite: boolean;
   disagreementBlack: boolean;
   setCurrentMoveNumber: (callback: (n: number) => number) => void;
-}
+};
 
 const MoveRow = memo(
   ({
