@@ -6,6 +6,7 @@ type CrosstableProps = {
   engines: CCCEngine[];
   cccEvent: CCCEventUpdate;
   onClose: () => void;
+  requestEvent: (gameNr?: string) => void;
 };
 
 type GameResult = "win" | "loss" | "draw" | "tbd";
@@ -214,7 +215,12 @@ function formatPenta(penta: Penta): string {
   return "[" + penta.join(", ") + "]";
 }
 
-export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
+export function Crosstable({
+  engines,
+  cccEvent,
+  onClose,
+  requestEvent,
+}: CrosstableProps) {
   const allGames = [
     ...cccEvent.tournamentDetails.schedule.past,
     ...(cccEvent.tournamentDetails.schedule.present
@@ -302,10 +308,24 @@ export function Crosstable({ engines, cccEvent, onClose }: CrosstableProps) {
                             .filter(Boolean)
                             .join(" ")}
                         >
-                          <span className={result1}>
+                          <span
+                            className={result1}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              requestEvent(gamePair[0].gameNr);
+                              onClose();
+                            }}
+                          >
                             {textFromResult(result1)}
                           </span>
-                          <span className={result2}>
+                          <span
+                            className={result2}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              requestEvent(gamePair[1].gameNr);
+                              onClose();
+                            }}
+                          >
                             {textFromResult(result2)}
                           </span>
                         </span>
