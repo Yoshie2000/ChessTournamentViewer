@@ -17,7 +17,7 @@ function formatDuration(value: number) {
 }
 
 function formatOutcome(outcome: string) {
-    return outcome.replace(/-/, "\u2013"); // en dash
+  return outcome.replace(/-/, "\u2013"); // en dash
 }
 
 const Schedule = memo(
@@ -100,10 +100,14 @@ const Schedule = memo(
           {gamesList.map((game, i) => {
             const gameWhite = engines.find(
               (engine) => engine.id === game.whiteId
-            )!!;
+            );
             const gameBlack = engines.find(
               (engine) => engine.id === game.blackId
-            )!!;
+            );
+
+            if (gameWhite === undefined || gameBlack === undefined) {
+              return;
+            }
 
             const whiteClass =
               game.outcome === "1-0"
