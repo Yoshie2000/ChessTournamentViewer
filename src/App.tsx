@@ -84,6 +84,9 @@ function App() {
   const setGame = useEventStore((state) => state.setGame);
   const setEventList = useEventStore((state) => state.setEventList);
 
+  const liveEngineData = useLiveInfo((state) => state.liveEngineData);
+  const setLiveEngineData = useLiveInfo((state) => state.setLiveEngineData);
+
   const [popupState, setPopupState] = useState<string>();
 
   const [clocks, setClocks] = useState<CCCClocks>({
@@ -103,13 +106,6 @@ function App() {
 
   const currentMoveNumber = useRef(-1);
 
-  const __liveInfosRefReplacement = useLiveInfo(
-    (state) => state.liveEngineData_REF_REPLACEMENT
-  );
-  const setLiveEngineData_REF_REPL = useLiveInfo(
-    (state) => state.setLiveEngineData_REF_REPL
-  );
-
   const getCurrentLiveInfos = useCallback(() => {
     const moveNumber =
       currentMoveNumber.current === game.current.length()
@@ -120,9 +116,9 @@ function App() {
     const turn = game.current.turnAt(index);
 
     function kibitzer(base: LiveInfoEntry, color: "red" | "green" | "blue") {
-      const array = __liveInfosRefReplacement[color].liveInfo;
+      const array = liveEngineData[color].liveInfo;
       return {
-        engineInfo: __liveInfosRefReplacement[color].engineInfo,
+        engineInfo: liveEngineData[color].engineInfo,
         liveInfo:
           array.at(base?.info.ply ?? moveNumber) ??
           array.at(base?.info.ply ? base?.info.ply - 1 : moveNumber),
@@ -130,45 +126,33 @@ function App() {
     }
 
     if (turn === "w") {
-      const white = __liveInfosRefReplacement.white.liveInfo.at(moveNumber);
-      const black = __liveInfosRefReplacement.black.liveInfo.at(
+      const white = liveEngineData.white.liveInfo.at(moveNumber);
+      const black = liveEngineData.black.liveInfo.at(
         moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
       );
 
       return {
-        black: {
-          liveInfo: black,
-          engineInfo: __liveInfosRefReplacement.black.engineInfo,
-        },
-        white: {
-          liveInfo: white,
-          engineInfo: __liveInfosRefReplacement.white.engineInfo,
-        },
+        black: { liveInfo: black, engineInfo: liveEngineData.black.engineInfo },
+        white: { liveInfo: white, engineInfo: liveEngineData.white.engineInfo },
         green: kibitzer(white, "green"),
         red: kibitzer(white, "red"),
         blue: kibitzer(white, "blue"),
       };
     } else {
-      const white = __liveInfosRefReplacement.white.liveInfo.at(
+      const white = liveEngineData.white.liveInfo.at(
         moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
       );
-      const black = __liveInfosRefReplacement.black.liveInfo.at(moveNumber);
+      const black = liveEngineData.black.liveInfo.at(moveNumber);
 
       return {
-        black: {
-          liveInfo: black,
-          engineInfo: __liveInfosRefReplacement.black.engineInfo,
-        },
-        white: {
-          liveInfo: white,
-          engineInfo: __liveInfosRefReplacement.white.engineInfo,
-        },
+        black: { liveInfo: black, engineInfo: liveEngineData.black.engineInfo },
+        white: { liveInfo: white, engineInfo: liveEngineData.white.engineInfo },
         green: kibitzer(black, "green"),
         red: kibitzer(black, "red"),
         blue: kibitzer(black, "blue"),
       };
     }
-  }, [__liveInfosRefReplacement]);
+  }, [liveEngineData]);
 
   const updateBoard = useCallback(
     (bypassRateLimit: boolean = false) => {
@@ -227,9 +211,9 @@ function App() {
       liveInfo: liveInfosBlack,
     };
 
-    setLiveEngineData_REF_REPL("white", wData);
-    setLiveEngineData_REF_REPL("black", bData);
-  }, [cccEvent, cccGame, setLiveEngineData_REF_REPL]);
+    setLiveEngineData("white", wData);
+    setLiveEngineData("black", bData);
+  }, [cccEvent, cccGame, setLiveEngineData]);
 
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
@@ -241,12 +225,12 @@ function App() {
       }
 
       const color = msg.info.color as keyof LiveEngineData;
-      const newLiveInfos = [...__liveInfosRefReplacement[color].liveInfo];
+      const newLiveInfos = [...liveEngineData[color].liveInfo];
       newLiveInfos[msg.info.ply] = msg;
 
-      setLiveEngineData_REF_REPL(color, { liveInfo: newLiveInfos });
+      setLiveEngineData(color, { liveInfo: newLiveInfos });
     },
-    [__liveInfosRefReplacement, setLiveEngineData_REF_REPL]
+    [liveEngineData, setLiveEngineData]
   );
 
   const handleMessage = useCallback(
@@ -260,17 +244,17 @@ function App() {
         case "gameUpdate": {
           game.current.loadPgn(msg.gameDetails.pgn);
 
-          setLiveEngineData_REF_REPL("green", {
+          setLiveEngineData("green", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: cccEvent ? loadLiveInfos(cccEvent, msg) : [],
           });
 
-          setLiveEngineData_REF_REPL("blue", {
+          setLiveEngineData("blue", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: [],
           });
 
-          setLiveEngineData_REF_REPL("red", {
+          setLiveEngineData("red", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: [],
           });
@@ -315,7 +299,7 @@ function App() {
         }
 
         case "kibitzer":
-          setLiveEngineData_REF_REPL(msg.color as EngineColor, {
+          setLiveEngineData(msg.color as EngineColor, {
             engineInfo: msg.engine,
           });
 
@@ -333,7 +317,7 @@ function App() {
       setEvent,
       setEventList,
       setGame,
-      setLiveEngineData_REF_REPL,
+      setLiveEngineData,
       updateBoard,
     ]
   );
@@ -357,25 +341,18 @@ function App() {
   useEffect(() => {
     const wsInstance = ws.current;
 
-    // ws.current.disconnect();
-
     if (
       !wsInstance.ws ||
       wsInstance.ws.readyState === wsInstance.ws.CLOSING ||
       wsInstance.ws.readyState === wsInstance.ws.CLOSED ||
       wsInstance.ws.readyState === undefined
     ) {
-      console.log("CONNECT");
       wsInstance.connect(handleMessage);
     } else if (
       wsInstance.ws.readyState === wsInstance.ws.OPEN ||
       wsInstance.ws.readyState === wsInstance.ws.CONNECTING
     ) {
-      console.log("setHANDLER");
-
       wsInstance.setHandler(handleMessage);
-    } else {
-      console.log("ELSE : ((((");
     }
 
     return () => {
@@ -417,10 +394,10 @@ function App() {
           if (game.current.getHeaders()["Event"] === "?") return;
           if (game.current.fen() != result.fen) return;
 
-          const newLiveInfos = [...__liveInfosRefReplacement.green.liveInfo];
+          const newLiveInfos = [...liveEngineData.green.liveInfo];
           newLiveInfos[result.liveInfo.info.ply] = result.liveInfo;
 
-          setLiveEngineData_REF_REPL("green", {
+          setLiveEngineData("green", {
             engineInfo: activeKibitzer.getEngineInfo(),
             liveInfo: newLiveInfos,
           });
@@ -434,13 +411,13 @@ function App() {
       }
     );
   }, [
-    __liveInfosRefReplacement.green.liveInfo,
+    liveEngineData.green.liveInfo,
     activeKibitzer,
     cccEvent,
     cccEvent?.tournamentDetails.tNr,
     cccGame,
     cccGame?.gameDetails.gameNr,
-    setLiveEngineData_REF_REPL,
+    setLiveEngineData,
     updateBoard,
   ]);
 

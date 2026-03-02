@@ -18,8 +18,8 @@ type LiveInfoData = {
     data: Partial<LiveEngineDataEntryObject>
   ) => void;
 
-  liveEngineData_REF_REPLACEMENT: LiveEngineData;
-  setLiveEngineData_REF_REPL: (
+  liveEngineData: LiveEngineData;
+  setLiveEngineData: (
     color: keyof LiveEngineData,
     data: Partial<LiveEngineDataObject>
   ) => void;
@@ -30,7 +30,7 @@ type LiveInfoData = {
 
 export const useLiveInfo = create<LiveInfoData>()(
   immer((set) => ({
-    liveEngineData_REF_REPLACEMENT: {
+    liveEngineData: {
       white: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
       black: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
       blue: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
@@ -50,10 +50,10 @@ export const useLiveInfo = create<LiveInfoData>()(
         state.moveNumberInfo = { ...state.moveNumberInfo, ...data };
       });
     },
-    setLiveEngineData_REF_REPL(color, data) {
+    setLiveEngineData(color, data) {
       set((state) => {
-        state.liveEngineData_REF_REPLACEMENT[color] = {
-          ...state.liveEngineData_REF_REPLACEMENT[color],
+        state.liveEngineData[color] = {
+          ...state.liveEngineData[color],
           ...data,
         };
       });
