@@ -119,7 +119,7 @@ const EngineCard = memo(
               <EngineLogo engine={engine!} />
             )}
 
-            <div className="engineName">
+            <div className="engineName" title={engine?.name ?? ""}>
               {!engine ? (placeholder ?? "Loading…") : engine!.name}
             </div>
           </div>

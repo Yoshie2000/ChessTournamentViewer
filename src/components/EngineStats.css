@@ -16,7 +16,7 @@
 
 .engineStats .engineFieldKey {
   color: #a1a1a1;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   width: 30px;
   text-align: left;
 }
@@ -24,10 +24,10 @@
 .engineStats .engineFieldValue {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
 }
 
 .engineStats .engineEvaluation {
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: var(--font-xl);
 }

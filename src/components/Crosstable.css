@@ -69,7 +69,7 @@
 
 .crosstable .h2hStats {
   margin-bottom: 0.4rem;
-  font-size: 1rem;
+  font-size: var(--font-md);
   line-height: 1.2;
   color: #a1a1a1;
 }

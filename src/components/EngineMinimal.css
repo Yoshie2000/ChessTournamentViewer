@@ -19,7 +19,7 @@
   }
 
   .engineMinimal .engineField .key::first-letter {
-    font-size: 0.9rem;
+    font-size: var(--font-sm);
   }
 
   .engineMinimal .engineField .value {
@@ -82,7 +82,7 @@
     padding: 0.5rem 1rem;
     row-gap: 0.25rem;
     column-gap: 2rem;
-    font-size: 0.9rem;
+    font-size: var(--font-sm);
   }
 
   .engineMinimal .engineField {
@@ -119,7 +119,7 @@
 
   .engineMinimal .enginePv,
   .engineMinimal .enginePv .pvMove {
-    font-size: 0.9rem;
+    font-size: var(--font-sm);
     color: #a1a1a1;
   }
 }

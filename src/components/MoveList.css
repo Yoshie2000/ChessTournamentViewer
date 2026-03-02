@@ -7,7 +7,7 @@
   border-top-left-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   width: var(--movelist-width);
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   padding: 0.5rem !important;
   position: relative;
   border-radius: 8px;

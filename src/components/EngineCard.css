@@ -28,6 +28,12 @@
 
 .engineComponent .engineName {
   font-weight: bold;
+  text-overflow: ellipsis;
+  text-wrap: break-spaces;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(var(--engine-card-info-width));
 }
 
 .engineComponent .engineInfoHeader {
@@ -42,7 +48,7 @@
   grid-template-columns: 1fr;
   row-gap: 0.25rem;
   margin-left: 0.25rem;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   padding: 0.5rem 0;
   flex-grow: 1;
 }
@@ -53,7 +59,7 @@
   justify-content: center;
   flex-grow: 1;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: var(--font-xl);
 }
 
 .engineComponent .engineField {
@@ -115,55 +121,9 @@
 
 .engineComponent .enginePv,
 .engineComponent .enginePv .pvMove {
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   color: #a1a1a1;
 }
 
 @media (max-width: 1750px) {
-  .engineComponent .engineField.hashfull {
-    display: none;
-  }
-}
-
-@media (max-width: 1600px) {
-  .engineComponent .engineField.tbhits {
-    display: none;
-  }
-
-  .engineComponent .engineRightSection {
-    flex-direction: column;
-    height: calc(100% - 2 * var(--padding)) !important;
-    width: var(--engine-board-width);
-    transform: translateY(var(--padding));
-    margin: 0 auto;
-  }
-
-  .engineComponent .movesWindow {
-    height: calc(100% - var(--engine-board-width));
-    width: 100%;
-    padding-bottom: 0 !important;
-    padding-right: 0 !important;
-    padding-left: 0 !important;
-  }
-
-  .engineComponent .moveTable {
-    width: var(--engine-board-width) !important;
-  }
-
-  .engineComponent .moveTable .move.right {
-    margin: 0 !important;
-  }
-}
-
-@media (max-width: 1400px) {
-  .engineComponent {
-    border: none;
-    padding: 0;
-    height: calc(100% - 44px);
-    width: 100%;
-  }
-
-  .engineComponent .engineLeftSection {
-    width: 100%;
-  }
 }

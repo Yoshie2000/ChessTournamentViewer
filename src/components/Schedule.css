@@ -9,7 +9,7 @@
   grid-template-columns: 50px 40px 1fr 7rem 1fr 40px;
   height: 40px;
   border-bottom: 1px solid #232323;
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
 }
 
 .schedule .game * {
@@ -89,7 +89,7 @@
   }
 
   .schedule .game .engineName {
-    font-size: 0.9rem;
+    font-size: var(--font-sm);
   }
 
   .schedule .game .round,
