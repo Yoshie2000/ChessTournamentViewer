@@ -26,6 +26,7 @@ const Schedule = memo(
     const currentGameRef = useRef<HTMLDivElement>(null);
 
     const [scrolledToCurrentGame, setScrolledToCurrentGame] = useState(false);
+    const userClickedRef = useRef(false);
 
     function scrollToCurrentGame() {
       if (
@@ -63,11 +64,16 @@ const Schedule = memo(
     }, [scheduleRef.current, currentGameRef.current]);
 
     useEffect(() => {
+      if (userClickedRef.current) {
+        userClickedRef.current = false;
+        return;
+      }
       scrollToCurrentGame();
       setScrolledToCurrentGame(false);
     }, [
       event.tournamentDetails.tNr,
       event.tournamentDetails.schedule.present?.gameNr,
+      selectedGame.gameDetails.gameNr,
     ]);
 
     const gamesList = [
@@ -137,7 +143,9 @@ const Schedule = memo(
             const ref =
               isCurrentGame || (isSelectedGame && tournamentOver)
                 ? currentGameRef
-                : null;
+                : isSelectedGame
+                  ? currentGameRef
+                  : null;
 
             let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
             gameClass += !game.outcome && !isCurrentGame ? " future" : "";
@@ -163,7 +171,10 @@ const Schedule = memo(
                 key={game.gameNr}
                 onClick={
                   game.outcome || ongoingAndNotSelectedGame
-                    ? () => requestEvent(game.gameNr)
+                    ? () => {
+                        userClickedRef.current = true;
+                        requestEvent(game.gameNr);
+                      }
                     : undefined
                 }
               >
