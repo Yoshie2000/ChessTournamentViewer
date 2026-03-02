@@ -2,16 +2,11 @@ import { Line } from "react-chartjs-2";
 import type { CCCLiveInfo } from "../types";
 import { useState } from "react";
 import "./GameGraph.css";
-import type { LiveInfoEntry } from "../LiveInfo";
 import { formatLargeNumber, formatTime } from "./EngineCard";
 import type { PointElement } from "chart.js";
+import { useLiveInfo } from "../context/LiveInfoContext";
 
 type GameGraphProps = {
-  liveInfosWhite: LiveInfoEntry[];
-  liveInfosBlack: LiveInfoEntry[];
-  liveInfosGreen: LiveInfoEntry[];
-  liveInfosRed: LiveInfoEntry[];
-  liveInfosBlue: LiveInfoEntry[];
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   currentMoveNumber: number;
   reducedMotion: boolean;
@@ -142,21 +137,20 @@ const MODES = [
 ];
 
 export function GameGraph({
-  liveInfosWhite,
-  liveInfosBlack,
-  liveInfosGreen,
-  liveInfosRed,
-  liveInfosBlue,
   setCurrentMoveNumber,
   currentMoveNumber,
   reducedMotion,
 }: GameGraphProps) {
+  const liveInfosObj = useLiveInfo(
+    (state) => state.liveEngineData_REF_REPLACEMENT
+  );
+
   const liveInfos = {
-    white: liveInfosWhite,
-    black: liveInfosBlack,
-    green: liveInfosGreen,
-    red: liveInfosRed,
-    blue: liveInfosBlue,
+    white: liveInfosObj.white.liveInfo,
+    black: liveInfosObj.black.liveInfo,
+    green: liveInfosObj.green.liveInfo,
+    red: liveInfosObj.red.liveInfo,
+    blue: liveInfosObj.blue.liveInfo,
   };
 
   const [mode, setMode] = useState(0);

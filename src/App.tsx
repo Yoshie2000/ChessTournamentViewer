@@ -6,6 +6,7 @@ import type {
   CCCEventsListUpdate,
   CCCClocks,
   CCCGameUpdate,
+  CCCLiveInfo,
 } from "./types";
 import {
   CategoryScale,
@@ -25,9 +26,10 @@ import "./components/Popup.css";
 import {
   extractLiveInfoFromGame,
   type LiveInfoEntry,
-  type LiveEngineDataEntry,
   type LiveEngineData,
   EmptyEngineDefinition,
+  type LiveEngineDataObject,
+  type EngineColor,
 } from "./LiveInfo";
 import { Crosstable } from "./components/Crosstable";
 import { EventList } from "./components/EventList";
@@ -46,6 +48,8 @@ import { Board, type BoardHandle } from "./components/Board";
 import { MoveList } from "./components/MoveList";
 import { loadLiveInfos, saveLiveInfos } from "./LocalStorage";
 import { uciToSan } from "./utils";
+import { useLiveInfo } from "./context/LiveInfoContext";
+import { useEventStore } from "./context/EventContext";
 
 const CLOCK_UPDATE_MS = 100;
 
@@ -59,23 +63,29 @@ Chart.register(
   Legend
 );
 
+const _initialWS = window.location.search.includes("tcec")
+  ? new TCECSocket()
+  : new CCCWebSocket();
+
 function App() {
   const boardHandle = useRef<BoardHandle>(null);
   const game = useRef(new Chess960());
-  const ws = useRef<TournamentWebSocket>(
-    window.location.search.includes("tcec")
-      ? new TCECSocket()
-      : new CCCWebSocket()
-  );
+  const ws = useRef<TournamentWebSocket>(_initialWS);
 
   const kibitzer = useRef<EngineWorker[]>(null);
   const [fen, setFen] = useState(game.current.fen());
   const [moves, setMoves] = useState<string[]>([]);
 
+  const cccEvent = useEventStore((state) => state.cccEvent);
+  const cccGame = useEventStore((state) => state.cccGame);
+  const cccEventList = useEventStore((state) => state.cccEventList);
+
+  const setEvent = useEventStore((state) => state.setEvent);
+  const setGame = useEventStore((state) => state.setGame);
+  const setEventList = useEventStore((state) => state.setEventList);
+
   const [popupState, setPopupState] = useState<string>();
-  const [cccEventList, setCccEventList] = useState<CCCEventsListUpdate>();
-  const cccEvent = useRef<CCCEventUpdate>(undefined);
-  const [cccGame, setCccGame] = useState<CCCGameUpdate>();
+
   const [clocks, setClocks] = useState<CCCClocks>({
     binc: "0",
     winc: "0",
@@ -92,15 +102,15 @@ function App() {
   ).matches;
 
   const currentMoveNumber = useRef(-1);
-  const liveInfosRef = useRef<LiveEngineData>({
-    white: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
-    black: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
-    red: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
-    blue: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
-    green: { engineInfo: EmptyEngineDefinition, liveInfo: [] },
-  });
 
-  function getCurrentLiveInfos(): LiveEngineDataEntry {
+  const __liveInfosRefReplacement = useLiveInfo(
+    (state) => state.liveEngineData_REF_REPLACEMENT
+  );
+  const setLiveEngineData_REF_REPL = useLiveInfo(
+    (state) => state.setLiveEngineData_REF_REPL
+  );
+
+  const getCurrentLiveInfos = useCallback(() => {
     const moveNumber =
       currentMoveNumber.current === game.current.length()
         ? -1
@@ -110,9 +120,9 @@ function App() {
     const turn = game.current.turnAt(index);
 
     function kibitzer(base: LiveInfoEntry, color: "red" | "green" | "blue") {
-      const array = liveInfosRef.current[color].liveInfo;
+      const array = __liveInfosRefReplacement[color].liveInfo;
       return {
-        engineInfo: liveInfosRef.current[color].engineInfo,
+        engineInfo: __liveInfosRefReplacement[color].engineInfo,
         liveInfo:
           array.at(base?.info.ply ?? moveNumber) ??
           array.at(base?.info.ply ? base?.info.ply - 1 : moveNumber),
@@ -120,54 +130,57 @@ function App() {
     }
 
     if (turn === "w") {
-      const white = liveInfosRef.current.white.liveInfo.at(moveNumber);
-      const black = liveInfosRef.current.black.liveInfo.at(
+      const white = __liveInfosRefReplacement.white.liveInfo.at(moveNumber);
+      const black = __liveInfosRefReplacement.black.liveInfo.at(
         moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
       );
 
       return {
         black: {
           liveInfo: black,
-          engineInfo: liveInfosRef.current.black.engineInfo,
+          engineInfo: __liveInfosRefReplacement.black.engineInfo,
         },
         white: {
           liveInfo: white,
-          engineInfo: liveInfosRef.current.white.engineInfo,
+          engineInfo: __liveInfosRefReplacement.white.engineInfo,
         },
         green: kibitzer(white, "green"),
         red: kibitzer(white, "red"),
         blue: kibitzer(white, "blue"),
       };
     } else {
-      const white = liveInfosRef.current.white.liveInfo.at(
+      const white = __liveInfosRefReplacement.white.liveInfo.at(
         moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
       );
-      const black = liveInfosRef.current.black.liveInfo.at(moveNumber);
+      const black = __liveInfosRefReplacement.black.liveInfo.at(moveNumber);
 
       return {
         black: {
           liveInfo: black,
-          engineInfo: liveInfosRef.current.black.engineInfo,
+          engineInfo: __liveInfosRefReplacement.black.engineInfo,
         },
         white: {
           liveInfo: white,
-          engineInfo: liveInfosRef.current.white.engineInfo,
+          engineInfo: __liveInfosRefReplacement.white.engineInfo,
         },
         green: kibitzer(black, "green"),
         red: kibitzer(black, "red"),
         blue: kibitzer(black, "blue"),
       };
     }
-  }
+  }, [__liveInfosRefReplacement]);
 
-  function updateBoard(bypassRateLimit: boolean = false) {
-    boardHandle.current?.updateBoard(
-      game.current,
-      currentMoveNumber.current,
-      getCurrentLiveInfos(),
-      bypassRateLimit
-    );
-  }
+  const updateBoard = useCallback(
+    (bypassRateLimit: boolean = false) => {
+      boardHandle.current?.updateBoard(
+        game.current,
+        currentMoveNumber.current,
+        getCurrentLiveInfos(),
+        bypassRateLimit
+      );
+    },
+    [getCurrentLiveInfos]
+  );
 
   function updateClocks() {
     setClocks((currentClock) => {
@@ -185,94 +198,148 @@ function App() {
     });
   }
 
-  function handleMessage(msg: CCCMessage) {
-    switch (msg.type) {
-      case "eventUpdate":
-        cccEvent.current = msg;
-        break;
+  useEffect(() => {
+    if (!cccEvent) {
+      return;
+    }
 
-      case "gameUpdate":
-        game.current.loadPgn(msg.gameDetails.pgn);
+    const wEngine =
+      cccEvent.tournamentDetails.engines.find(
+        (engine) => engine.name === game.current.getHeaders()["White"]
+      ) || EmptyEngineDefinition;
 
-        const { liveInfosBlack, liveInfosWhite } = extractLiveInfoFromGame(
-          game.current
-        );
-        liveInfosRef.current.white.liveInfo = liveInfosWhite;
-        liveInfosRef.current.white.engineInfo =
-          cccEvent.current?.tournamentDetails.engines.find(
-            (engine) => engine.name === game.current.getHeaders()["White"]
-          )!;
-        liveInfosRef.current.black.liveInfo = liveInfosBlack;
-        liveInfosRef.current.black.engineInfo =
-          cccEvent.current?.tournamentDetails.engines.find(
-            (engine) => engine.name === game.current.getHeaders()["Black"]
-          )!;
+    const bEngine =
+      cccEvent.tournamentDetails.engines.find(
+        (engine) => engine.name === game.current.getHeaders()["Black"]
+      ) || EmptyEngineDefinition;
 
-        liveInfosRef.current.green.liveInfo = cccEvent.current
-          ? loadLiveInfos(cccEvent.current, msg)
-          : [];
-        liveInfosRef.current.blue.liveInfo = [];
-        liveInfosRef.current.red.liveInfo = [];
+    const { liveInfosBlack, liveInfosWhite } = extractLiveInfoFromGame(
+      game.current
+    );
 
-        currentMoveNumber.current = -1;
-        updateBoard();
+    const wData: LiveEngineDataObject = {
+      engineInfo: wEngine,
+      liveInfo: liveInfosWhite,
+    };
 
-        setCccGame(msg);
-        setFen(game.current.fen());
-        setMoves(game.current.history());
+    const bData: LiveEngineDataObject = {
+      engineInfo: bEngine,
+      liveInfo: liveInfosBlack,
+    };
 
-        break;
+    setLiveEngineData_REF_REPL("white", wData);
+    setLiveEngineData_REF_REPL("black", bData);
+  }, [cccEvent, cccGame, setLiveEngineData_REF_REPL]);
 
-      case "liveInfo":
-        if (ws.current instanceof CCCWebSocket) {
-          msg.info.pvSan = uciToSan(
-            game.current.fen(),
-            msg.info.pv.split(" ")
-          ).join(" ");
+  const handleLiveInfo = useCallback(
+    (msg: CCCLiveInfo) => {
+      if (ws.current instanceof CCCWebSocket) {
+        msg.info.pvSan = uciToSan(
+          game.current.fen(),
+          msg.info.pv.split(" ")
+        ).join(" ");
+      }
+
+      const color = msg.info.color as keyof LiveEngineData;
+      const newLiveInfos = [...__liveInfosRefReplacement[color].liveInfo];
+      newLiveInfos[msg.info.ply] = msg;
+
+      setLiveEngineData_REF_REPL(color, { liveInfo: newLiveInfos });
+    },
+    [__liveInfosRefReplacement, setLiveEngineData_REF_REPL]
+  );
+
+  const handleMessage = useCallback(
+    function (msg: CCCMessage) {
+      switch (msg.type) {
+        case "eventUpdate":
+          setEvent(msg);
+
+          break;
+
+        case "gameUpdate": {
+          game.current.loadPgn(msg.gameDetails.pgn);
+
+          setLiveEngineData_REF_REPL("green", {
+            engineInfo: EmptyEngineDefinition,
+            liveInfo: cccEvent ? loadLiveInfos(cccEvent, msg) : [],
+          });
+
+          setLiveEngineData_REF_REPL("blue", {
+            engineInfo: EmptyEngineDefinition,
+            liveInfo: [],
+          });
+
+          setLiveEngineData_REF_REPL("red", {
+            engineInfo: EmptyEngineDefinition,
+            liveInfo: [],
+          });
+
+          currentMoveNumber.current = -1;
+
+          updateBoard();
+
+          setGame(msg);
+          setFen(game.current.fen());
+          setMoves(game.current.history());
+
+          break;
         }
 
-        const color = msg.info.color as keyof LiveEngineData;
-        const newLiveInfos = [...liveInfosRef.current[color].liveInfo];
-        newLiveInfos[msg.info.ply] = msg;
-        liveInfosRef.current[color].liveInfo = newLiveInfos;
+        case "liveInfo": {
+          handleLiveInfo(msg);
 
-        updateBoard();
-        break;
+          updateBoard();
+          break;
+        }
 
-      case "eventsListUpdate":
-        setCccEventList(msg);
-        break;
+        case "eventsListUpdate":
+          setEventList(msg);
+          break;
 
-      case "clocks":
-        setClocks(msg);
-        break;
+        case "clocks":
+          setClocks(msg);
+          break;
 
-      case "newMove":
-        const from = msg.move.slice(0, 2) as Square;
-        const to = msg.move.slice(2, 4) as Square;
-        const promo = msg.move?.[4];
+        case "newMove": {
+          const from = msg.move.slice(0, 2) as Square;
+          const to = msg.move.slice(2, 4) as Square;
+          const promo = msg.move?.[4];
 
-        game.current.move({ from, to, promotion: promo as any });
-        setFen(game.current.fen());
-        setMoves(game.current.history());
-        updateBoard(true);
+          game.current.move({ from, to, promotion: promo as any });
+          setFen(game.current.fen());
+          setMoves(game.current.history());
+          updateBoard(true);
 
-        break;
+          break;
+        }
 
-      case "kibitzer":
-        liveInfosRef.current[msg.color as keyof LiveEngineData].engineInfo =
-          msg.engine;
-        break;
+        case "kibitzer":
+          setLiveEngineData_REF_REPL(msg.color as EngineColor, {
+            engineInfo: msg.engine,
+          });
 
-      case "result":
-        game.current.setHeader("Termination", msg.reason);
-        game.current.setHeader("Result", msg.score);
-        updateBoard(true);
-    }
-  }
+          break;
+
+        case "result":
+          game.current.setHeader("Termination", msg.reason);
+          game.current.setHeader("Result", msg.score);
+          updateBoard(true);
+      }
+    },
+    [
+      cccEvent,
+      handleLiveInfo,
+      setEvent,
+      setEventList,
+      setGame,
+      setLiveEngineData_REF_REPL,
+      updateBoard,
+    ]
+  );
 
   const requestEvent = useCallback((gameNr?: string, eventNr?: string) => {
-    let message: any = { type: "requestEvent" };
+    const message: Record<string, string> = { type: "requestEvent" };
     if (gameNr) message["gameNr"] = gameNr;
     if (eventNr) message["eventNr"] = eventNr;
 
@@ -284,13 +351,37 @@ function App() {
       currentMoveNumber.current = callback(currentMoveNumber.current);
       updateBoard(true);
     },
-    []
+    [updateBoard]
   );
 
   useEffect(() => {
-    ws.current.disconnect();
-    ws.current.connect(handleMessage);
-  }, []);
+    const wsInstance = ws.current;
+
+    // ws.current.disconnect();
+
+    if (
+      !wsInstance.ws ||
+      wsInstance.ws.readyState === wsInstance.ws.CLOSING ||
+      wsInstance.ws.readyState === wsInstance.ws.CLOSED ||
+      wsInstance.ws.readyState === undefined
+    ) {
+      console.log("CONNECT");
+      wsInstance.connect(handleMessage);
+    } else if (
+      wsInstance.ws.readyState === wsInstance.ws.OPEN ||
+      wsInstance.ws.readyState === wsInstance.ws.CONNECTING
+    ) {
+      console.log("setHANDLER");
+
+      wsInstance.setHandler(handleMessage);
+    } else {
+      console.log("ELSE : ((((");
+    }
+
+    return () => {
+      // wsInstance.disconnect();
+    };
+  }, [handleMessage]);
 
   useEffect(() => {
     const clockTimer = setInterval(updateClocks, CLOCK_UPDATE_MS);
@@ -326,25 +417,34 @@ function App() {
           if (game.current.getHeaders()["Event"] === "?") return;
           if (game.current.fen() != result.fen) return;
 
-          liveInfosRef.current.green.engineInfo =
-            activeKibitzer.getEngineInfo();
-
-          const newLiveInfos = [...liveInfosRef.current.green.liveInfo];
+          const newLiveInfos = [...__liveInfosRefReplacement.green.liveInfo];
           newLiveInfos[result.liveInfo.info.ply] = result.liveInfo;
-          liveInfosRef.current.green.liveInfo = newLiveInfos;
+
+          setLiveEngineData_REF_REPL("green", {
+            engineInfo: activeKibitzer.getEngineInfo(),
+            liveInfo: newLiveInfos,
+          });
 
           updateBoard();
 
-          if (cccEvent.current && cccGame)
-            saveLiveInfos(cccEvent.current, cccGame, newLiveInfos);
+          if (cccEvent && cccGame) {
+            saveLiveInfos(cccEvent, cccGame, newLiveInfos);
+          }
         };
       }
     );
   }, [
-    activeKibitzer?.getID(),
-    cccEvent.current?.tournamentDetails.tNr,
+    __liveInfosRefReplacement.green.liveInfo,
+    activeKibitzer,
+    cccEvent,
+    cccEvent?.tournamentDetails.tNr,
+    cccGame,
     cccGame?.gameDetails.gameNr,
+    setLiveEngineData_REF_REPL,
+    updateBoard,
   ]);
+
+  const _kibitzerId = activeKibitzer?.getID();
 
   useEffect(() => {
     if (!cccGame?.gameDetails.live || !kibitzerSettings.enableKibitzer) return;
@@ -352,22 +452,26 @@ function App() {
     activeKibitzer?.analyze(fen);
   }, [
     fen,
-    activeKibitzer?.getID(),
+    _kibitzerId,
     cccGame?.gameDetails.gameNr,
     kibitzerSettings.enableKibitzer,
+    cccGame?.gameDetails.live,
+    activeKibitzer,
   ]);
 
   const liveInfos = getCurrentLiveInfos();
 
   const engines = useMemo(() => {
-    if (!cccEvent.current?.tournamentDetails?.engines) return [];
+    // this needed to help typescript correctly infer that
+    // current event is not null without unsafe assertion
+    const event = cccEvent;
+    if (!event?.tournamentDetails?.engines) return [];
 
-    return cccEvent.current.tournamentDetails.engines
+    return event.tournamentDetails.engines
       .map((engine) => {
-        const playedGames =
-          cccEvent.current!.tournamentDetails.schedule.past.filter(
-            (game) => game.blackId === engine.id || game.whiteId === engine.id
-          );
+        const playedGames = event.tournamentDetails.schedule.past.filter(
+          (game) => game.blackId === engine.id || game.whiteId === engine.id
+        );
         const points = playedGames.reduce((prev, cur) => {
           if (cur.blackId === engine.id) {
             switch (cur.outcome) {
@@ -402,7 +506,7 @@ function App() {
         };
       })
       .sort((a, b) => Number(b.perf) - Number(a.perf));
-  }, [cccEvent.current]);
+  }, [cccEvent]);
 
   const pgnHeaders = game.current.getHeaders();
   const termination =
@@ -417,10 +521,10 @@ function App() {
     <div className="app">
       {popupState && (
         <div className="popup">
-          {popupState === "crosstable" && cccEvent.current && (
+          {popupState === "crosstable" && cccEvent && (
             <Crosstable
               engines={engines}
-              cccEvent={cccEvent.current}
+              cccEvent={cccEvent}
               onClose={() => setPopupState(undefined)}
               requestEvent={requestEvent}
             />
@@ -438,15 +542,15 @@ function App() {
       <div className="topBar">
         <div className="currentEvent">
           Chess Tournament Viewer
-          {cccEvent.current?.tournamentDetails.name
-            ? " - " + cccEvent.current?.tournamentDetails.name
+          {cccEvent?.tournamentDetails.name
+            ? " - " + cccEvent?.tournamentDetails.name
             : ""}
         </div>
         <div className="settingsRow">
           <EventList
-            eventList={cccEventList}
+            eventList={cccEventList || undefined}
             requestEvent={requestEvent}
-            selectedEvent={cccEvent.current}
+            selectedEvent={cccEvent || undefined}
           />
           <button onClick={() => setPopupState("settings")} title="Settings">
             <LuSettings />
@@ -499,7 +603,7 @@ function App() {
 
       <div className="standingsWindow">
         <h4>Standings</h4>
-        {cccEvent.current && cccGame ? (
+        {cccEvent && cccGame ? (
           <>
             <button
               onClick={() => setPopupState("crosstable")}
@@ -519,11 +623,6 @@ function App() {
       <div className="graphWindow">
         {cccEvent && cccGame ? (
           <GameGraph
-            liveInfosWhite={liveInfosRef.current.white.liveInfo}
-            liveInfosBlack={liveInfosRef.current.black.liveInfo}
-            liveInfosGreen={liveInfosRef.current.green.liveInfo}
-            liveInfosRed={liveInfosRef.current.red.liveInfo}
-            liveInfosBlue={liveInfosRef.current.blue.liveInfo}
             setCurrentMoveNumber={setCurrentMoveNumber}
             currentMoveNumber={currentMoveNumber.current}
             reducedMotion={prefersReducedMotion}
@@ -539,9 +638,9 @@ function App() {
 
       <div className="scheduleWindow">
         <h4>Schedule</h4>
-        {cccEvent.current && cccGame ? (
+        {cccEvent && cccGame ? (
           <Schedule
-            event={cccEvent.current}
+            event={cccEvent}
             engines={engines}
             requestEvent={requestEvent}
             selectedGame={cccGame}

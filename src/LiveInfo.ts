@@ -3,29 +3,22 @@ import { Chess960, type Square } from "./chess.js/chess";
 import type { CCCEngine, CCCLiveInfo } from "./types";
 import { sanToUci, uciToSan } from "./utils";
 
+export type EngineColor = "white" | "black" | "red" | "blue" | "green";
 export type LiveInfoEntry = CCCLiveInfo | undefined;
-type LiveEngineDataObject = {
+export type LiveEngineDataObject = {
   engineInfo: CCCEngine;
   liveInfo: LiveInfoEntry[];
 };
-export type LiveEngineData = {
-  white: LiveEngineDataObject;
-  black: LiveEngineDataObject;
-  red: LiveEngineDataObject;
-  blue: LiveEngineDataObject;
-  green: LiveEngineDataObject;
-};
+export type LiveEngineData = Record<EngineColor, LiveEngineDataObject>;
+
 export type LiveEngineDataEntryObject = {
   engineInfo: CCCEngine;
   liveInfo: LiveInfoEntry;
 };
-export type LiveEngineDataEntry = {
-  white: LiveEngineDataEntryObject;
-  black: LiveEngineDataEntryObject;
-  red: LiveEngineDataEntryObject;
-  blue: LiveEngineDataEntryObject;
-  green: LiveEngineDataEntryObject;
-};
+export type LiveEngineDataEntry = Record<
+  EngineColor,
+  LiveEngineDataEntryObject
+>;
 
 export const EmptyEngineDefinition: CCCEngine = {
   authors: "",

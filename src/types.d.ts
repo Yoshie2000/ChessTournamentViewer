@@ -1,5 +1,3 @@
-import type { LiveEngineDataEntry } from "./LiveInfo";
-
 type TimeControl = { init: number; incr: number };
 
 type CCCEngine = {
@@ -125,3 +123,19 @@ export type CCCMessage =
   | CCCEventsListUpdate
   | CCCResult
   | CCCKibitzer;
+
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * Makes all properties of T nullable, and for function properties,
+ * makes their parameters nullable while preserving the return type.
+ *
+ * @example
+ * type User = { name: string; greet: (name: string) => string; }
+ * type NullishUser = _Nullish<User> // { name: string | null; greet: (args: string | null) => string; }
+ */
+export type _Nullish<T extends object> = {
+  [K in keyof T]: T[K] extends (arg: infer Params) => infer Return
+    ? (args: Params | null) => Return
+    : T[K] | null;
+};
