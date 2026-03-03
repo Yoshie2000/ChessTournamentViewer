@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CCCWebSocket, type TournamentWebSocket } from "./CCCWebsocket";
 import type { CCCMessage, CCCClocks, CCCLiveInfo } from "./types";
 import {
@@ -56,9 +56,9 @@ Chart.register(
   Legend
 );
 
-const _initialWS = window.location.search.includes("tcec")
-  ? new TCECSocket()
-  : new CCCWebSocket();
+const isTCEC = window.location.search.includes("tcec");
+
+const _initialWS = isTCEC ? new TCECSocket() : new CCCWebSocket();
 
 function App() {
   const boardHandle = useRef<BoardHandle>(null);
@@ -328,6 +328,18 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (isTCEC) {
+      const wsInstance = ws.current as TCECSocket;
+
+      if (!wsInstance.socket) {
+        wsInstance.connect(handleMessage);
+      } else {
+        wsInstance.setHandler(handleMessage);
+      }
+
+      return;
+    }
+
     const wsInstance = ws.current;
 
     if (

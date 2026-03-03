@@ -17,8 +17,8 @@ import {
 } from "./LiveInfo";
 
 export class TCECSocket implements TournamentWebSocket {
-  private socket: SocketIOClient.Socket | null = null;
-  private onMessage: ((message: CCCMessage) => void) | null = null;
+  socket: SocketIOClient.Socket | null = null;
+  private cb: ((message: CCCMessage) => void) | null = null;
 
   private live: boolean = true;
   private game: Chess960 = new Chess960();
@@ -62,9 +62,9 @@ export class TCECSocket implements TournamentWebSocket {
             this.loadKibitzerData(lc0, sf);
           });
       } else if (!gameNr && !eventNr) {
-        if (this.onMessage) {
+        if (this.cb) {
           this.disconnect();
-          this.connect(this.onMessage);
+          this.connect(this.cb);
         }
       } else if (eventNr) {
         this.live = false;
@@ -82,7 +82,7 @@ export class TCECSocket implements TournamentWebSocket {
   }
 
   connect(onMessage: (message: CCCMessage) => void) {
-    this.onMessage = onMessage;
+    this.cb = onMessage;
 
     this.socket = io.connect("https://tcec-chess.com", {
       transports: ["polling", "websocket"],
@@ -92,21 +92,24 @@ export class TCECSocket implements TournamentWebSocket {
       reconnectionDelayMax: 5000,
     });
 
-    // this.socket.on("banner", (json: any) => {
-    //   console.log("banner", json);
-    // });
+    this.setHandler(this.cb);
 
-    // this.socket.on("bracket", (json: any) => {
-    //   console.log("bracket", json);
-    // });
+    this.openEvent(
+      "https://ctv.yoshie2000.de/tcec/schedule.json",
+      "https://ctv.yoshie2000.de/tcec/crosstable.json",
+      "https://ctv.yoshie2000.de/tcec/live.pgn",
+      "https://ctv.yoshie2000.de/tcec/liveeval.json",
+      "https://ctv.yoshie2000.de/tcec/liveeval1.json"
+    );
+    this.loadEventList();
+  }
 
-    // this.socket.on("crash", (json: any) => {
-    //   console.log("crash", json);
-    // });
+  setHandler(onMessage: (message: CCCMessage) => void) {
+    this.cb = onMessage;
 
-    // this.socket.on("crosstable", (json: any) => {
-    //   console.log("crosstable", json);
-    // });
+    if (!this.socket) {
+      return;
+    }
 
     this.socket.on("htmlread", (json: any) => {
       if (!this.live) return;
@@ -119,7 +122,14 @@ export class TCECSocket implements TournamentWebSocket {
         infoString,
         this.game.fen()
       );
-      if (liveInfo) onMessage(liveInfo.liveInfo);
+
+      if (liveInfo) {
+        if (this.cb) {
+          this.cb(liveInfo.liveInfo);
+        } else {
+          onMessage(liveInfo.liveInfo);
+        }
+      }
     });
 
     // this.socket.on("livechart", (json: any) => {
@@ -132,12 +142,21 @@ export class TCECSocket implements TournamentWebSocket {
 
     this.socket.on("liveeval", (json: any) => {
       if (!this.live) return;
-      onMessage(this.parseLiveEval(json, this.game.fen(), "blue"));
+
+      if (this.cb) {
+        this.cb(this.parseLiveEval(json, this.game.fen(), "blue"));
+      } else {
+        onMessage(this.parseLiveEval(json, this.game.fen(), "blue"));
+      }
     });
 
     this.socket.on("liveeval1", (json: any) => {
       if (!this.live) return;
-      onMessage(this.parseLiveEval(json, this.game.fen(), "red"));
+      if (this.cb) {
+        this.cb(this.parseLiveEval(json, this.game.fen(), "red"));
+      } else {
+        onMessage(this.parseLiveEval(json, this.game.fen(), "red"));
+      }
     });
 
     this.socket.on("pgn", (json: any) => {
@@ -145,7 +164,12 @@ export class TCECSocket implements TournamentWebSocket {
 
       if (this.game.getHeaders()["Result"] !== "*") {
         this.disconnect();
-        this.connect(onMessage);
+
+        if (this.cb) {
+          this.connect(this.cb);
+        } else {
+          this.connect(onMessage);
+        }
         return;
       }
 
@@ -162,7 +186,12 @@ export class TCECSocket implements TournamentWebSocket {
           .find((move) => move.san === moveData.m)!;
 
         this.game.move(move.san, { strict: false });
-        onMessage({ type: "newMove", move: move.lan, times: { w: 1, b: 1 } });
+
+        if (this.cb) {
+          this.cb({ type: "newMove", move: move.lan, times: { w: 1, b: 1 } });
+        } else {
+          onMessage({ type: "newMove", move: move.lan, times: { w: 1, b: 1 } });
+        }
 
         // Extract the live info
         const relevantKeys = Object.keys(moveData).filter(
@@ -179,7 +208,13 @@ export class TCECSocket implements TournamentWebSocket {
           commentString,
           fenBeforeMove
         );
-        if (liveInfo) onMessage(liveInfo);
+        if (liveInfo) {
+          if (this.cb) {
+            this.cb(liveInfo);
+          } else {
+            onMessage(liveInfo);
+          }
+        }
       }
 
       const whiteToMove = this.game.turn() === "w";
@@ -195,13 +230,24 @@ export class TCECSocket implements TournamentWebSocket {
       });
 
       if (json.Headers.Result !== "*") {
-        onMessage({
-          type: "result",
-          blackName: json.Headers.Black,
-          whiteName: json.Headers.White,
-          reason: json.Headers.TerminationDetails,
-          score: json.Headers.Result,
-        });
+        if (this.cb) {
+          this.cb({
+            type: "result",
+            blackName: json.Headers.Black,
+            whiteName: json.Headers.White,
+            reason: json.Headers.TerminationDetails,
+            score: json.Headers.Result,
+          });
+        } else {
+          onMessage({
+            type: "result",
+            blackName: json.Headers.Black,
+            whiteName: json.Headers.White,
+            reason: json.Headers.TerminationDetails,
+            score: json.Headers.Result,
+          });
+        }
+
         this.game.setHeader("Result", json.Headers.Result);
       }
     });
@@ -218,14 +264,14 @@ export class TCECSocket implements TournamentWebSocket {
       this.socket?.emit("room", "roomall");
     });
 
-    this.openEvent(
-      "https://ctv.yoshie2000.de/tcec/schedule.json",
-      "https://ctv.yoshie2000.de/tcec/crosstable.json",
-      "https://ctv.yoshie2000.de/tcec/live.pgn",
-      "https://ctv.yoshie2000.de/tcec/liveeval.json",
-      "https://ctv.yoshie2000.de/tcec/liveeval1.json"
-    );
-    this.loadEventList();
+    // this.openEvent(
+    //   "https://ctv.yoshie2000.de/tcec/schedule.json",
+    //   "https://ctv.yoshie2000.de/tcec/crosstable.json",
+    //   "https://ctv.yoshie2000.de/tcec/live.pgn",
+    //   "https://ctv.yoshie2000.de/tcec/liveeval.json",
+    //   "https://ctv.yoshie2000.de/tcec/liveeval1.json"
+    // );
+    // this.loadEventList();
   }
 
   private parseLiveEval(
@@ -282,7 +328,7 @@ export class TCECSocket implements TournamentWebSocket {
   }
 
   private loadEventList() {
-    if (!this.onMessage) return;
+    if (!this.cb) return;
 
     fetch("https://ctv.yoshie2000.de/tcec/archive/gamelist.json")
       .then((response) => response.json())
@@ -311,12 +357,12 @@ export class TCECSocket implements TournamentWebSocket {
             });
           }
         }
-        this.onMessage?.(eventList);
+        this.cb?.(eventList);
       });
   }
 
   private loadKibitzerData(lc0: any, sf: any) {
-    this.onMessage?.({
+    this.cb?.({
       type: "kibitzer",
       color: "blue",
       engine: {
@@ -325,7 +371,7 @@ export class TCECSocket implements TournamentWebSocket {
         imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Lc0.png",
       },
     });
-    this.onMessage?.({
+    this.cb?.({
       type: "kibitzer",
       color: "red",
       engine: {
@@ -357,7 +403,7 @@ export class TCECSocket implements TournamentWebSocket {
       ) {
         lc0Move.eval = "+" + lc0Move.eval;
       }
-      this.onMessage?.(this.parseLiveEval(lc0Move, comments[i].fen, "blue"));
+      this.cb?.(this.parseLiveEval(lc0Move, comments[i].fen, "blue"));
     });
     (sf.moves as any[]).forEach((sfMove, i) => {
       if (sfMove.pv.includes("...")) {
@@ -374,7 +420,7 @@ export class TCECSocket implements TournamentWebSocket {
       ) {
         sfMove.eval = "+" + sfMove.eval;
       }
-      this.onMessage?.(this.parseLiveEval(sfMove, comments[i].fen, "red"));
+      this.cb?.(this.parseLiveEval(sfMove, comments[i].fen, "red"));
     });
   }
 
@@ -542,7 +588,7 @@ export class TCECSocket implements TournamentWebSocket {
             isRoundRobin,
           },
         };
-        this.onMessage?.(event);
+        this.cb?.(event);
         this.event = event;
 
         this.openGame(livePGN);
@@ -551,7 +597,7 @@ export class TCECSocket implements TournamentWebSocket {
   }
 
   private openGame(pgn: string) {
-    if (!this.event || !this.onMessage) return;
+    if (!this.event || !this.cb) return;
 
     this.game.loadPgn(pgn);
     this.game.setHeader("White", this.game.getHeaders()["White"].split(" ")[0]);
@@ -585,7 +631,7 @@ export class TCECSocket implements TournamentWebSocket {
         pgn: this.game.pgn(),
       },
     };
-    this.onMessage(gameUpdate);
+    this.cb(gameUpdate);
 
     const lastComment0 = this.game.getComments().at(-2);
     const lastComment1 = this.game.getComments().at(-1);
@@ -602,7 +648,7 @@ export class TCECSocket implements TournamentWebSocket {
 
     const whiteToMove = this.game.turn() === "w";
 
-    this.onMessage({
+    this.cb({
       type: "clocks",
       binc: "1",
       btime: whiteToMove ? clock1 : clock0,
