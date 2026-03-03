@@ -25,7 +25,6 @@ import {
   type EngineColor,
 } from "./LiveInfo";
 import { Crosstable } from "./components/Crosstable";
-import { EventList } from "./components/EventList";
 import { Spinner } from "./components/Loading";
 import { NativeWorker } from "./engine/NativeWorker";
 import { type EngineSettings, EngineWorker } from "./engine/EngineWorker";
@@ -34,7 +33,6 @@ import { EngineWindow } from "./components/EngineWindow";
 import { EngineMinimal } from "./components/EngineMinimal";
 import { Chess, Chess960, type Square } from "./chess.js/chess";
 import { GameResultOverlay } from "./components/GameResultOverlay";
-import { LuSettings } from "react-icons/lu";
 import { getDefaultKibitzerSettings, Settings } from "./components/Settings";
 import { TCECSocket } from "./TCECWebsocket";
 import { Board, type BoardHandle } from "./components/Board";
@@ -43,6 +41,7 @@ import { loadLiveInfos, saveLiveInfos } from "./LocalStorage";
 import { uciToSan } from "./utils";
 import { useLiveInfo } from "./context/LiveInfoContext";
 import { useEventStore } from "./context/EventContext";
+import { EventListWindow } from "./components/EventList/EventList";
 
 const CLOCK_UPDATE_MS = 100;
 
@@ -55,6 +54,8 @@ Chart.register(
   Tooltip,
   Legend
 );
+
+type PopupStateValues = "crosstable" | "settings" | "none";
 
 const isTCEC = window.location.search.includes("tcec");
 
@@ -70,7 +71,6 @@ function App() {
 
   const cccEvent = useEventStore((state) => state.cccEvent);
   const cccGame = useEventStore((state) => state.cccGame);
-  const cccEventList = useEventStore((state) => state.cccEventList);
 
   const setEvent = useEventStore((state) => state.setEvent);
   const setGame = useEventStore((state) => state.setGame);
@@ -89,7 +89,7 @@ function App() {
   const liveInfos = useLiveInfo((state) => state.liveInfos);
   const setLiveInfos = useLiveInfo((state) => state.setLiveInfos);
 
-  const [popupState, setPopupState] = useState<string>();
+  const [popupState, setPopupState] = useState<PopupStateValues>("none");
 
   const [clocks, setClocks] = useState<CCCClocks>({
     binc: "0",
@@ -513,15 +513,22 @@ function App() {
     setCurrentFen(game.current.fenAt(currentMoveNumber));
   }, [currentMoveNumber, setCurrentFen]);
 
+  const _setPopupState = useCallback(
+    (state: PopupStateValues) => {
+      setPopupState(state);
+    },
+    [setPopupState]
+  );
+
   return (
     <div className="app">
-      {popupState && (
+      {popupState !== "none" && (
         <div className="popup">
           {popupState === "crosstable" && cccEvent && (
             <Crosstable
               engines={engines}
               cccEvent={cccEvent}
-              onClose={() => setPopupState(undefined)}
+              onClose={() => setPopupState("none")}
               requestEvent={requestEvent}
             />
           )}
@@ -529,29 +536,16 @@ function App() {
             <Settings
               kibitzerSettings={kibitzerSettings}
               setKibitzerSettings={setKibitzerSettings}
-              onClose={() => setPopupState(undefined)}
+              onClose={() => setPopupState("none")}
             />
           )}
         </div>
       )}
-      <div className="topBar">
-        <div className="currentEvent">
-          Chess Tournament Viewer
-          {cccEvent?.tournamentDetails.name
-            ? " - " + cccEvent?.tournamentDetails.name
-            : ""}
-        </div>
-        <div className="settingsRow">
-          <EventList
-            eventList={cccEventList || undefined}
-            requestEvent={requestEvent}
-            selectedEvent={cccEvent || undefined}
-          />
-          <button onClick={() => setPopupState("settings")} title="Settings">
-            <LuSettings />
-          </button>
-        </div>
-      </div>
+
+      <EventListWindow
+        requestEvent={requestEvent}
+        setPopupState={_setPopupState}
+      />
       <EngineWindow liveInfos={liveInfos} clocks={clocks} fen={currentFEN} />
       <div className="boardWindow">
         <EngineMinimal
