@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import {
   MdKeyboardArrowLeft,
   MdKeyboardArrowRight,
@@ -85,7 +85,44 @@ const MoveList = memo(
           el.scrollTop = el.scrollHeight;
         });
       }
-    }, [moves.length, currentMoveNumber]);
+    }, [moves.length, currentMoveNumber, controllers]);
+
+    const undoAllMoves = useCallback(() => {
+      setCurrentMoveNumber(0);
+      const el = moveListRef.current;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollTop = 0;
+        });
+      }
+    }, [setCurrentMoveNumber]);
+    const redoAllMoves = useCallback(() => {
+      setCurrentMoveNumber(-1);
+      const el = moveListRef.current;
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollTop = el.scrollHeight;
+        });
+      }
+    }, [setCurrentMoveNumber]);
+    const undoMove = useCallback(() => {
+      if (currentMoveNumber === 0) {
+        return;
+      } else if (currentMoveNumber === -1) {
+        setCurrentMoveNumber(moves.length - 1);
+      } else {
+        setCurrentMoveNumber(currentMoveNumber - 1);
+      }
+    }, [currentMoveNumber, moves.length, setCurrentMoveNumber]);
+    const redoMove = useCallback(() => {
+      if (currentMoveNumber === -1) {
+        return;
+      } else if (currentMoveNumber + 1 >= moves.length) {
+        setCurrentMoveNumber(-1);
+      } else {
+        setCurrentMoveNumber(currentMoveNumber + 1);
+      }
+    }, [currentMoveNumber, moves.length, setCurrentMoveNumber]);
 
     useEffect(() => {
       if (controllers) {
@@ -108,44 +145,15 @@ const MoveList = memo(
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
       }
-    }, [currentMoveNumber, moves.length]);
-
-    function undoAllMoves() {
-      setCurrentMoveNumber(0);
-      const el = moveListRef.current;
-      if (el) {
-        requestAnimationFrame(() => {
-          el.scrollTop = 0;
-        });
-      }
-    }
-    function redoAllMoves() {
-      setCurrentMoveNumber(-1);
-      const el = moveListRef.current;
-      if (el) {
-        requestAnimationFrame(() => {
-          el.scrollTop = el.scrollHeight;
-        });
-      }
-    }
-    function undoMove() {
-      if (currentMoveNumber === 0) {
-        return;
-      } else if (currentMoveNumber === -1) {
-        setCurrentMoveNumber(moves.length - 1);
-      } else {
-        setCurrentMoveNumber(currentMoveNumber - 1);
-      }
-    }
-    function redoMove() {
-      if (currentMoveNumber === -1) {
-        return;
-      } else if (currentMoveNumber + 1 >= moves.length) {
-        setCurrentMoveNumber(-1);
-      } else {
-        setCurrentMoveNumber(currentMoveNumber + 1);
-      }
-    }
+    }, [
+      controllers,
+      currentMoveNumber,
+      moves.length,
+      redoAllMoves,
+      redoMove,
+      undoAllMoves,
+      undoMove,
+    ]);
 
     function copyFen() {
       copyToClipboard(

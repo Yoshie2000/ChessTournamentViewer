@@ -161,6 +161,10 @@ function App() {
     [currentMoveNumber, getCurrentLiveInfos]
   );
 
+  useEffect(() => {
+    updateBoard();
+  }, [currentMoveNumber, updateBoard]);
+
   function updateClocks() {
     setClocks((currentClock) => {
       if (!currentClock) return currentClock;
