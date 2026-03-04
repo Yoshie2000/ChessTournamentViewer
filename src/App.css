@@ -18,10 +18,10 @@
   --engine-card-movelist-width: calc(var(--engine-board-width) / 1.9);
   --engine-card-width: max(38rem, 470px);
 
-  --font-sm: 0.8rem;
-  --font-md: 0.9rem;
+  --font-sm: 0.9rem;
+  --font-md: 0.95rem;
   --font-lg: 1rem;
-  --font-xl: 1.1rem;
+  --font-xl: 1.15rem;
 }
 
 *,
@@ -135,24 +135,6 @@
   position: absolute;
   top: 0.75rem;
   right: var(--gap);
-}
-
-@media (max-width: 2220px) {
-  :root {
-    --font-sm: 0.8rem;
-    --font-md: 0.9rem;
-    --font-lg: 1rem;
-    --font-xl: 1.1rem;
-  }
-}
-
-@media (max-width: 1600px) {
-  :root {
-    --font-sm: 0.8rem;
-    --font-md: 0.85rem;
-    --font-lg: 0.9rem;
-    --font-xl: 0.95rem;
-  }
 }
 
 @media (max-width: 1400px) {
