@@ -24,7 +24,7 @@ type LiveInfoData = {
   ) => void;
 
   currentMoveNumber: number;
-  setCurrentMoveNumber: (data: number) => void;
+  setCurrentMoveNumber: (callback: (previous: number) => number) => void;
 
   currentFen: string;
   setCurrentFen: (fen: string) => void;
@@ -55,9 +55,9 @@ export const useLiveInfo = create<LiveInfoData>()(
     setCurrentFen(fen) {
       set({ currentFen: fen });
     },
-    setCurrentMoveNumber(data) {
+    setCurrentMoveNumber(callback) {
       set((state) => {
-        state.currentMoveNumber = data;
+        state.currentMoveNumber = callback(state.currentMoveNumber);
       });
     },
     // ================

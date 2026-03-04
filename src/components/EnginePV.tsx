@@ -1,11 +1,11 @@
-import { useRef, useMemo, useCallback, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { Chess960 } from "../chess.js/chess";
 import type { LiveEngineDataEntryObject } from "../LiveInfo";
 import { normalizePv, buildPvGame } from "../utils";
-import { type BoardHandle, Board } from "./Board";
 import { SkeletonBlock } from "./Loading";
 import { MoveList } from "./MoveList";
 import "./EnginePV.css";
+import { useKibitzerBoard } from "../hooks/BoardHook";
 
 type EnginePVProps = {
   liveInfoData: LiveEngineDataEntryObject;
@@ -20,28 +20,22 @@ export function EnginePV({
 }: EnginePVProps) {
   const data = liveInfoData.liveInfo?.info;
 
-  const boardHandle = useRef<BoardHandle>(null);
-  const pvMoveNumber = useRef(-1);
-  const game = useRef(new Chess960());
+  const {
+    Board,
+    currentMoveNumber,
+    game,
+    setCurrentFen,
+    setCurrentMoveNumber,
+    updateBoard,
+  } = useKibitzerBoard({ animated: false });
 
   const moves = useMemo(() => {
     if (!data?.color) return undefined;
 
-    pvMoveNumber.current = -1;
+    setCurrentMoveNumber(-1);
     return normalizePv(data.pvSan, data.color, fen);
   }, [data?.pvSan, data?.color, fen]);
 
-  function updateBoard() {
-    boardHandle.current?.updateBoard(game.current, pvMoveNumber.current);
-  }
-
-  const setPvMoveNumber = useCallback(
-    (callback: (previous: number) => number) => {
-      pvMoveNumber.current = callback(pvMoveNumber.current);
-      updateBoard();
-    },
-    [moves, fen]
-  );
 
   useEffect(() => {
     if (!fen || !moves) return;
@@ -49,11 +43,12 @@ export function EnginePV({
     // Throttle the actual update slightly to not destroy react render times
     const timeout = setTimeout(() => {
       game.current = buildPvGame(fen, moves, -1);
+      setCurrentFen(game.current.fen());
       updateBoard();
     }, 10);
 
     return () => clearTimeout(timeout);
-  }, [moves, boardHandle.current]);
+  }, [moves]);
 
   const moveNumberOffset = new Chess960(fen).moveNumber() - 1;
 
@@ -69,13 +64,13 @@ export function EnginePV({
 
   return (
     <div className="enginePV">
-      <Board ref={boardHandle} animated={false} />
+      {Board}
 
       <MoveList
         startFen={fen}
         moves={moves}
-        currentMoveNumber={pvMoveNumber.current}
-        setCurrentMoveNumber={setPvMoveNumber}
+        currentMoveNumber={currentMoveNumber}
+        setCurrentMoveNumber={setCurrentMoveNumber}
         controllers={false}
         disagreementMoveIndex={
           pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined

@@ -1809,7 +1809,7 @@ export class Chess {
 
   public turnAt(idx: number) {
     if (idx < 0 || idx === this.length())
-      return this.turn();
+      return this._history[this.length() - 2]?.turn;
     return this._history[idx].turn;
   }
 

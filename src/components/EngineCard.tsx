@@ -1,13 +1,13 @@
-import { useMemo, useRef, useCallback, memo, useEffect } from "react";
+import { useMemo, memo, useEffect } from "react";
 import type { CCCEngine, CCCLiveInfo } from "../types";
 import { EngineLogo } from "./EngineLogo";
-import { Board, type BoardHandle } from "../components/Board";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
 import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
 import { Chess, Chess960 } from "../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
+import { useKibitzerBoard } from "../hooks/BoardHook";
 
 type EngineCardProps = {
   info?: CCCLiveInfo;
@@ -50,13 +50,14 @@ const EngineCard = memo(
     const data = info?.info;
     const loading = !data || !engine || !info || !time;
 
-    const pvMoveNumber = useRef(-1);
-    const game = useRef(new Chess960());
-    const boardHandle = useRef<BoardHandle>(null);
-
-    function updateBoard() {
-      boardHandle.current?.updateBoard(game.current, pvMoveNumber.current);
-    }
+    const {
+      Board,
+      currentMoveNumber,
+      game,
+      setCurrentFen,
+      setCurrentMoveNumber,
+      updateBoard,
+    } = useKibitzerBoard({ animated: false });
 
     const pvDisagreementPoint = useMemo(() => {
       return findPvDisagreementPoint(fen, info, opponentInfo);
@@ -65,7 +66,7 @@ const EngineCard = memo(
     const moves = useMemo(() => {
       if (loading || !fen || !data?.color) return undefined;
 
-      pvMoveNumber.current = -1;
+      setCurrentMoveNumber(-1);
       return normalizePv(data.pvSan, data.color, fen);
     }, [loading, data?.pvSan, data?.color, fen]);
 
@@ -75,19 +76,12 @@ const EngineCard = memo(
       // Throttle the actual update slightly to not destroy react render times
       const timeout = setTimeout(() => {
         game.current = buildPvGame(fen, moves, -1);
+        setCurrentFen(game.current.fen());
         updateBoard();
       }, 10);
 
       return () => clearTimeout(timeout);
     }, [moves]);
-
-    const setPvMoveNumber = useCallback(
-      (callback: (previous: number) => number) => {
-        pvMoveNumber.current = callback(pvMoveNumber.current);
-        updateBoard();
-      },
-      [moves, fen]
-    );
 
     const fields = loading
       ? ["Time", "Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map(
@@ -165,13 +159,13 @@ const EngineCard = memo(
           />
         ) : moves && !isMobile ? (
           <div className="engineRightSection">
-            <Board ref={boardHandle} animated={false} />
+            {Board}
 
             <MoveList
               startFen={safeFen}
               moves={moves}
-              currentMoveNumber={pvMoveNumber.current}
-              setCurrentMoveNumber={setPvMoveNumber}
+              currentMoveNumber={currentMoveNumber}
+              setCurrentMoveNumber={setCurrentMoveNumber}
               controllers={false}
               disagreementMoveIndex={
                 pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined

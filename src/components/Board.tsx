@@ -18,7 +18,7 @@ export type BoardHandle = {
   ) => void;
 };
 
-type BoardProps = { id?: string; animated: boolean };
+export type BoardProps = { id?: string; animated: boolean };
 
 export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
   const boardElementRef = useRef<HTMLDivElement>(null);

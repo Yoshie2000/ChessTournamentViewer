@@ -1,5 +1,5 @@
 import type { DrawShape } from "@lichess-org/chessground/draw";
-import { Chess960, type Square } from "./chess.js/chess";
+import { Chess960, type Color, type Square } from "./chess.js/chess";
 import type { CCCEngine, CCCLiveInfo } from "./types";
 import { sanToUci, uciToSan } from "./utils";
 
@@ -39,6 +39,50 @@ export const EmptyEngineDefinition: CCCEngine = {
   website: "",
   year: "",
 };
+
+export function getLiveInfosForMove(
+  liveEngineData: LiveEngineData,
+  moveNumber: number,
+  turn: Color
+) {
+  function kibitzer(base: LiveInfoEntry, color: "red" | "green" | "blue") {
+    const array = liveEngineData[color].liveInfo;
+    return {
+      engineInfo: liveEngineData[color].engineInfo,
+      liveInfo:
+        array.at(base?.info.ply ?? moveNumber) ??
+        array.at(base?.info.ply ? base?.info.ply - 1 : moveNumber),
+    };
+  }
+
+  if (turn === "w") {
+    const white = liveEngineData.white.liveInfo.at(moveNumber);
+    const black = liveEngineData.black.liveInfo.at(
+      moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
+    );
+
+    return {
+      black: { liveInfo: black, engineInfo: liveEngineData.black.engineInfo },
+      white: { liveInfo: white, engineInfo: liveEngineData.white.engineInfo },
+      green: kibitzer(white, "green"),
+      red: kibitzer(white, "red"),
+      blue: kibitzer(white, "blue"),
+    };
+  } else {
+    const white = liveEngineData.white.liveInfo.at(
+      moveNumber === -1 ? -1 : Math.max(0, moveNumber - 1)
+    );
+    const black = liveEngineData.black.liveInfo.at(moveNumber);
+
+    return {
+      black: { liveInfo: black, engineInfo: liveEngineData.black.engineInfo },
+      white: { liveInfo: white, engineInfo: liveEngineData.white.engineInfo },
+      green: kibitzer(black, "green"),
+      red: kibitzer(black, "red"),
+      blue: kibitzer(black, "blue"),
+    };
+  }
+}
 
 export function extractLiveInfoFromTCECComment(
   comment: string,
