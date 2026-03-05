@@ -4,6 +4,8 @@ export interface TournamentWebSocket {
   connect: (onMessage: (message: CCCMessage) => void) => void;
   setHandler: (onMessage: (message: CCCMessage) => void) => void;
 
+  isConnected: () => boolean;
+
   disconnect: () => void;
   send: (msg: unknown) => void;
   socket: WebSocket | SocketIOClient.Socket | null;
@@ -46,8 +48,12 @@ export class CCCWebSocket implements TournamentWebSocket {
 
     this.socket.onerror = () => {
       // this.ws?.close();
-      console.log("on eerror");
+      console.log("on error");
     };
+  }
+
+  isConnected() {
+    return !!this.socket && this.socket.readyState !== this.socket.CLOSING && this.socket.readyState !== this.socket.CLOSED && this.socket.readyState !== undefined;
   }
 
   setHandler(onMessage: (message: CCCMessage) => void) {

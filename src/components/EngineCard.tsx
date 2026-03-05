@@ -37,16 +37,13 @@ export function formatTime(time: number) {
 }
 
 const EngineCard = memo(
-  ({
-    color,
-    opponentColor,
-    time,
-    fen,
-    kibitzerLayout,
-  }: EngineCardProps) => {
-
-  const { engineInfo: engine, liveInfo: info } = useLiveInfo((state) => state.liveInfos[color]);
-  const opponentInfo = useLiveInfo((state) => opponentColor ? state.liveInfos[opponentColor].liveInfo : undefined);
+  ({ color, opponentColor, time, fen, kibitzerLayout }: EngineCardProps) => {
+    const { engineInfo: engine, liveInfo: info } = useLiveInfo(
+      (state) => state.liveInfos[color]
+    );
+    const opponentInfo = useLiveInfo((state) =>
+      opponentColor ? state.liveInfos[opponentColor].liveInfo : undefined
+    );
 
     const data = info?.info;
     const loading = !data || !engine || !info || !time;
@@ -57,7 +54,6 @@ const EngineCard = memo(
       game,
       setCurrentFen,
       setCurrentMoveNumber,
-      updateBoard,
     } = useKibitzerBoard({ animated: false });
 
     const pvDisagreementPoint = useMemo(() => {
@@ -74,14 +70,8 @@ const EngineCard = memo(
     useEffect(() => {
       if (!fen || !moves) return;
 
-      // Throttle the actual update slightly to not destroy react render times
-      const timeout = setTimeout(() => {
-        game.current = buildPvGame(fen, moves, -1);
-        setCurrentFen(game.current.fen());
-        updateBoard();
-      }, 10);
-
-      return () => clearTimeout(timeout);
+      game.current = buildPvGame(fen, moves, -1);
+      setCurrentFen(game.current.fen());
     }, [moves]);
 
     const fields = loading

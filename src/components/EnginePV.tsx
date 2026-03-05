@@ -26,7 +26,6 @@ export function EnginePV({
     game,
     setCurrentFen,
     setCurrentMoveNumber,
-    updateBoard,
   } = useKibitzerBoard({ animated: false });
 
   const moves = useMemo(() => {
@@ -36,18 +35,11 @@ export function EnginePV({
     return normalizePv(data.pvSan, data.color, fen);
   }, [data?.pvSan, data?.color, fen]);
 
-
   useEffect(() => {
     if (!fen || !moves) return;
 
-    // Throttle the actual update slightly to not destroy react render times
-    const timeout = setTimeout(() => {
-      game.current = buildPvGame(fen, moves, -1);
-      setCurrentFen(game.current.fen());
-      updateBoard();
-    }, 10);
-
-    return () => clearTimeout(timeout);
+    game.current = buildPvGame(fen, moves, -1);
+    setCurrentFen(game.current.fen());
   }, [moves]);
 
   const moveNumberOffset = new Chess960(fen).moveNumber() - 1;

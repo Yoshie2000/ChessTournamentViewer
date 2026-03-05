@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Chess960 } from "../chess.js/chess";
 import {
   Board as BoardComponent,
@@ -21,7 +21,11 @@ export function useLiveBoard({ animated, id }: BoardProps) {
       boardHandle.current?.updateBoard(
         game,
         currentMoveNumber,
-        getLiveInfosForMove(liveEngineData, currentMoveNumber, game.turnAt(currentMoveNumber)),
+        getLiveInfosForMove(
+          liveEngineData,
+          currentMoveNumber,
+          game.turnAt(currentMoveNumber)
+        ),
         bypassRateLimit
       );
     },
@@ -42,13 +46,14 @@ export function useKibitzerBoard({ animated, id }: BoardProps) {
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
   const [currentFen, setCurrentFen] = useState(game.current.fen());
 
-  const updateBoard = useCallback(() => {
-    boardHandle.current?.updateBoard(game.current, currentMoveNumber);
+  useEffect(() => {
+    setTimeout(() => {
+      boardHandle.current?.updateBoard(game.current, currentMoveNumber);
+    }, 10);
   }, [currentMoveNumber, currentFen]);
 
   return {
     Board: <BoardComponent id={id} ref={boardHandle} animated={animated} />,
-    updateBoard,
     game,
     currentMoveNumber,
     setCurrentMoveNumber,

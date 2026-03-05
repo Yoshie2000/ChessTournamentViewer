@@ -104,6 +104,10 @@ export class TCECSocket implements TournamentWebSocket {
     this.loadEventList();
   }
 
+  isConnected() {
+    return !!this.socket;
+  }
+
   setHandler(onMessage: (message: CCCMessage) => void) {
     this.cb = onMessage;
 

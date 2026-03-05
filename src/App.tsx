@@ -102,10 +102,6 @@ function App() {
     id: "main-board",
   });
 
-  useEffect(() => {
-    updateBoard();
-  }, [updateBoard]);
-
   function updateClocks() {
     setClocks((currentClock) => {
       if (!currentClock) return currentClock;
@@ -123,9 +119,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (!cccEvent) {
-      return;
-    }
+    if (!cccEvent) return;
 
     const wEngine =
       cccEvent.tournamentDetails.engines.find(
@@ -163,7 +157,6 @@ function App() {
       switch (msg.type) {
         case "eventUpdate":
           setEvent(msg);
-
           break;
 
         case "gameUpdate": {
@@ -201,7 +194,6 @@ function App() {
 
         case "liveInfo": {
           handleLiveInfo(msg);
-
           updateBoard();
           break;
         }
@@ -231,13 +223,13 @@ function App() {
           setLiveEngineData(msg.color as EngineColor, {
             engineInfo: msg.engine,
           });
-
           break;
 
         case "result":
           game.setHeader("Termination", msg.reason);
           game.setHeader("Result", msg.score);
           updateBoard(true);
+          break;
       }
     },
     [
@@ -262,42 +254,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isTCEC) {
-      const isSocketIOSocket = ws.current instanceof TCECSocket;
-      if (!isSocketIOSocket) {
-        return;
-      }
-
-      const wsInstance = ws.current;
-
-      if (!wsInstance.socket) {
-        wsInstance.connect(handleMessage);
-      } else {
-        wsInstance.setHandler(handleMessage);
-      }
-
-      return;
+    if (!ws.current.isConnected()) {
+      ws.current.connect(handleMessage);
+    } else {
+      ws.current.setHandler(handleMessage);
     }
-
-    const wsInstance = ws.current as CCCWebSocket;
-
-    if (
-      !wsInstance.socket ||
-      wsInstance.socket.readyState === wsInstance.socket.CLOSING ||
-      wsInstance.socket.readyState === wsInstance.socket.CLOSED ||
-      wsInstance.socket.readyState === undefined
-    ) {
-      wsInstance.connect(handleMessage);
-    } else if (
-      wsInstance.socket.readyState === wsInstance.socket.OPEN ||
-      wsInstance.socket.readyState === wsInstance.socket.CONNECTING
-    ) {
-      wsInstance.setHandler(handleMessage);
-    }
-
-    return () => {
-      // wsInstance.disconnect();
-    };
   }, [handleMessage]);
 
   useEffect(() => {
