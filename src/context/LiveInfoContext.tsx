@@ -5,22 +5,23 @@ import {
   EmptyEngineDefinition,
   type LiveEngineData,
   type LiveEngineDataEntry,
-  type LiveEngineDataEntryObject,
   type LiveEngineDataObject,
 } from "../LiveInfo";
-import { Chess } from "../chess.js/chess";
+import { Chess, Chess960 } from "../chess.js/chess";
+import type { CCCLiveInfo } from "../types";
+import { getLiveInfosForMove } from "../LiveInfo";
 
 type LiveInfoData = {
   liveInfos: LiveEngineDataEntry;
-  setLiveInfos: (
-    color: keyof LiveEngineDataEntry,
-    data: Partial<LiveEngineDataEntryObject>
-  ) => void;
 
   liveEngineData: LiveEngineData;
   setLiveEngineData: (
     color: keyof LiveEngineData,
     data: Partial<LiveEngineDataObject>
+  ) => void;
+  updateLiveEngineData: (
+    color: keyof LiveEngineData,
+    data: CCCLiveInfo
   ) => void;
 
   currentMoveNumber: number;
@@ -28,6 +29,8 @@ type LiveInfoData = {
 
   currentFen: string;
   setCurrentFen: (fen: string) => void;
+
+  game: Chess960;
 };
 
 export const useLiveInfo = create<LiveInfoData>()(
@@ -51,6 +54,7 @@ export const useLiveInfo = create<LiveInfoData>()(
     // chess.js game and fen + move info and whatever game-related data?
     currentMoveNumber: -1,
     currentFen: new Chess().fen(),
+    game: new Chess960(),
 
     setCurrentFen(fen) {
       set({ currentFen: fen });
@@ -68,11 +72,25 @@ export const useLiveInfo = create<LiveInfoData>()(
           ...state.liveEngineData[color],
           ...data,
         };
+
+        state.liveInfos = getLiveInfosForMove(
+          state.liveEngineData,
+          state.currentMoveNumber,
+          state.game.turnAt(state.currentMoveNumber)
+        );
       });
     },
-    setLiveInfos(color, data) {
+    updateLiveEngineData(color, data) {
       set((state) => {
-        state.liveInfos[color] = { ...state.liveInfos[color], ...data };
+        const newLiveInfos = [...state.liveEngineData[color].liveInfo];
+        newLiveInfos[data.info.ply] = data;
+        state.liveEngineData[color].liveInfo = newLiveInfos;
+
+        state.liveInfos = getLiveInfosForMove(
+          state.liveEngineData,
+          state.currentMoveNumber,
+          state.game.turnAt(state.currentMoveNumber)
+        );
       });
     },
   }))

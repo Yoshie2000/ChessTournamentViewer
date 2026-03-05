@@ -2,15 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { EngineCard } from "./EngineCard";
 import "./EngineWindow.css";
-import type { LiveEngineDataEntry } from "../LiveInfo";
 import { EngineWindowMobile } from "./EngineWindowMobile";
 import { findPvDisagreementPoint } from "../utils";
 import { EngineLogo } from "./EngineLogo";
 import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
+import { useLiveInfo } from "../context/LiveInfoContext";
 
 export type EngineWindowProps = {
-  liveInfos: LiveEngineDataEntry;
   clocks?: { wtime?: string; btime?: string };
   fen: string;
 };
@@ -20,7 +19,9 @@ type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-export function EngineWindow({ liveInfos, clocks, fen }: EngineWindowProps) {
+export function EngineWindow({ clocks, fen }: EngineWindowProps) {
+  const liveInfos = useLiveInfo((state) => state.liveInfos);
+
   const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
   const activeKibitzers = (["green", "blue", "red"] as const).filter(
     (color) => !!liveInfos[color].liveInfo
@@ -46,7 +47,7 @@ export function EngineWindow({ liveInfos, clocks, fen }: EngineWindowProps) {
 
   // MOBILE FALLBACK: Render a different component
   const isMobile = useMediaQuery({ maxWidth: 1400 });
-  if (isMobile) return <EngineWindowMobile fen={fen} liveInfos={liveInfos} />;
+  if (isMobile) return <EngineWindowMobile fen={fen} />;
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES

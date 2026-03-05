@@ -10,22 +10,23 @@ import { getLiveInfosForMove } from "../LiveInfo";
 
 export function useLiveBoard({ animated, id }: BoardProps) {
   const boardHandle = useRef<BoardHandle>(null);
-  const game = useRef(new Chess960());
 
   const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
   const liveEngineData = useLiveInfo((state) => state.liveEngineData);
-  const [currentFen, setCurrentFen] = useState(game.current.fen());
+  const currentFen = useLiveInfo((state) => state.currentFen);
+  const setCurrentFen = useLiveInfo((state) => state.setCurrentFen);
+  const game = useLiveInfo((state) => state.game);
 
   const updateBoard = useCallback(
     (bypassRateLimit: boolean = false) => {
       boardHandle.current?.updateBoard(
-        game.current,
+        game,
         currentMoveNumber,
-        getLiveInfosForMove(liveEngineData, currentMoveNumber, game.current.turnAt(currentMoveNumber)),
+        getLiveInfosForMove(liveEngineData, currentMoveNumber, game.turnAt(currentMoveNumber)),
         bypassRateLimit
       );
     },
-    [currentMoveNumber, currentFen, liveEngineData]
+    [game, currentMoveNumber, currentFen, liveEngineData]
   );
 
   return {

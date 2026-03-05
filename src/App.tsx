@@ -18,9 +18,7 @@ import {
   extractLiveInfoFromGame,
   type LiveEngineData,
   EmptyEngineDefinition,
-  type LiveEngineDataObject,
   type EngineColor,
-  getLiveInfosForMove,
 } from "./LiveInfo";
 import { Crosstable } from "./components/Crosstable";
 import { Spinner } from "./components/Loading";
@@ -34,7 +32,7 @@ import { GameResultOverlay } from "./components/GameResultOverlay";
 import { getDefaultKibitzerSettings, Settings } from "./components/Settings";
 import { TCECSocket } from "./TCECWebsocket";
 import { MoveList } from "./components/MoveList";
-import { loadLiveInfos, saveLiveInfos } from "./LocalStorage";
+import { loadLiveInfos } from "./LocalStorage";
 import { uciToSan } from "./utils";
 import { useLiveInfo } from "./context/LiveInfoContext";
 import { useEventStore } from "./context/EventContext";
@@ -78,10 +76,10 @@ function App() {
     (state) => state.setCurrentMoveNumber
   );
 
-  const liveEngineData = useLiveInfo((state) => state.liveEngineData);
   const setLiveEngineData = useLiveInfo((state) => state.setLiveEngineData);
-  const liveInfos = useLiveInfo((state) => state.liveInfos);
-  const setLiveInfos = useLiveInfo((state) => state.setLiveInfos);
+  const updateLiveEngineData = useLiveInfo(
+    (state) => state.updateLiveEngineData
+  );
 
   const popupState = usePopup((state) => state.popupState);
 
@@ -109,13 +107,13 @@ function App() {
   function updateClocks() {
     setClocks((currentClock) => {
       if (!currentClock) return currentClock;
-      const result = game.current.getHeaders()["Result"];
+      const result = game.getHeaders()["Result"];
       if (result && result !== "*") return { ...currentClock };
 
       let wtime = Number(currentClock.wtime);
       let btime = Number(currentClock.btime);
 
-      if (game.current.turn() == "w") wtime -= CLOCK_UPDATE_MS;
+      if (game.turn() == "w") wtime -= CLOCK_UPDATE_MS;
       else btime -= CLOCK_UPDATE_MS;
 
       return { ...currentClock, wtime: String(wtime), btime: String(btime) };
@@ -129,48 +127,33 @@ function App() {
 
     const wEngine =
       cccEvent.tournamentDetails.engines.find(
-        (engine) => engine.name === game.current.getHeaders()["White"]
+        (engine) => engine.name === game.getHeaders()["White"]
       ) || EmptyEngineDefinition;
 
     const bEngine =
       cccEvent.tournamentDetails.engines.find(
-        (engine) => engine.name === game.current.getHeaders()["Black"]
+        (engine) => engine.name === game.getHeaders()["Black"]
       ) || EmptyEngineDefinition;
 
-    const { liveInfosBlack, liveInfosWhite } = extractLiveInfoFromGame(
-      game.current
-    );
-
-    const wData: LiveEngineDataObject = {
-      engineInfo: wEngine,
-      liveInfo: liveInfosWhite,
-    };
-
-    const bData: LiveEngineDataObject = {
-      engineInfo: bEngine,
-      liveInfo: liveInfosBlack,
-    };
-
-    setLiveEngineData("white", wData);
-    setLiveEngineData("black", bData);
-  }, [cccEvent, cccGame, setLiveEngineData]);
+    setLiveEngineData("white", { engineInfo: wEngine });
+    setLiveEngineData("black", { engineInfo: bEngine });
+  }, [
+    cccEvent,
+    game.getHeaders()["White"],
+    game.getHeaders()["Black"],
+    setLiveEngineData,
+  ]);
 
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
       if (ws.current instanceof CCCWebSocket) {
-        msg.info.pvSan = uciToSan(
-          game.current.fen(),
-          msg.info.pv.split(" ")
-        ).join(" ");
+        msg.info.pvSan = uciToSan(game.fen(), msg.info.pv.split(" ")).join(" ");
       }
 
       const color = msg.info.color as keyof LiveEngineData;
-      const newLiveInfos = [...liveEngineData[color].liveInfo];
-      newLiveInfos[msg.info.ply] = msg;
-
-      setLiveEngineData(color, { liveInfo: newLiveInfos });
+      updateLiveEngineData(color, msg);
     },
-    [liveEngineData, setLiveEngineData]
+    [updateLiveEngineData]
   );
 
   const handleMessage = useCallback(
@@ -182,30 +165,34 @@ function App() {
           break;
 
         case "gameUpdate": {
-          game.current.loadPgn(msg.gameDetails.pgn);
+          game.loadPgn(msg.gameDetails.pgn);
 
+          // Reset kibitzer live infos
           setLiveEngineData("green", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: cccEvent ? loadLiveInfos(cccEvent, msg) : [],
           });
-
           setLiveEngineData("blue", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: [],
           });
-
           setLiveEngineData("red", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: [],
           });
 
-          setCurrentMoveNumber(() => -1);
+          // Load engine live info
+          const { liveInfosBlack, liveInfosWhite } =
+            extractLiveInfoFromGame(game);
+          setLiveEngineData("white", { liveInfo: liveInfosWhite });
+          setLiveEngineData("black", { liveInfo: liveInfosBlack });
 
+          setCurrentMoveNumber(() => -1);
           updateBoard();
 
           setGame(msg);
-          setCurrentFen(game.current.fen());
-          setMoves(game.current.history());
+          setCurrentFen(game.fen());
+          setMoves(game.history());
 
           break;
         }
@@ -230,9 +217,9 @@ function App() {
           const to = msg.move.slice(2, 4) as Square;
           const promo = msg.move?.[4];
 
-          game.current.move({ from, to, promotion: promo });
-          setCurrentFen(game.current.fen());
-          setMoves(game.current.history());
+          game.move({ from, to, promotion: promo });
+          setCurrentFen(game.fen());
+          setMoves(game.history());
           updateBoard(true);
 
           break;
@@ -246,8 +233,8 @@ function App() {
           break;
 
         case "result":
-          game.current.setHeader("Termination", msg.reason);
-          game.current.setHeader("Result", msg.score);
+          game.setHeader("Termination", msg.reason);
+          game.setHeader("Result", msg.score);
           updateBoard(true);
       }
     },
@@ -342,33 +329,30 @@ function App() {
     Promise.all(kibitzer.current.map((kibitzer) => kibitzer.stop())).then(
       () => {
         activeKibitzer.onMessage = (result) => {
-          if (game.current.getHeaders()["Event"] === "?") return;
-          if (game.current.fen() != result.fen) return;
+          if (game.getHeaders()["Event"] === "?") return;
+          if (game.fen() != result.fen) return;
 
-          const newLiveInfos = [...liveEngineData.green.liveInfo];
-          newLiveInfos[result.liveInfo.info.ply] = result.liveInfo;
-
+          updateLiveEngineData("green", result.liveInfo);
           setLiveEngineData("green", {
             engineInfo: activeKibitzer.getEngineInfo(),
-            liveInfo: newLiveInfos,
           });
 
           updateBoard();
 
-          if (cccEvent && cccGame) {
-            saveLiveInfos(cccEvent, cccGame, newLiveInfos);
-          }
+          // TODO fix later - we can't stop & restart the kibitzers every time the liveinfos change
+          // if (cccEvent && cccGame) {
+          //   saveLiveInfos(cccEvent, cccGame, newLiveInfos);
+          // }
         };
       }
     );
   }, [
-    liveEngineData.green.liveInfo,
     activeKibitzer,
     cccEvent,
     cccEvent?.tournamentDetails.tNr,
     cccGame,
     cccGame?.gameDetails.gameNr,
-    setLiveEngineData,
+    updateLiveEngineData,
     updateBoard,
   ]);
 
@@ -387,20 +371,7 @@ function App() {
     currentFen,
   ]);
 
-  useEffect(() => {
-    const { white, black, blue, green, red } = getLiveInfosForMove(
-      liveEngineData,
-      currentMoveNumber,
-      game.current.turnAt(currentMoveNumber)
-    );
-    setLiveInfos("white", white);
-    setLiveInfos("black", black);
-    setLiveInfos("blue", blue);
-    setLiveInfos("green", green);
-    setLiveInfos("red", red);
-  }, [setLiveInfos, liveEngineData, currentMoveNumber, currentFen]);
-
-  const pgnHeaders = game.current.getHeaders();
+  const pgnHeaders = game.getHeaders();
   const termination =
     cccGame?.gameDetails?.termination ??
     pgnHeaders["Termination"] ??
@@ -408,7 +379,7 @@ function App() {
   const result = pgnHeaders["Result"];
 
   useEffect(() => {
-    setCurrentFen(game.current.fenAt(currentMoveNumber));
+    setCurrentFen(game.fenAt(currentMoveNumber));
   }, [currentMoveNumber, setCurrentFen]);
 
   return (
@@ -428,13 +399,12 @@ function App() {
       )}
 
       <EventListWindow requestEvent={requestEvent} />
-      <EngineWindow liveInfos={liveInfos} clocks={clocks} fen={currentFen} />
+      <EngineWindow clocks={clocks} fen={currentFen} />
       <div className="boardWindow">
         <EngineMinimal
-          info={liveInfos.black.liveInfo}
+          color="black"
           time={Number(clocks?.btime ?? 0)}
           placeholder={"Black"}
-          engine={liveInfos.black.engineInfo}
           className="borderRadiusTop"
         />
         <div className="boardWrapper">
@@ -444,13 +414,13 @@ function App() {
             result &&
             result !== "*" &&
             (currentMoveNumber === -1 ||
-              currentMoveNumber === game.current.length()) && (
+              currentMoveNumber === game.length()) && (
               <GameResultOverlay result={result} termination={termination} />
             )}
         </div>
 
         <MoveList
-          startFen={game.current.getHeaders()["FEN"] ?? new Chess().fen()}
+          startFen={game.getHeaders()["FEN"] ?? new Chess().fen()}
           moves={moves}
           currentMoveNumber={currentMoveNumber}
           setCurrentMoveNumber={setCurrentMoveNumber}
@@ -462,10 +432,9 @@ function App() {
           controllers={true}
         />
         <EngineMinimal
-          info={liveInfos.white.liveInfo}
+          color="white"
           time={Number(clocks?.wtime ?? 0)}
           placeholder={"White"}
-          engine={liveInfos.white.engineInfo}
           className="borderRadiusBottom"
         />
       </div>
