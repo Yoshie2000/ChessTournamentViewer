@@ -5,13 +5,16 @@ import { EngineStats } from "./EngineStats";
 import type { EngineWindowProps } from "./EngineWindow";
 import { findPvDisagreementPoint } from "../utils";
 import "./EngineWindowMobile.css";
+import { useLiveInfo } from "../context/LiveInfoContext";
 
 const TABS = ["Engines", "Engine PVs", "Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-export function EngineWindowMobile({ fen, liveInfos }: EngineWindowProps) {
+export function EngineWindowMobile({ fen }: EngineWindowProps) {
+  const liveInfos = useLiveInfo((state) => state.liveInfos);
+
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
 
   const activeKibitzers = (["green", "blue", "red"] as const).filter(

@@ -1,24 +1,27 @@
-import type { CCCEngine, CCCLiveInfo } from "../types";
+import { useLiveInfo } from "../context/LiveInfoContext";
+import {
+  type EngineColor,
+} from "../LiveInfo";
 import { formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 
 type EngineCardProps = {
-  info?: CCCLiveInfo;
-  engine?: CCCEngine;
+  color: EngineColor;
   time: number;
   placeholder?: string;
   className?: string;
 };
 
 export function EngineMinimal({
-  engine,
-  info,
+  color,
   time,
   placeholder,
   className,
 }: EngineCardProps) {
+  const { engineInfo: engine, liveInfo: info } = useLiveInfo((state) => state.liveInfos[color]);
+
   const data = info?.info;
   const loading = !data || !engine || !info || !time;
 
