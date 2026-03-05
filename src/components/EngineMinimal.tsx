@@ -10,14 +10,12 @@ import { SkeletonBlock, SkeletonText } from "./Loading";
 type EngineCardProps = {
   color: EngineColor;
   time: number;
-  placeholder?: string;
   className?: string;
 };
 
 export function EngineMinimal({
   color,
   time,
-  placeholder,
   className,
 }: EngineCardProps) {
   const { engineInfo: engine, liveInfo: info } = useLiveInfo((state) => state.liveInfos[color]);
@@ -37,7 +35,7 @@ export function EngineMinimal({
         )}
 
         <div className="engineName">
-          {loading ? (placeholder ?? "Loading…") : engine!.name}
+          {loading ? color : engine!.name}
         </div>
 
         <div className="engineOutput">

@@ -39,7 +39,7 @@ import { useEventStore } from "./context/EventContext";
 import { EventListWindow } from "./components/EventList/EventList";
 import { GraphWindow } from "./components/GraphWindow/GraphWindow";
 import { StandingsWindow } from "./components/StandingsWindow/StandingsWindow";
-import { usePopup } from "./components/Popup/PopupContext";
+import { usePopup } from "./context/PopupContext";
 import { useLiveBoard } from "./hooks/BoardHook";
 
 const CLOCK_UPDATE_MS = 100;
@@ -95,7 +95,9 @@ function App() {
     getDefaultKibitzerSettings()
   );
 
-  const { Board, currentFen, setCurrentFen, game, updateBoard } = useLiveBoard({
+  const currentFen = useLiveInfo((state) => state.currentFen);
+  const setCurrentFen = useLiveInfo((state) => state.setCurrentFen);
+  const { Board, game, updateBoard } = useLiveBoard({
     animated: true,
     id: "main-board",
   });
@@ -399,12 +401,11 @@ function App() {
       )}
 
       <EventListWindow requestEvent={requestEvent} />
-      <EngineWindow clocks={clocks} fen={currentFen} />
+      <EngineWindow clocks={clocks} />
       <div className="boardWindow">
         <EngineMinimal
           color="black"
           time={Number(clocks?.btime ?? 0)}
-          placeholder={"Black"}
           className="borderRadiusTop"
         />
         <div className="boardWrapper">
@@ -434,7 +435,6 @@ function App() {
         <EngineMinimal
           color="white"
           time={Number(clocks?.wtime ?? 0)}
-          placeholder={"White"}
           className="borderRadiusBottom"
         />
       </div>

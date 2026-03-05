@@ -14,7 +14,6 @@ export function useLiveBoard({ animated, id }: BoardProps) {
   const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
   const liveEngineData = useLiveInfo((state) => state.liveEngineData);
   const currentFen = useLiveInfo((state) => state.currentFen);
-  const setCurrentFen = useLiveInfo((state) => state.setCurrentFen);
   const game = useLiveInfo((state) => state.game);
 
   const updateBoard = useCallback(
@@ -33,8 +32,6 @@ export function useLiveBoard({ animated, id }: BoardProps) {
     Board: <BoardComponent id={id} ref={boardHandle} animated={animated} />,
     updateBoard,
     game,
-    currentFen,
-    setCurrentFen,
   };
 }
 
