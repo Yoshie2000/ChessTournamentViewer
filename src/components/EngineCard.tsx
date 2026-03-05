@@ -1,5 +1,4 @@
 import { useMemo, memo, useEffect } from "react";
-import type { CCCEngine, CCCLiveInfo } from "../types";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
@@ -8,14 +7,14 @@ import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
 import { Chess, Chess960 } from "../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
 import { useKibitzerBoard } from "../hooks/BoardHook";
+import type { EngineColor } from "../LiveInfo";
+import { useLiveInfo } from "../context/LiveInfoContext";
 
 type EngineCardProps = {
-  info?: CCCLiveInfo;
-  engine?: CCCEngine;
+  color: EngineColor;
+  opponentColor?: EngineColor;
   time: number;
-  placeholder?: string;
   fen: string | undefined;
-  opponentInfo?: CCCLiveInfo;
   kibitzerLayout?: boolean;
 };
 
@@ -39,14 +38,16 @@ export function formatTime(time: number) {
 
 const EngineCard = memo(
   ({
-    engine,
-    info,
+    color,
+    opponentColor,
     time,
-    placeholder,
     fen,
-    opponentInfo,
     kibitzerLayout,
   }: EngineCardProps) => {
+
+  const { engineInfo: engine, liveInfo: info } = useLiveInfo((state) => state.liveInfos[color]);
+  const opponentInfo = useLiveInfo((state) => opponentColor ? state.liveInfos[opponentColor].liveInfo : undefined);
+
     const data = info?.info;
     const loading = !data || !engine || !info || !time;
 
@@ -114,7 +115,7 @@ const EngineCard = memo(
             )}
 
             <div className="engineName" title={engine?.name ?? ""}>
-              {!engine ? (placeholder ?? "Loading…") : engine!.name}
+              {!engine ? color : engine!.name}
             </div>
           </div>
 

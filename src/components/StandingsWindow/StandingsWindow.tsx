@@ -5,7 +5,7 @@ import { useEventStore } from "../../context/EventContext";
 import { Spinner } from "../Loading";
 import { StandingsTable } from "../StandingsTable";
 
-import { usePopup } from "../Popup/PopupContext";
+import { usePopup } from "../../context/PopupContext";
 
 export const StandingsWindow = memo(() => {
   const cccEvent = useEventStore((state) => state.cccEvent);

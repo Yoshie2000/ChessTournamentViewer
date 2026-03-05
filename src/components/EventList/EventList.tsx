@@ -4,7 +4,7 @@ import { useEventStore } from "../../context/EventContext";
 import { LuSettings } from "react-icons/lu";
 import { EventList } from "../EventList";
 
-import { usePopup } from "../Popup/PopupContext";
+import { usePopup } from "../../context/PopupContext";
 
 type EventListWindowProps = {
   requestEvent: (gameNr?: string, eventNr?: string) => void;

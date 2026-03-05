@@ -3,7 +3,7 @@ import type { EngineSettings } from "../engine/EngineWorker";
 import "./Settings.css";
 import { memo, useState } from "react";
 import { loadSettings, saveSettings } from "../LocalStorage";
-import { usePopup } from "./Popup/PopupContext";
+import { usePopup } from "../context/PopupContext";
 
 type SettingsProps = {
   kibitzerSettings: EngineSettings;

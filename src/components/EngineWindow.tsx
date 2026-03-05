@@ -9,9 +9,8 @@ import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
 import { useLiveInfo } from "../context/LiveInfoContext";
 
-export type EngineWindowProps = {
+type EngineWindowProps = {
   clocks?: { wtime?: string; btime?: string };
-  fen: string;
 };
 
 const TABS = ["Kibitzers", "Kibitzer PVs"] as const;
@@ -19,8 +18,9 @@ type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-export function EngineWindow({ clocks, fen }: EngineWindowProps) {
+export function EngineWindow({ clocks }: EngineWindowProps) {
   const liveInfos = useLiveInfo((state) => state.liveInfos);
+  const fen = useLiveInfo((state) => state.currentFen);
 
   const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
   const activeKibitzers = (["green", "blue", "red"] as const).filter(
@@ -47,7 +47,7 @@ export function EngineWindow({ clocks, fen }: EngineWindowProps) {
 
   // MOBILE FALLBACK: Render a different component
   const isMobile = useMediaQuery({ maxWidth: 1400 });
-  if (isMobile) return <EngineWindowMobile fen={fen} />;
+  if (isMobile) return <EngineWindowMobile />;
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES
@@ -58,10 +58,8 @@ export function EngineWindow({ clocks, fen }: EngineWindowProps) {
   const kibitzerWindow =
     activeKibitzers.length === 0 ? null : activeKibitzers.length === 1 ? (
       <EngineCard
-        engine={liveInfos[activeKibitzers[0]].engineInfo}
-        info={liveInfos[activeKibitzers[0]].liveInfo}
+        color={activeKibitzers[0]}
         time={1}
-        placeholder="Kibitzer"
         fen={fen}
       />
     ) : (
@@ -129,19 +127,15 @@ export function EngineWindow({ clocks, fen }: EngineWindowProps) {
   return (
     <div className="engineWindow">
       <EngineCard
-        engine={liveInfos.black.engineInfo}
-        info={liveInfos.black.liveInfo}
-        opponentInfo={liveInfos.white.liveInfo}
+        color="black"
+        opponentColor="white"
         time={btime}
-        placeholder="Black"
         fen={fen}
       />
       <EngineCard
-        engine={liveInfos.white.engineInfo}
-        info={liveInfos.white.liveInfo}
-        opponentInfo={liveInfos.black.liveInfo}
+        color="white"
+        opponentColor="black"
         time={wtime}
-        placeholder="White"
         fen={fen}
       />
       {kibitzerWindow}

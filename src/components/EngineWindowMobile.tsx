@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { EngineLogo } from "./EngineLogo";
 import { EnginePV } from "./EnginePV";
 import { EngineStats } from "./EngineStats";
-import type { EngineWindowProps } from "./EngineWindow";
 import { findPvDisagreementPoint } from "../utils";
 import "./EngineWindowMobile.css";
 import { useLiveInfo } from "../context/LiveInfoContext";
@@ -12,8 +11,9 @@ type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-export function EngineWindowMobile({ fen }: EngineWindowProps) {
+export function EngineWindowMobile() {
   const liveInfos = useLiveInfo((state) => state.liveInfos);
+  const fen = useLiveInfo((state) => state.currentFen);
 
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
 

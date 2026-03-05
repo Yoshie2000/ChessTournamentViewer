@@ -239,7 +239,7 @@ export const GameGraph = memo(() => {
             },
             onClick: (_, elements) => {
               if (elements[0]?.index) {
-                setCurrentMoveNumber(elements[0].index + bookPlies);
+                setCurrentMoveNumber(() => elements[0].index + bookPlies);
               }
             },
             scales: {

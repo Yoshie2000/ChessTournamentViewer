@@ -3,7 +3,7 @@ import type { CCCGame } from "../types";
 import "./Crosstable.css";
 import { useEventStore } from "../context/EventContext";
 import { memo } from "react";
-import { usePopup } from "./Popup/PopupContext";
+import { usePopup } from "../context/PopupContext";
 
 type CrosstableProps = { requestEvent: (gameNr?: string) => void };
 
@@ -213,7 +213,7 @@ function formatPenta(penta: Penta): string {
   return "[" + penta.join(", ") + "]";
 }
 
-export const Crosstable = memo(({ onClose, requestEvent }: CrosstableProps) => {
+export const Crosstable = memo(({ requestEvent }: CrosstableProps) => {
   const cccEvent = useEventStore((state) => state.cccEvent);
   const engines = useEventStore((state) => state.engines) ?? [];
 
