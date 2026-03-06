@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CCCWebSocket, type TournamentWebSocket } from "./CCCWebsocket";
-import type { CCCMessage, CCCClocks, CCCLiveInfo } from "./types";
+import type { CCCMessage, CCCLiveInfo } from "./types";
 import {
   CategoryScale,
   Chart,
@@ -76,20 +76,13 @@ function App() {
     (state) => state.setCurrentMoveNumber
   );
 
+  const setClocks = useLiveInfo((state) => state.setClocks);
   const setLiveEngineData = useLiveInfo((state) => state.setLiveEngineData);
   const updateLiveEngineData = useLiveInfo(
     (state) => state.updateLiveEngineData
   );
 
   const popupState = usePopup((state) => state.popupState);
-
-  const [clocks, setClocks] = useState<CCCClocks>({
-    binc: "0",
-    winc: "0",
-    btime: "0",
-    wtime: "0",
-    type: "clocks",
-  });
 
   const [kibitzerSettings, setKibitzerSettings] = useState<EngineSettings>(
     getDefaultKibitzerSettings()
@@ -203,7 +196,7 @@ function App() {
           break;
 
         case "clocks":
-          setClocks(msg);
+          setClocks(() => msg);
           break;
 
         case "newMove": {
@@ -362,11 +355,10 @@ function App() {
       )}
 
       <EventListWindow requestEvent={requestEvent} />
-      <EngineWindow clocks={clocks} />
+      <EngineWindow />
       <div className="boardWindow">
         <EngineMinimal
           color="black"
-          time={Number(clocks?.btime ?? 0)}
           className="borderRadiusTop"
         />
         <div className="boardWrapper">
@@ -395,7 +387,6 @@ function App() {
         />
         <EngineMinimal
           color="white"
-          time={Number(clocks?.wtime ?? 0)}
           className="borderRadiusBottom"
         />
       </div>
