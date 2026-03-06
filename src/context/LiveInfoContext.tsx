@@ -8,7 +8,7 @@ import {
   type LiveEngineDataObject,
 } from "../LiveInfo";
 import { Chess, Chess960 } from "../chess.js/chess";
-import type { CCCLiveInfo } from "../types";
+import type { CCCClocks, CCCLiveInfo } from "../types";
 import { getLiveInfosForMove } from "../LiveInfo";
 
 type LiveInfoData = {
@@ -23,6 +23,9 @@ type LiveInfoData = {
     color: keyof LiveEngineData,
     data: CCCLiveInfo
   ) => void;
+
+  clocks: CCCClocks;
+  setClocks: (callback: (clocks: CCCClocks) => CCCClocks) => void;
 
   currentMoveNumber: number;
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
@@ -48,6 +51,13 @@ export const useLiveInfo = create<LiveInfoData>()(
       blue: { engineInfo: EmptyEngineDefinition, liveInfo: undefined },
       green: { engineInfo: EmptyEngineDefinition, liveInfo: undefined },
       red: { engineInfo: EmptyEngineDefinition, liveInfo: undefined },
+    },
+
+    clocks: { binc: "0", winc: "0", btime: "0", wtime: "0", type: "clocks" },
+    setClocks(callback) {
+      set((state) => {
+        state.clocks = callback(state.clocks);
+      });
     },
 
     // probably should create another context for the game with

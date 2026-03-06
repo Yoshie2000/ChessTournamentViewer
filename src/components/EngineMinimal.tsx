@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import {
   type EngineColor,
@@ -9,16 +10,15 @@ import { SkeletonBlock, SkeletonText } from "./Loading";
 
 type EngineCardProps = {
   color: EngineColor;
-  time: number;
   className?: string;
 };
 
-export function EngineMinimal({
+const EngineMinimal = memo(({
   color,
-  time,
   className,
-}: EngineCardProps) {
+}: EngineCardProps) => {
   const { engineInfo: engine, liveInfo: info } = useLiveInfo((state) => state.liveInfos[color]);
+  const time = Number(useLiveInfo((state) => color === "white" ? state.clocks.wtime : state.clocks.btime) ?? 0);
 
   const data = info?.info;
   const loading = !data || !engine || !info || !time;
@@ -47,4 +47,6 @@ export function EngineMinimal({
       </div>
     </div>
   );
-}
+});
+
+export { EngineMinimal };
