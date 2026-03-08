@@ -46,6 +46,7 @@ import { Board, type BoardHandle } from "./components/Board";
 import { MoveList } from "./components/MoveList";
 import { loadLiveInfos, saveLiveInfos } from "./LocalStorage";
 import { uciToSan } from "./utils";
+import { useMediaQuery } from "react-responsive";
 
 const CLOCK_UPDATE_MS = 100;
 
@@ -414,6 +415,8 @@ function App() {
 
   const currentFen = game.current.fenAt(currentMoveNumber.current);
 
+  const isMobile = useMediaQuery({ maxWidth: 775 });
+
   return (
     <div className="app">
       {popupState && (
@@ -458,13 +461,16 @@ function App() {
       <EngineWindow liveInfos={liveInfos} clocks={clocks} fen={currentFen} />
 
       <div className="boardWindow">
-        <EngineMinimal
-          info={liveInfos.black.liveInfo}
-          time={Number(clocks?.btime || 1) || 1}
-          placeholder={"Black"}
-          engine={liveInfos.black.engineInfo}
-          className="borderRadiusTop"
-        />
+        {isMobile ? (
+          <EngineMinimal
+            info={liveInfos.black.liveInfo}
+            time={Number(clocks?.btime || 1) || 1}
+            placeholder={"Black"}
+            engine={liveInfos.black.engineInfo}
+            className="borderRadiusTop"
+          />
+        ) : undefined}
+
         <div className="boardWrapper">
           <Board id="main-board" ref={boardHandle} animated={true} />
 
@@ -489,13 +495,15 @@ function App() {
           }
           controllers={true}
         />
-        <EngineMinimal
-          info={liveInfos.white.liveInfo}
-          time={Number(clocks?.wtime || 1) || 1}
-          placeholder={"White"}
-          engine={liveInfos.white.engineInfo}
-          className="borderRadiusBottom"
-        />
+        {isMobile ? (
+          <EngineMinimal
+            info={liveInfos.white.liveInfo}
+            time={Number(clocks?.wtime || 1) || 1}
+            placeholder={"White"}
+            engine={liveInfos.white.engineInfo}
+            className="borderRadiusBottom"
+          />
+        ) : undefined}
       </div>
 
       <div className="standingsWindow">
