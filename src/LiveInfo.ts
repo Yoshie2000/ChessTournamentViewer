@@ -40,6 +40,59 @@ export const EmptyEngineDefinition: CCCEngine = {
   year: "",
 };
 
+export function parseTCECLiveInfo(
+  json: any,
+  fen: string,
+  color: "blue" | "red"
+): CCCLiveInfo {
+  const blackToMove = json.pv.includes("...");
+  const fullmove = blackToMove
+    ? Number(json.pv.split("...")[0])
+    : Number(json.pv.split(".")[0]);
+  const ply = 2 * (fullmove - 1) + (blackToMove ? 1 : 0);
+
+  const tmpGame = new Chess960(fen);
+  const pvMoves = json.pv
+    .split(/ |\.\.\./)
+    .filter((str: string) => !str.match(/^\d+\.?$/));
+
+  const lanMoves: string[] = [];
+  for (let pvMove of pvMoves) {
+    try {
+      const move = tmpGame.move(pvMove, { strict: false });
+      if (move) {
+        lanMoves.push(move.lan);
+      } else {
+        break;
+      }
+    } catch (_) {
+      break;
+    }
+  }
+
+  return {
+    type: "liveInfo",
+    info: {
+      color: color,
+      depth: json.depth.split("/")[0],
+      hashfull: "-",
+      multipv: "1",
+      name: "",
+      nodes: String(json.nodes),
+      pv: lanMoves.join(" "),
+      pvSan: pvMoves.join(" "),
+      score: String(json.eval),
+      seldepth: json.depth.split("/")[1],
+      speed: String(
+        Number(json.speed.split(" ")[0]) * (color === "blue" ? 1000 : 1000000)
+      ),
+      tbhits: String(json.tbhits),
+      time: "-",
+      ply,
+    },
+  };
+}
+
 export function getLiveInfosForMove(
   liveEngineData: LiveEngineData,
   moveNumber: number,

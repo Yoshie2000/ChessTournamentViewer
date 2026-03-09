@@ -30,7 +30,7 @@ import { EngineMinimal } from "./components/EngineMinimal";
 import { Chess, type Square } from "./chess.js/chess";
 import { GameResultOverlay } from "./components/GameResultOverlay";
 import { getDefaultKibitzerSettings, Settings } from "./components/Settings";
-import { TCECSocket } from "./TCECWebsocket";
+import { TCECWebSocket } from "./TCECWebsocket";
 import { MoveList } from "./components/MoveList";
 import { loadLiveInfos } from "./LocalStorage";
 import { uciToSan } from "./utils";
@@ -56,7 +56,7 @@ Chart.register(
 
 const isTCEC = window.location.search.includes("tcec");
 
-const _initialWS = isTCEC ? new TCECSocket() : new CCCWebSocket();
+const _initialWS = isTCEC ? new TCECWebSocket() : new CCCWebSocket();
 
 function App() {
   const ws = useRef<TournamentWebSocket>(_initialWS);
