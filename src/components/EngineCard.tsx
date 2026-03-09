@@ -37,7 +37,7 @@ export function formatTime(time: number) {
 
 const EngineCard = memo(
   ({ color, opponentColor, fen, kibitzerLayout }: EngineCardProps) => {
-    const time = Number(useLiveInfo((state) => color === "white" ? state.clocks.wtime : color === "black" ? state.clocks.btime : "1") ?? 0);
+    const time = Number(useLiveInfo((state) => color === "white" ? state.clocks.wtime : color === "black" ? state.clocks.btime : "1") || 1) || 1;
 
     const { engineInfo: engine, liveInfo: info } = useLiveInfo(
       (state) => state.liveInfos[color]
