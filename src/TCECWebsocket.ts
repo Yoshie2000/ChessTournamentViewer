@@ -17,7 +17,7 @@ import {
 } from "./LiveInfo";
 
 export class TCECWebSocket implements TournamentWebSocket {
-  socket: SocketIOClient.Socket | null = null;
+  private socket: SocketIOClient.Socket | null = null;
   private callback: ((message: CCCMessage) => void) | null = null;
 
   private live: boolean = true;

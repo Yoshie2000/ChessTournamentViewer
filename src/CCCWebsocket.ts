@@ -8,12 +8,11 @@ export interface TournamentWebSocket {
 
   disconnect: () => void;
   send: (msg: unknown) => void;
-  socket: WebSocket | SocketIOClient.Socket | null;
 }
 
 export class CCCWebSocket implements TournamentWebSocket {
   private url: string = "wss://ccc-api.gcp-prod.chess.com/ws";
-  socket: WebSocket | null = new WebSocket(this.url);
+  private socket: WebSocket | null = new WebSocket(this.url);
 
   private callback: (message: CCCMessage) => void = () => {};
 
