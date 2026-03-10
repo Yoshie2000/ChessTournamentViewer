@@ -77,6 +77,12 @@ export const useLiveInfo = create<LiveInfoData>()(
         set((state) => {
           state.currentMoveNumber = callback(state.currentMoveNumber);
           state.currentFen = state.game.fenAt(state.currentMoveNumber);
+
+          state.liveInfos = getLiveInfosForMove(
+            state.liveEngineData,
+            state.currentMoveNumber,
+            state.game.turnAt(state.currentMoveNumber)
+          );
         });
       },
 

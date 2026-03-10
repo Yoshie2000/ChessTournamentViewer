@@ -85,7 +85,7 @@ const MoveList = memo(
       }
     }, [moves.length, currentMoveNumber]);
 
-        function undoAllMoves() {
+    function undoAllMoves() {
       setCurrentMoveNumber(() => 0);
       const el = moveListRef.current;
       if (el) {

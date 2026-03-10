@@ -19,7 +19,10 @@ export const zustandHmrFix = (name: string, useStore: UseBoundStore<any>) => {
       if (newModule) {
         const savedState = import.meta.hot!.data[name];
         if (savedState) {
-          const newState = { ...savedState, actions: useStore.getState().actions };
+          const newState = {
+            ...savedState,
+            actions: useStore.getState().actions,
+          };
           useStore.setState(newState);
         }
       }

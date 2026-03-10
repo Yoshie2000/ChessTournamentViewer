@@ -220,7 +220,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
     const data = value.comment?.split(", ") ?? [];
 
     if (data[0] === "book") return;
-    
+
     const fenBeforeMove = allValues[i - 1]?.fen ?? startingFen;
     const color = fenBeforeMove.includes(" w ") ? "white" : "black";
 

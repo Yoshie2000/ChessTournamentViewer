@@ -1,4 +1,3 @@
-import React from "react";
 import { useEventStore } from "../../context/EventContext";
 import { Spinner } from "../Loading";
 import { Schedule } from "../Schedule";

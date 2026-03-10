@@ -92,7 +92,6 @@ export function EngineWindowMobile() {
               {PLAYING_ENGINES.map((color) => (
                 <td key={color}>
                   <EnginePV
-                    fen={fen}
                     pvDisagreementPoint={playingEnginesDisagreement}
                     liveInfoData={liveInfos[color]}
                   />
@@ -112,7 +111,6 @@ export function EngineWindowMobile() {
               {activeKibitzers.map((color) => (
                 <td key={color}>
                   <EnginePV
-                    fen={fen}
                     pvDisagreementPoint={kibitzerDisagreement}
                     liveInfoData={liveInfos[color]}
                   />

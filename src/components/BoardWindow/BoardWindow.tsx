@@ -77,6 +77,7 @@ export const BoardWindow = memo(() => {
 
         case "gameUpdate": {
           game.loadPgn(msg.gameDetails.pgn);
+          liveInfoState.setCurrentMoveNumber(() => -1);
 
           // Reset kibitzer live infos
           liveInfoState.setLiveEngineData("green", {

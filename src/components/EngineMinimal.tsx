@@ -1,24 +1,23 @@
 import { memo } from "react";
 import { useLiveInfo } from "../context/LiveInfoContext";
-import {
-  type EngineColor,
-} from "../LiveInfo";
+import { type EngineColor } from "../LiveInfo";
 import { formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 
-type EngineCardProps = {
-  color: EngineColor;
-  className?: string;
-};
+type EngineCardProps = { color: EngineColor; className?: string };
 
-const EngineMinimal = memo(({
-  color,
-  className,
-}: EngineCardProps) => {
-  const { engineInfo: engine, liveInfo: info } = useLiveInfo((state) => state.liveInfos[color]);
-  const time = Number(useLiveInfo((state) => color === "white" ? state.clocks.wtime : state.clocks.btime) || 1) || 1;
+const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
+  const { engineInfo: engine, liveInfo: info } = useLiveInfo(
+    (state) => state.liveInfos[color]
+  );
+  const time =
+    Number(
+      useLiveInfo((state) =>
+        color === "white" ? state.clocks.wtime : state.clocks.btime
+      ) || 1
+    ) || 1;
 
   const data = info?.info;
   const loading = !data || !engine || !info || !time;
@@ -34,9 +33,7 @@ const EngineMinimal = memo(({
           <EngineLogo engine={engine!} />
         )}
 
-        <div className="engineName">
-          {loading ? color : engine!.name}
-        </div>
+        <div className="engineName">{loading ? color : engine!.name}</div>
 
         <div className="engineOutput">
           <div className="engineTime">

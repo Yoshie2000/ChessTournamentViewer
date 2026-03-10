@@ -49,7 +49,9 @@ const EngineCard = memo(
       ) || 1;
 
     // Kibitzers re-render on FEN change, or on every depth change after depth 15
-    const fen = useLiveInfo((state) => state.game.fenAt(state.currentMoveNumber));
+    const fen = useLiveInfo((state) =>
+      state.game.fenAt(state.currentMoveNumber)
+    );
     useLiveInfo((state) =>
       !["black", "white"].includes(color)
         ? Math.max(

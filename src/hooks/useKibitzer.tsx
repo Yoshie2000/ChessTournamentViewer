@@ -65,7 +65,11 @@ export const useKibitzer = ({
           updateBoard();
 
           if (cccEvent && cccGame) {
-            saveLiveInfos(cccEvent, cccGame, useLiveInfo.getState().liveEngineData["green"].liveInfo);
+            saveLiveInfos(
+              cccEvent,
+              cccGame,
+              useLiveInfo.getState().liveEngineData["green"].liveInfo
+            );
           }
         };
       }
@@ -87,9 +91,12 @@ export const useKibitzer = ({
   useEffect(() => {
     if (!cccGame?.gameDetails.live || !kibitzerSettings.enableKibitzer) return;
 
-    const unsubscribe = useLiveInfo.subscribe((state) => state.currentFen, (currentFen) => {
-      activeKibitzer?.analyze({ fen: currentFen, gameIndex: game.length() });
-    });
+    const unsubscribe = useLiveInfo.subscribe(
+      (state) => state.currentFen,
+      (currentFen) => {
+        activeKibitzer?.analyze({ fen: currentFen, gameIndex: game.length() });
+      }
+    );
 
     return unsubscribe;
   }, [

@@ -152,7 +152,10 @@ export const GameGraph = memo(() => {
 
   const [mode, setMode] = useState(0);
 
-  const bookPlies = liveInfos.white.findIndex((liveInfo) => !!liveInfo);
+  const bookPlies = Math.min(
+    liveInfos.white.findIndex((liveInfo) => !!liveInfo),
+    liveInfos.black.findIndex((liveInfo) => !!liveInfo)
+  );
 
   const colors = Object.keys(liveInfos) as (keyof typeof liveInfos)[];
   const lengths = colors.map((color) => liveInfos[color].length);

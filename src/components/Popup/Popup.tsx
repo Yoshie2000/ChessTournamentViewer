@@ -1,4 +1,3 @@
-import React from "react";
 import { useEventStore } from "../../context/EventContext";
 import { usePopup } from "../../context/PopupContext";
 import { Settings } from "../Settings";
@@ -10,7 +9,6 @@ export const Popup = () => {
 
   return (
     <>
-      {" "}
       {popupState !== "none" && (
         <div className="popup">
           {popupState === "crosstable" && cccEvent && <Crosstable />}
