@@ -1,17 +1,15 @@
+import { useEventStore } from "../context/EventContext";
 import type { CCCEventsListUpdate, CCCEventUpdate } from "../types";
 import "./EventList.css";
 
 type EventListProps = {
   eventList: CCCEventsListUpdate | undefined;
   selectedEvent: CCCEventUpdate | undefined;
-  requestEvent: (gameNr?: string, eventNr?: string) => void;
 };
 
-export function EventList({
-  eventList,
-  selectedEvent,
-  requestEvent,
-}: EventListProps) {
+export function EventList({ eventList, selectedEvent }: EventListProps) {
+  const requestEvent = useEventStore((state) => state.requestEvent);
+
   if (!eventList || !selectedEvent) {
     return (
       <select className="eventListContainer">

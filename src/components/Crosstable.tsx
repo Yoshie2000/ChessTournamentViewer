@@ -5,8 +5,6 @@ import { useEventStore } from "../context/EventContext";
 import { memo } from "react";
 import { usePopup } from "../context/PopupContext";
 
-type CrosstableProps = { requestEvent: (gameNr?: string) => void };
-
 type GameResult = "win" | "loss" | "draw" | "tbd";
 type GameScore = -1 | 0 | 1;
 type Penta = [number, number, number, number, number];
@@ -213,9 +211,10 @@ function formatPenta(penta: Penta): string {
   return "[" + penta.join(", ") + "]";
 }
 
-export const Crosstable = memo(({ requestEvent }: CrosstableProps) => {
+export const Crosstable = memo(() => {
   const cccEvent = useEventStore((state) => state.cccEvent);
   const engines = useEventStore((state) => state.engines) ?? [];
+  const requestEvent = useEventStore((state) => state.requestEvent);
 
   const setPopupState = usePopup((state) => state.setPopupState);
 

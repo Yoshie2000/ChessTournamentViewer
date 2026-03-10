@@ -8,6 +8,7 @@ import { EngineLogo } from "./EngineLogo";
 import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
 import { useLiveInfo } from "../context/LiveInfoContext";
+import { useClocks } from "../hooks/useClocks";
 
 const TABS = ["Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
@@ -15,6 +16,8 @@ type Tab = (typeof TABS)[number];
 const PLAYING_ENGINES = ["white", "black"] as const;
 
 export function EngineWindow() {
+  useClocks();
+
   const liveInfos = useLiveInfo((state) => state.liveInfos);
   const fen = useLiveInfo((state) => state.currentFen);
 
@@ -48,10 +51,7 @@ export function EngineWindow() {
 
   const kibitzerWindow =
     activeKibitzers.length === 0 ? null : activeKibitzers.length === 1 ? (
-      <EngineCard
-        color={activeKibitzers[0]}
-        fen={fen}
-      />
+      <EngineCard color={activeKibitzers[0]} fen={fen} />
     ) : (
       <div className="kibitzerWindow">
         <div className="engineTabs">
@@ -116,16 +116,8 @@ export function EngineWindow() {
 
   return (
     <div className="engineWindow">
-      <EngineCard
-        color="black"
-        opponentColor="white"
-        fen={fen}
-      />
-      <EngineCard
-        color="white"
-        opponentColor="black"
-        fen={fen}
-      />
+      <EngineCard color="black" opponentColor="white" fen={fen} />
+      <EngineCard color="white" opponentColor="black" fen={fen} />
       {kibitzerWindow}
     </div>
   );
