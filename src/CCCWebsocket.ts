@@ -12,7 +12,7 @@ export interface TournamentWebSocket {
 
 export class CCCWebSocket implements TournamentWebSocket {
   private url: string = "wss://ccc-api.gcp-prod.chess.com/ws";
-  private socket: WebSocket | null = new WebSocket(this.url);
+  private socket: WebSocket | null = null;
 
   private callback: (message: CCCMessage) => void = () => {};
 
