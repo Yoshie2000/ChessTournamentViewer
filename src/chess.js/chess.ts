@@ -1763,7 +1763,7 @@ export class Chess {
 
       if (!moveObj) {
         for (let i = 0, len = moves.length; i < len; i++) {
-          if (move.from === algebraic(moves[i].from) && moves[i].piece === "k" && moves[i].rookFrom && moves[i].rookTo) {
+          if (move.from === algebraic(moves[i].from) && moves[i].piece === "k" && moves[i].rookFrom !== undefined && moves[i].rookTo !== undefined) {
             const to = Ox88[move.to as Square];
 
             if (file(to) < file(moves[i].from)) {
