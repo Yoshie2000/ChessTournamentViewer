@@ -39,6 +39,10 @@ export function GameResultOverlay() {
       case "adjudication":
         if (result === "1/2-1/2") return "Draw Adjudication";
         else return "Adjudication";
+      case "abandoned":
+        if (result === "1-0") return "Black crashed";
+        if (result === "0-1") return "White crashed";
+        return termination;
       default:
         return termination;
     }
