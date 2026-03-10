@@ -4,8 +4,6 @@ import "./Schedule.css";
 import { MdOutlineClose } from "react-icons/md";
 import { useEventStore } from "../context/EventContext";
 
-type ScheduleProps = { requestEvent: (gameNr?: string) => void };
-
 function formatDuration(value: number) {
   if (value < 60) return `in ${value.toFixed(0)} minutes`;
   return `in ${(value / 60).toFixed(0)} hours`;
@@ -77,11 +75,7 @@ const Schedule = memo(() => {
   ]);
 
   if (!event || !selectedGame || !engines) {
-    // ! TODO add some sort of loader?
-    // ? but this clause should actually never fire with
-    // ? current store conditions
-    // throw an error if we are here then?
-    return <></>;
+    return null;
   }
 
   const gamesList = [

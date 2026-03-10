@@ -6,18 +6,14 @@ import { SkeletonBlock } from "./Loading";
 import { MoveList } from "./MoveList";
 import "./EnginePV.css";
 import { useKibitzerBoard } from "../hooks/BoardHook";
+import { useLiveInfo } from "../context/LiveInfoContext";
 
 type EnginePVProps = {
   liveInfoData: LiveEngineDataEntryObject;
-  fen: string;
   pvDisagreementPoint: number;
 };
 
-export function EnginePV({
-  liveInfoData,
-  fen,
-  pvDisagreementPoint,
-}: EnginePVProps) {
+export function EnginePV({ liveInfoData, pvDisagreementPoint }: EnginePVProps) {
   const data = liveInfoData.liveInfo?.info;
 
   const {
@@ -27,6 +23,8 @@ export function EnginePV({
     setCurrentFen,
     setCurrentMoveNumber,
   } = useKibitzerBoard({ animated: false });
+
+  const fen = useLiveInfo((state) => state.game.fenAt(state.currentMoveNumber));
 
   const moves = useMemo(() => {
     if (!data?.color) return undefined;

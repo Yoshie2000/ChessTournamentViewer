@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMediaQuery } from "react-responsive";
 import { EngineCard } from "./EngineCard";
 import "./EngineWindow.css";
@@ -9,6 +9,8 @@ import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { useClocks } from "../hooks/useClocks";
+import type { EngineColor } from "../LiveInfo";
+import { useShallow } from "zustand/shallow";
 
 const TABS = ["Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
@@ -18,19 +20,30 @@ const PLAYING_ENGINES = ["white", "black"] as const;
 export function EngineWindow() {
   useClocks();
 
-  const liveInfos = useLiveInfo((state) => state.liveInfos);
-  const fen = useLiveInfo((state) => state.currentFen);
+  const { kibitzerDisagreement, activeKibitzersJson } = useLiveInfo(
+    useShallow((state) => {
+      const liveInfos = state.liveInfos;
 
-  const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
-  const activeKibitzers = (["green", "blue", "red"] as const).filter(
-    (color) => !!liveInfos[color].liveInfo
+      const activeKibitzers = (["green", "blue", "red"] as const).filter(
+        (color) => !!liveInfos[color].liveInfo
+      );
+
+      const kibitzerLiveInfos = activeKibitzers.map(
+        (color) => liveInfos[color].liveInfo
+      );
+      return {
+        kibitzerDisagreement: findPvDisagreementPoint(
+          state.game.fenAt(state.currentMoveNumber),
+          ...kibitzerLiveInfos
+        ),
+        activeKibitzersJson: JSON.stringify(activeKibitzers),
+      };
+    })
   );
-  const kibitzerDisagreement = useMemo(() => {
-    const kibitzerLiveInfos = activeKibitzers.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    return findPvDisagreementPoint(fen, ...kibitzerLiveInfos);
-  }, [fen, JSON.stringify(activeKibitzers)]);
+  const activeKibitzers = JSON.parse(activeKibitzersJson) as EngineColor[];
+
+  const { liveInfos } = useLiveInfo.getState();
+  const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -51,7 +64,7 @@ export function EngineWindow() {
 
   const kibitzerWindow =
     activeKibitzers.length === 0 ? null : activeKibitzers.length === 1 ? (
-      <EngineCard color={activeKibitzers[0]} fen={fen} />
+      <EngineCard color={activeKibitzers[0]} />
     ) : (
       <div className="kibitzerWindow">
         <div className="engineTabs">
@@ -101,7 +114,6 @@ export function EngineWindow() {
                 {activeKibitzers.map((color) => (
                   <td key={color}>
                     <EnginePV
-                      fen={fen}
                       pvDisagreementPoint={kibitzerDisagreement}
                       liveInfoData={liveInfos[color]}
                     />
@@ -116,8 +128,8 @@ export function EngineWindow() {
 
   return (
     <div className="engineWindow">
-      <EngineCard color="black" opponentColor="white" fen={fen} />
-      <EngineCard color="white" opponentColor="black" fen={fen} />
+      <EngineCard color="black" opponentColor="white" />
+      <EngineCard color="white" opponentColor="black" />
       {kibitzerWindow}
     </div>
   );

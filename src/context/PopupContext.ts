@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { zustandHmrFix } from "./ZustandHMRFix";
 
 type PopupStateValues = "crosstable" | "settings" | "none";
 
@@ -13,3 +14,5 @@ export const usePopup = create<PopupContext>((set) => ({
     set({ popupState: val });
   },
 }));
+
+zustandHmrFix("popupContext", usePopup);

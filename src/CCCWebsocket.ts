@@ -35,15 +35,28 @@ export class CCCWebSocket implements TournamentWebSocket {
       const lastLiveInfoIdx = messages.findLastIndex(
         (message) => message.type === "liveInfo"
       );
-      // If there are multiple liveInfos for the same ply, ignore all but the last one
-      const filteredMessages = messages.filter(
-        (message, idx) =>
-          lastLiveInfoIdx === -1 ||
-          message.type !== "liveInfo" ||
-          message.info.ply !==
-            (messages[lastLiveInfoIdx] as CCCLiveInfo).info.ply ||
-          idx === lastLiveInfoIdx
+      const newMoveIdx = messages.findLastIndex(
+        (message) => message.type === "newMove"
       );
+      const isLiveGame = messages.find(
+        (message) => message.type === "gameUpdate" && message.gameDetails.live
+      );
+
+      const filteredMessages = messages
+        // If there are multiple liveInfos for the same ply, ignore all but the last one
+        .filter(
+          (message, idx) =>
+            lastLiveInfoIdx === -1 ||
+            message.type !== "liveInfo" ||
+            message.info.ply !==
+              (messages[lastLiveInfoIdx] as CCCLiveInfo).info.ply ||
+            idx === lastLiveInfoIdx
+        )
+        // Ignore liveInfo updates in the same render cycle as a new move
+        .filter(
+          (message) =>
+            isLiveGame || newMoveIdx === -1 || message.type !== "liveInfo"
+        );
 
       for (const msg of filteredMessages) {
         if (msg.type === "eventUpdate") {

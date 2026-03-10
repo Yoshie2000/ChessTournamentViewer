@@ -1,3 +1,4 @@
+import { useLiveInfo } from "../context/LiveInfoContext";
 import "./GameResultOverlay.css";
 
 type GameResultOverlayProps = { result: string; termination: string };
@@ -6,6 +7,9 @@ export function GameResultOverlay({
   result,
   termination,
 }: GameResultOverlayProps) {
+  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
+  const game = useLiveInfo((state) => state.game);
+
   function getTerminationString() {
     switch (termination.toLowerCase()) {
       case "drawsyzygy":
@@ -33,9 +37,11 @@ export function GameResultOverlay({
   }
 
   return (
-    <div className="gameResultOverlay">
-      <div className="result">{result}</div>
-      <div className="termination">{getTerminationString()}</div>
-    </div>
+    (currentMoveNumber === -1 || currentMoveNumber === game.length()) && (
+      <div className="gameResultOverlay">
+        <div className="result">{result}</div>
+        <div className="termination">{getTerminationString()}</div>
+      </div>
+    )
   );
 }

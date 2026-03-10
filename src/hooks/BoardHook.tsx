@@ -11,31 +11,24 @@ import { getLiveInfosForMove } from "../LiveInfo";
 export function useLiveBoard({ animated, id }: BoardProps) {
   const boardHandle = useRef<BoardHandle>(null);
 
-  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
-  const liveEngineData = useLiveInfo((state) => state.liveEngineData);
-  const currentFen = useLiveInfo((state) => state.currentFen);
-  const game = useLiveInfo((state) => state.game);
+  const updateBoard = useCallback((bypassRateLimit: boolean = false) => {
+    const { game, currentMoveNumber, liveEngineData } = useLiveInfo.getState();
 
-  const updateBoard = useCallback(
-    (bypassRateLimit: boolean = false) => {
-      boardHandle.current?.updateBoard(
-        game,
+    boardHandle.current?.updateBoard(
+      game,
+      currentMoveNumber,
+      getLiveInfosForMove(
+        liveEngineData,
         currentMoveNumber,
-        getLiveInfosForMove(
-          liveEngineData,
-          currentMoveNumber,
-          game.turnAt(currentMoveNumber)
-        ),
-        bypassRateLimit
-      );
-    },
-    [game, currentMoveNumber, currentFen, liveEngineData]
-  );
+        game.turnAt(currentMoveNumber)
+      ),
+      bypassRateLimit
+    );
+  }, []);
 
   return {
     Board: <BoardComponent id={id} ref={boardHandle} animated={animated} />,
     updateBoard,
-    game,
   };
 }
 

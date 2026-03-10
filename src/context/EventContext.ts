@@ -6,6 +6,7 @@ import type {
   _Nullish,
   CCCEngine,
 } from "../types";
+import { zustandHmrFix } from "./ZustandHMRFix";
 
 type RequestEventFn = (gameNr?: string, eventNr?: string) => void;
 
@@ -161,3 +162,5 @@ function calculateNewEngineStandings(event: CCCEventUpdate): CCCEngine[] {
 
   return updatedEngines;
 }
+
+zustandHmrFix("eventContext", useEventStore);

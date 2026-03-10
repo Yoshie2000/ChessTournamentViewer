@@ -13,7 +13,6 @@ import { useLiveInfo } from "../context/LiveInfoContext";
 type EngineCardProps = {
   color: EngineColor;
   opponentColor?: EngineColor;
-  fen: string | undefined;
   kibitzerLayout?: boolean;
 };
 
@@ -36,18 +35,45 @@ export function formatTime(time: number) {
 }
 
 const EngineCard = memo(
-  ({ color, opponentColor, fen, kibitzerLayout }: EngineCardProps) => {
-    const time = Number(useLiveInfo((state) => color === "white" ? state.clocks.wtime : color === "black" ? state.clocks.btime : "1") || 1) || 1;
+  ({ color, opponentColor, kibitzerLayout }: EngineCardProps) => {
+    // This is the main re-render trigger for black / white
+    const time =
+      Number(
+        useLiveInfo((state) =>
+          color === "white"
+            ? state.clocks.wtime
+            : color === "black"
+              ? state.clocks.btime
+              : "1"
+        ) || 1
+      ) || 1;
 
-    const { engineInfo: engine, liveInfo: info } = useLiveInfo(
-      (state) => state.liveInfos[color]
-    );
-    const opponentInfo = useLiveInfo((state) =>
-      opponentColor ? state.liveInfos[opponentColor].liveInfo : undefined
+    // Kibitzers re-render on FEN change, or on every depth change after depth 15
+    const fen = useLiveInfo((state) => state.game.fenAt(state.currentMoveNumber));
+    useLiveInfo((state) =>
+      !["black", "white"].includes(color)
+        ? Math.max(
+            15,
+            Number(state.liveInfos[color].liveInfo?.info.depth || 0) || 0
+          )
+        : undefined
     );
 
-    const data = info?.info;
-    const loading = !data || !engine || !info || !time;
+    const state = useLiveInfo.getState();
+    const engine = state.liveInfos[color].engineInfo;
+    const liveInfo = state.liveInfos[color].liveInfo;
+    const opponentInfo = opponentColor
+      ? state.liveInfos[opponentColor].liveInfo
+      : undefined;
+
+    const pvDisagreementPoint = findPvDisagreementPoint(
+      fen,
+      liveInfo,
+      opponentInfo
+    );
+
+    const data = liveInfo?.info;
+    const loading = !data || !engine || !time;
 
     const {
       Board,
@@ -56,10 +82,6 @@ const EngineCard = memo(
       setCurrentFen,
       setCurrentMoveNumber,
     } = useKibitzerBoard({ animated: false });
-
-    const pvDisagreementPoint = useMemo(() => {
-      return findPvDisagreementPoint(fen, info, opponentInfo);
-    }, [info, opponentInfo, fen]);
 
     const moves = useMemo(() => {
       if (loading || !fen || !data?.color) return undefined;

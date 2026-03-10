@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { EngineSettings } from "../engine/EngineWorker";
 import { getDefaultKibitzerSettings } from "../components/Settings";
+import { zustandHmrFix } from "./ZustandHMRFix";
 
 type KibitzerSettings = {
   kibitzerSettings: EngineSettings;
@@ -13,3 +14,5 @@ export const useKibitzerSettings = create<KibitzerSettings>()((set) => ({
     set({ kibitzerSettings: settings });
   },
 }));
+
+zustandHmrFix("kibitzerContext", useKibitzerSettings);

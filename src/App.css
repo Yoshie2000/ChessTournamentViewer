@@ -282,7 +282,7 @@
 
   .boardWindow {
     grid-column: 1 / 2;
-    display: grid;
+    display: grid !important;
     grid-template-columns: minmax(var(--board-size), var(--board-size));
     grid-template-rows: auto var(--board-size) auto var(--padding) auto auto;
     height: auto;

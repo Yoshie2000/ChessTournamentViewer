@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useLiveBoard } from "../../hooks/BoardHook";
 import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
@@ -11,12 +11,12 @@ import {
   type EngineColor,
 } from "../../LiveInfo";
 import { loadLiveInfos } from "../../LocalStorage";
-import { Chess, type Square } from "../../chess.js/chess";
+import { type Square } from "../../chess.js/chess";
 import { uciToSan } from "../../utils";
 import { EngineMinimal } from "../EngineMinimal";
 import { GameResultOverlay } from "../GameResultOverlay";
-import { MoveList } from "../MoveList";
 import { useKibitzer } from "../../hooks/useKibitzer";
+import { LiveMoveList } from "../LiveMoveList";
 
 const isTCEC = window.location.search.includes("tcec");
 const _initialWS = isTCEC ? new TCECWebSocket() : new CCCWebSocket();
@@ -24,35 +24,16 @@ const _initialWS = isTCEC ? new TCECWebSocket() : new CCCWebSocket();
 export const BoardWindow = memo(() => {
   const ws = useRef<TournamentWebSocket>(_initialWS);
 
-  const { Board, game, updateBoard } = useLiveBoard({
+  const { Board, updateBoard } = useLiveBoard({
     animated: true,
     id: "main-board",
   });
 
   useKibitzer({ updateBoard });
 
-  const [moves, setMoves] = useState<string[]>([]);
-
   const cccEvent = useEventStore((state) => state.cccEvent);
   const cccGame = useEventStore((state) => state.cccGame);
-
-  const setEvent = useEventStore((state) => state.setEvent);
-  const setGame = useEventStore((state) => state.setGame);
-  const setEventList = useEventStore((state) => state.setEventList);
-  const setRequestEvent = useEventStore((state) => state.setRequestEvent);
-
-  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
-  const setCurrentMoveNumber = useLiveInfo(
-    (state) => state.setCurrentMoveNumber
-  );
-
-  const setClocks = useLiveInfo((state) => state.setClocks);
-  const setLiveEngineData = useLiveInfo((state) => state.setLiveEngineData);
-  const updateLiveEngineData = useLiveInfo(
-    (state) => state.updateLiveEngineData
-  );
-
-  const setCurrentFen = useLiveInfo((state) => state.setCurrentFen);
+  const game = useLiveInfo((state) => state.game);
 
   useEffect(() => {
     if (!cccEvent) return;
@@ -67,9 +48,10 @@ export const BoardWindow = memo(() => {
         (engine) => engine.name === game.getHeaders()["Black"]
       ) || EmptyEngineDefinition;
 
+    const { setLiveEngineData } = useLiveInfo.getState();
     setLiveEngineData("white", { engineInfo: wEngine });
     setLiveEngineData("black", { engineInfo: bEngine });
-  }, [cccEvent, game, setLiveEngineData]);
+  }, [cccEvent, game]);
 
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
@@ -78,31 +60,34 @@ export const BoardWindow = memo(() => {
       }
 
       const color = msg.info.color as EngineColor;
-      updateLiveEngineData(color, msg);
+      useLiveInfo.getState().updateLiveEngineData(color, msg);
     },
-    [game, updateLiveEngineData]
+    [game]
   );
 
   const handleMessage = useCallback(
     function (msg: CCCMessage) {
+      const liveInfoState = useLiveInfo.getState();
+      const eventState = useEventStore.getState();
+
       switch (msg.type) {
         case "eventUpdate":
-          setEvent(msg);
+          eventState.setEvent(msg);
           break;
 
         case "gameUpdate": {
           game.loadPgn(msg.gameDetails.pgn);
 
           // Reset kibitzer live infos
-          setLiveEngineData("green", {
+          liveInfoState.setLiveEngineData("green", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: cccEvent ? loadLiveInfos(cccEvent, msg) : [],
           });
-          setLiveEngineData("blue", {
+          liveInfoState.setLiveEngineData("blue", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: [],
           });
-          setLiveEngineData("red", {
+          liveInfoState.setLiveEngineData("red", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: [],
           });
@@ -110,15 +95,19 @@ export const BoardWindow = memo(() => {
           // Load engine live info
           const { liveInfosBlack, liveInfosWhite } =
             extractLiveInfoFromGame(game);
-          setLiveEngineData("white", { liveInfo: liveInfosWhite });
-          setLiveEngineData("black", { liveInfo: liveInfosBlack });
+          liveInfoState.setLiveEngineData("white", {
+            liveInfo: liveInfosWhite,
+          });
+          liveInfoState.setLiveEngineData("black", {
+            liveInfo: liveInfosBlack,
+          });
 
-          setCurrentMoveNumber(() => -1);
+          liveInfoState.setCurrentMoveNumber(() => -1);
           updateBoard();
 
-          setGame(msg);
-          setCurrentFen(game.fen());
-          setMoves(game.history());
+          eventState.setGame(msg);
+          liveInfoState.setCurrentFen(game.fen());
+          liveInfoState.setMoves(game.history());
 
           break;
         }
@@ -130,11 +119,11 @@ export const BoardWindow = memo(() => {
         }
 
         case "eventsListUpdate":
-          setEventList(msg);
+          eventState.setEventList(msg);
           break;
 
         case "clocks":
-          setClocks(() => msg);
+          liveInfoState.setClocks(() => msg);
           break;
 
         case "newMove": {
@@ -143,15 +132,15 @@ export const BoardWindow = memo(() => {
           const promo = msg.move?.[4];
 
           game.move({ from, to, promotion: promo });
-          setCurrentFen(game.fen());
-          setMoves(game.history());
+          liveInfoState.setCurrentFen(game.fen());
+          liveInfoState.setMoves(game.history());
           updateBoard(true);
 
           break;
         }
 
         case "kibitzer":
-          setLiveEngineData(msg.color as EngineColor, {
+          liveInfoState.setLiveEngineData(msg.color as EngineColor, {
             engineInfo: msg.engine,
           });
           break;
@@ -163,19 +152,7 @@ export const BoardWindow = memo(() => {
           break;
       }
     },
-    [
-      cccEvent,
-      game,
-      handleLiveInfo,
-      setClocks,
-      setCurrentFen,
-      setCurrentMoveNumber,
-      setEvent,
-      setEventList,
-      setGame,
-      setLiveEngineData,
-      updateBoard,
-    ]
+    [cccEvent, game, handleLiveInfo, updateBoard]
   );
 
   useEffect(() => {
@@ -187,9 +164,11 @@ export const BoardWindow = memo(() => {
   }, [handleMessage]);
 
   useEffect(() => {
-    setCurrentFen(game.fenAt(currentMoveNumber));
-    updateBoard();
-  }, [currentMoveNumber, game, setCurrentFen, updateBoard]);
+    useLiveInfo.subscribe(
+      (state) => state.currentMoveNumber,
+      () => updateBoard(true)
+    );
+  }, []);
 
   useEffect(() => {
     const requestEvent = (gameNr?: string, eventNr?: string) => {
@@ -200,8 +179,8 @@ export const BoardWindow = memo(() => {
       ws.current.send(message);
     };
 
-    setRequestEvent(requestEvent);
-  }, [setRequestEvent]);
+    useEventStore.getState().setRequestEvent(requestEvent);
+  }, []);
 
   const pgnHeaders = game.getHeaders();
   const termination =
@@ -216,26 +195,12 @@ export const BoardWindow = memo(() => {
       <div className="boardWrapper">
         {Board}
 
-        {termination &&
-          result &&
-          result !== "*" &&
-          (currentMoveNumber === -1 || currentMoveNumber === game.length()) && (
-            <GameResultOverlay result={result} termination={termination} />
-          )}
+        {termination && result && result !== "*" && (
+          <GameResultOverlay result={result} termination={termination} />
+        )}
       </div>
 
-      <MoveList
-        startFen={game.getHeaders()["FEN"] ?? new Chess().fen()}
-        moves={moves}
-        currentMoveNumber={currentMoveNumber}
-        setCurrentMoveNumber={setCurrentMoveNumber}
-        downloadURL={
-          termination && result && result !== "*"
-            ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${cccGame?.gameDetails.gameNr}.log`
-            : undefined
-        }
-        controllers={true}
-      />
+      <LiveMoveList />
       <EngineMinimal color="white" className="borderRadiusBottom" />
     </div>
   );

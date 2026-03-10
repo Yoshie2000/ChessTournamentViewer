@@ -5,6 +5,7 @@ import { StockfishWorker } from "../engine/StockfishWorker";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { useEventStore } from "../context/EventContext";
 import { useKibitzerSettings } from "../context/KibitzerSettings";
+import { saveLiveInfos } from "../LocalStorage";
 
 export const useKibitzer = ({
   updateBoard,
@@ -20,7 +21,6 @@ export const useKibitzer = ({
 
   const cccEvent = useEventStore((state) => state.cccEvent);
   const cccGame = useEventStore((state) => state.cccGame);
-  const currentFen = useLiveInfo((state) => state.currentFen);
 
   const setLiveEngineData = useLiveInfo((state) => state.setLiveEngineData);
   const updateLiveEngineData = useLiveInfo(
@@ -64,10 +64,9 @@ export const useKibitzer = ({
 
           updateBoard();
 
-          // TODO fix later - we can't stop & restart the kibitzers every time the liveinfos change
-          // if (cccEvent && cccGame) {
-          //   saveLiveInfos(cccEvent, cccGame, newLiveInfos);
-          // }
+          if (cccEvent && cccGame) {
+            saveLiveInfos(cccEvent, cccGame, useLiveInfo.getState().liveEngineData["green"].liveInfo);
+          }
         };
       }
     );
@@ -88,14 +87,17 @@ export const useKibitzer = ({
   useEffect(() => {
     if (!cccGame?.gameDetails.live || !kibitzerSettings.enableKibitzer) return;
 
-    activeKibitzer?.analyze({ fen: currentFen, gameIndex: game.length() });
+    const unsubscribe = useLiveInfo.subscribe((state) => state.currentFen, (currentFen) => {
+      activeKibitzer?.analyze({ fen: currentFen, gameIndex: game.length() });
+    });
+
+    return unsubscribe;
   }, [
     _kibitzerId,
     cccGame?.gameDetails.gameNr,
     kibitzerSettings.enableKibitzer,
     cccGame?.gameDetails.live,
     activeKibitzer,
-    currentFen,
     game,
   ]);
 };
