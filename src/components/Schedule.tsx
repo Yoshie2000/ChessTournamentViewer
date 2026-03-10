@@ -15,7 +15,7 @@ function formatOutcome(outcome: string) {
   return outcome.replace(/-/, "\u2013"); // en dash
 }
 
-const Schedule = memo(({ requestEvent }: ScheduleProps) => {
+const Schedule = memo(() => {
   const scheduleRef = useRef<HTMLDivElement>(null);
   const currentGameRef = useRef<HTMLDivElement>(null);
 
@@ -25,6 +25,7 @@ const Schedule = memo(({ requestEvent }: ScheduleProps) => {
   const selectedGame = useEventStore((state) => state.cccGame);
   const event = useEventStore((state) => state.cccEvent);
   const engines = useEventStore((state) => state.engines);
+  const requestEvent = useEventStore((state) => state.requestEvent);
 
   const scrollToCurrentGame = useCallback(() => {
     if (

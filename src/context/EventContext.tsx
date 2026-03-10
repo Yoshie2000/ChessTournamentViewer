@@ -7,6 +7,8 @@ import type {
   CCCEngine,
 } from "../types";
 
+type RequestEventFn = (gameNr?: string, eventNr?: string) => void;
+
 type EventContext = _Nullish<{
   cccEventList: CCCEventsListUpdate;
   cccEvent: CCCEventUpdate;
@@ -17,7 +19,10 @@ type EventContext = _Nullish<{
   setGame: (game: CCCGameUpdate) => void;
   setEvent: (cccEvent: CCCEventUpdate) => void;
   updateCCCEngines: () => void;
-}>;
+}> & {
+  requestEvent: RequestEventFn;
+  setRequestEvent: (fn: RequestEventFn) => void;
+};
 
 export const useEventStore = create<EventContext>((set, get) => {
   return {
@@ -103,6 +108,12 @@ export const useEventStore = create<EventContext>((set, get) => {
 
         return { engines: updatedEngines };
       });
+    },
+
+    //
+    requestEvent: () => {},
+    setRequestEvent(fn) {
+      set({ requestEvent: fn });
     },
   };
 });
