@@ -34,24 +34,6 @@ export const BoardWindow = memo(() => {
   const cccEvent = useEventStore((state) => state.cccEvent);
   const game = useLiveInfo((state) => state.game);
 
-  useEffect(() => {
-    if (!cccEvent) return;
-
-    const wEngine =
-      cccEvent.tournamentDetails.engines.find(
-        (engine) => engine.name === game.getHeaders()["White"]
-      ) || EmptyEngineDefinition;
-
-    const bEngine =
-      cccEvent.tournamentDetails.engines.find(
-        (engine) => engine.name === game.getHeaders()["Black"]
-      ) || EmptyEngineDefinition;
-
-    const { setLiveEngineData } = useLiveInfo.getState();
-    setLiveEngineData("white", { engineInfo: wEngine });
-    setLiveEngineData("black", { engineInfo: bEngine });
-  }, [cccEvent, game]);
-
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
       if (ws.current instanceof CCCWebSocket) {
@@ -92,14 +74,27 @@ export const BoardWindow = memo(() => {
             liveInfo: [],
           });
 
-          // Load engine live info
+          // Load white + black engine live info
           const { liveInfosBlack, liveInfosWhite } =
             extractLiveInfoFromGame(game);
+          const engines = eventState.cccEvent?.tournamentDetails.engines ?? [];
+          const wEngine =
+            engines.find(
+              (engine) => engine.name === game.getHeaders()["White"]
+            ) || EmptyEngineDefinition;
+
+          const bEngine =
+            engines.find(
+              (engine) => engine.name === game.getHeaders()["Black"]
+            ) || EmptyEngineDefinition;
+
           liveInfoState.setLiveEngineData("white", {
             liveInfo: liveInfosWhite,
+            engineInfo: wEngine,
           });
           liveInfoState.setLiveEngineData("black", {
             liveInfo: liveInfosBlack,
+            engineInfo: bEngine,
           });
 
           liveInfoState.setCurrentMoveNumber(() => -1);
