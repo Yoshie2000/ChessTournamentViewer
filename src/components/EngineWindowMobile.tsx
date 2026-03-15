@@ -19,8 +19,12 @@ export function EngineWindowMobile() {
     (color) => !!liveInfos[color].liveInfo
   );
 
-  const playingEnginesDisagreement = useLiveInfo((state) => state.engineAgreePly.at(state.currentMoveNumber));
-  const kibitzerDisagreement = useLiveInfo((state) => state.kibitzerAgreePly.at(state.currentMoveNumber));
+  const playingEnginesDisagreement = useLiveInfo((state) =>
+    state.engineAgreePly.at(state.currentMoveNumber)
+  );
+  const kibitzerDisagreement = useLiveInfo((state) =>
+    state.kibitzerAgreePly.at(state.currentMoveNumber)
+  );
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES

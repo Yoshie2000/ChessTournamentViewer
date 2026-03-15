@@ -28,7 +28,9 @@ export function EngineWindow() {
       );
 
       return {
-        kibitzerDisagreement: state.kibitzerAgreePly.at(state.currentMoveNumber),
+        kibitzerDisagreement: state.kibitzerAgreePly.at(
+          state.currentMoveNumber
+        ),
         activeKibitzersJson: JSON.stringify(activeKibitzers),
       };
     })

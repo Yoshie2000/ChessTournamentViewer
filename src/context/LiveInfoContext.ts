@@ -117,14 +117,16 @@ export const useLiveInfo = create<LiveInfoData>()(
               const fen = state.game.fenAt(ply);
               state.engineAgreePly[ply] = findPvDisagreementPoint(
                 fen,
-                state.liveEngineData.white.liveInfo[ply] ?? state.liveEngineData.white.liveInfo[ply - 1],
-                state.liveEngineData.black.liveInfo[ply] ?? state.liveEngineData.black.liveInfo[ply - 1],
+                state.liveEngineData.white.liveInfo[ply] ??
+                  state.liveEngineData.white.liveInfo[ply - 1],
+                state.liveEngineData.black.liveInfo[ply] ??
+                  state.liveEngineData.black.liveInfo[ply - 1]
               );
               state.kibitzerAgreePly[ply] = findPvDisagreementPoint(
                 fen,
                 state.liveEngineData.red.liveInfo[ply],
                 state.liveEngineData.blue.liveInfo[ply],
-                state.liveEngineData.green.liveInfo[ply],
+                state.liveEngineData.green.liveInfo[ply]
               );
             }
           }
@@ -144,8 +146,10 @@ export const useLiveInfo = create<LiveInfoData>()(
 
           state.engineAgreePly[data.info.ply] = findPvDisagreementPoint(
             state.game.fenAt(data.info.ply),
-            state.liveEngineData.white.liveInfo[data.info.ply] ?? state.liveEngineData.white.liveInfo[data.info.ply - 1],
-            state.liveEngineData.black.liveInfo[data.info.ply] ?? state.liveEngineData.black.liveInfo[data.info.ply - 1]
+            state.liveEngineData.white.liveInfo[data.info.ply] ??
+              state.liveEngineData.white.liveInfo[data.info.ply - 1],
+            state.liveEngineData.black.liveInfo[data.info.ply] ??
+              state.liveEngineData.black.liveInfo[data.info.ply - 1]
           );
           state.kibitzerAgreePly[data.info.ply] = findPvDisagreementPoint(
             state.game.fenAt(data.info.ply),
