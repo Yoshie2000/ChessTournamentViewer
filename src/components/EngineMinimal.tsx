@@ -15,8 +15,10 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
   const time =
     Number(
       useLiveInfo((state) =>
-        color === "white" ? state.clocks.wtime : state.clocks.btime
-      ) || 1
+        color === "white"
+          ? state.liveInfos.white.liveInfo?.info.timeLeft
+          : state.liveInfos.black.liveInfo?.info.timeLeft
+      )
     ) || 1;
 
   const data = info?.info;

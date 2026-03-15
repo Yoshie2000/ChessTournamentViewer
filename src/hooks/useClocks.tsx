@@ -8,18 +8,12 @@ export const useClocks = () => {
   const game = useLiveInfo((state) => state.game);
 
   const updateClocks = useCallback(() => {
-    setClocks((currentClock) => {
-      if (!currentClock) return currentClock;
-      const result = game.getHeaders()["Result"];
-      if (result && result !== "*") return { ...currentClock };
+    const result = game.getHeaders()["Result"];
+    if (result && result !== "*") return;
 
-      let wtime = Number(currentClock.wtime);
-      let btime = Number(currentClock.btime);
-
-      if (game.turn() == "w") wtime -= CLOCK_UPDATE_MS;
-      else btime -= CLOCK_UPDATE_MS;
-
-      return { ...currentClock, wtime: String(wtime), btime: String(btime) };
+    setClocks((color, timeLeft) => {
+      if (color.startsWith(game.turn())) return timeLeft - CLOCK_UPDATE_MS;
+      return timeLeft;
     });
   }, [game, setClocks]);
 

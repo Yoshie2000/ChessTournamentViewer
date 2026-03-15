@@ -68,10 +68,10 @@ type CCCGameUpdate = {
 
 type CCCClocks = {
   type: "clocks";
-  binc: string;
-  btime: string;
-  winc: string;
-  wtime: string;
+  binc?: string;
+  btime?: string;
+  winc?: string;
+  wtime?: string;
 };
 
 type CCCLiveInfo = {
@@ -91,6 +91,7 @@ type CCCLiveInfo = {
     speed: string;
     tbhits: string;
     time: string;
+    timeLeft: number;
   };
 };
 

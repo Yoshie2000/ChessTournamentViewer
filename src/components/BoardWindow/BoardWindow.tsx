@@ -8,6 +8,7 @@ import type { CCCLiveInfo, CCCMessage } from "../../types";
 import {
   EmptyEngineDefinition,
   extractLiveInfoFromGame,
+  getTimeControl,
   type EngineColor,
 } from "../../LiveInfo";
 import { loadLiveInfos } from "../../LocalStorage";
@@ -43,7 +44,16 @@ export const BoardWindow = memo(() => {
       }
 
       const color = msg.info.color as EngineColor;
-      useLiveInfo.getState().updateLiveEngineData(color, msg);
+      const liveInfoState = useLiveInfo.getState();
+
+      const { tcBase, tcIncrement } = getTimeControl(liveInfoState.game);
+      const liveInfos = liveInfoState.liveEngineData[color].liveInfo;
+      const previousTimeLeft =
+        liveInfos[msg.info.ply - 2]?.info.timeLeft ?? tcBase;
+      msg.info.timeLeft =
+        previousTimeLeft + tcIncrement - Number(msg.info.time);
+
+      liveInfoState.updateLiveEngineData(color, msg);
     },
     [game]
   );
@@ -120,7 +130,9 @@ export const BoardWindow = memo(() => {
           break;
 
         case "clocks":
-          liveInfoState.setClocks(() => msg);
+          liveInfoState.setClocks((color) =>
+            color === "white" ? Number(msg.wtime) : Number(msg.btime)
+          );
           break;
 
         case "newMove": {
@@ -182,9 +194,13 @@ export const BoardWindow = memo(() => {
   useEffect(() => {
     if (!cccEvent || !cccEventList) return;
 
-    const eventExists = cccEventList.events.some((event) => String(event.id) === cccEvent.tournamentDetails.tNr);
+    const eventExists = cccEventList.events.some(
+      (event) => String(event.id) === cccEvent.tournamentDetails.tNr
+    );
     if (!eventExists) {
-      useEventStore.getState().requestEvent(undefined, cccEventList.events[0].id)
+      useEventStore
+        .getState()
+        .requestEvent(undefined, cccEventList.events[0].id);
     }
   }, [cccEvent, cccEventList]);
 

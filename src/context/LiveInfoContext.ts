@@ -8,7 +8,7 @@ import {
   type LiveEngineDataObject,
 } from "../LiveInfo";
 import { Chess, Chess960 } from "../chess.js/chess";
-import type { CCCClocks, CCCLiveInfo } from "../types";
+import type { CCCLiveInfo } from "../types";
 import { getLiveInfosForMove } from "../LiveInfo";
 import { subscribeWithSelector } from "zustand/middleware";
 import { zustandHmrFix } from "./ZustandHMRFix";
@@ -29,8 +29,9 @@ type LiveInfoData = {
   moves: string[];
   setMoves: (moves: string[]) => void;
 
-  clocks: CCCClocks;
-  setClocks: (callback: (clocks: CCCClocks) => CCCClocks) => void;
+  setClocks: (
+    callback: (color: "white" | "black", timeLeft: number) => number
+  ) => void;
 
   currentMoveNumber: number;
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
@@ -59,10 +60,41 @@ export const useLiveInfo = create<LiveInfoData>()(
         red: { engineInfo: EmptyEngineDefinition, liveInfo: undefined },
       },
 
-      clocks: { binc: "0", winc: "0", btime: "0", wtime: "0", type: "clocks" },
       setClocks(callback) {
         set((state) => {
-          state.clocks = callback(state.clocks);
+          const whitePly = state.liveEngineData.white.liveInfo.findLastIndex(
+            (liveInfo) => !!liveInfo
+          );
+          const wtime =
+            whitePly !== -1
+              ? callback(
+                  "white",
+                  state.liveEngineData.white.liveInfo[whitePly]!.info.timeLeft
+                )
+              : undefined;
+          if (wtime)
+            state.liveEngineData.white.liveInfo[whitePly]!.info.timeLeft =
+              wtime;
+
+          const blackPly = state.liveEngineData.black.liveInfo.findLastIndex(
+            (liveInfo) => !!liveInfo
+          );
+          const btime =
+            blackPly !== -1
+              ? callback(
+                  "black",
+                  state.liveEngineData.black.liveInfo[blackPly]!.info.timeLeft
+                )
+              : undefined;
+          if (btime)
+            state.liveEngineData.black.liveInfo[blackPly]!.info.timeLeft =
+              btime;
+
+          state.liveInfos = getLiveInfosForMove(
+            state.liveEngineData,
+            state.currentMoveNumber,
+            state.game.turnAt(state.currentMoveNumber)
+          );
         });
       },
 
