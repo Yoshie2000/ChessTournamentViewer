@@ -38,7 +38,7 @@ export function formatTime(time: number) {
 const EngineCard = memo(
   ({ color, opponentColor, kibitzerLayout }: EngineCardProps) => {
     // This is the main re-render trigger for black / white
-    const {wtime, btime} = useLiveInfo(
+    const { wtime, btime } = useLiveInfo(
       useShallow((state) => ({
         wtime: state.liveInfos.white.liveInfo?.info.timeLeft,
         btime: state.liveInfos.black.liveInfo?.info.timeLeft,

@@ -141,7 +141,8 @@ export class TCECWebSocket implements TournamentWebSocket {
         (moveData) => moveData.fen === this.game.fen()
       );
 
-      let wtime: string | undefined = undefined, btime: string | undefined = undefined;
+      let wtime: string | undefined = undefined,
+        btime: string | undefined = undefined;
       for (const moveData of json.Moves.slice(ignoreIndex + 1)) {
         const fenBeforeMove = this.game.fen();
 
@@ -153,10 +154,8 @@ export class TCECWebSocket implements TournamentWebSocket {
         if (!move) break;
 
         // Update clock
-        if (this.game.turn() === "w")
-          wtime = moveData.tl;
-        else
-          btime = moveData.tl;
+        if (this.game.turn() === "w") wtime = moveData.tl;
+        else btime = moveData.tl;
 
         this.game.move(move.san, { strict: false });
 
@@ -186,13 +185,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         }
       }
 
-      onMessage({
-        type: "clocks",
-        binc: "1",
-        winc: "1",
-        btime,
-        wtime,
-      });
+      onMessage({ type: "clocks", binc: "1", winc: "1", btime, wtime });
 
       if (json.Headers.Result !== "*") {
         this.callback?.({
