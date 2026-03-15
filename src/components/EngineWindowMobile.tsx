@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { EngineLogo } from "./EngineLogo";
 import { EnginePV } from "./EnginePV";
 import { EngineStats } from "./EngineStats";
-import { findPvDisagreementPoint } from "../utils";
 import "./EngineWindowMobile.css";
 import { useLiveInfo } from "../context/LiveInfoContext";
 
@@ -13,7 +12,6 @@ const PLAYING_ENGINES = ["white", "black"] as const;
 
 export function EngineWindowMobile() {
   const liveInfos = useLiveInfo((state) => state.liveInfos);
-  const fen = useLiveInfo((state) => state.currentFen);
 
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
 
@@ -21,19 +19,8 @@ export function EngineWindowMobile() {
     (color) => !!liveInfos[color].liveInfo
   );
 
-  const playingEnginesDisagreement = useMemo(() => {
-    const playingLiveInfos = PLAYING_ENGINES.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    return findPvDisagreementPoint(fen, ...playingLiveInfos);
-  }, [fen, JSON.stringify(activeKibitzers)]);
-
-  const kibitzerDisagreement = useMemo(() => {
-    const kibitzerLiveInfos = activeKibitzers.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    return findPvDisagreementPoint(fen, ...kibitzerLiveInfos);
-  }, [fen, JSON.stringify(activeKibitzers)]);
+  const playingEnginesDisagreement = useLiveInfo((state) => state.engineAgreePly.at(state.currentMoveNumber));
+  const kibitzerDisagreement = useLiveInfo((state) => state.kibitzerAgreePly.at(state.currentMoveNumber));
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES

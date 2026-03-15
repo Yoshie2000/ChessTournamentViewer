@@ -3,7 +3,6 @@ import { useMediaQuery } from "react-responsive";
 import { EngineCard } from "./EngineCard";
 import "./EngineWindow.css";
 import { EngineWindowMobile } from "./EngineWindowMobile";
-import { findPvDisagreementPoint } from "../utils";
 import { EngineLogo } from "./EngineLogo";
 import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
@@ -28,14 +27,8 @@ export function EngineWindow() {
         (color) => !!liveInfos[color].liveInfo
       );
 
-      const kibitzerLiveInfos = activeKibitzers.map(
-        (color) => liveInfos[color].liveInfo
-      );
       return {
-        kibitzerDisagreement: findPvDisagreementPoint(
-          state.game.fenAt(state.currentMoveNumber),
-          ...kibitzerLiveInfos
-        ),
+        kibitzerDisagreement: state.kibitzerAgreePly.at(state.currentMoveNumber),
         activeKibitzersJson: JSON.stringify(activeKibitzers),
       };
     })
@@ -133,8 +126,8 @@ export function EngineWindow() {
 
   return (
     <div className="engineWindow">
-      <EngineCard color="black" opponentColor="white" />
-      <EngineCard color="white" opponentColor="black" />
+      <EngineCard color="black" />
+      <EngineCard color="white" />
       {kibitzerWindow}
     </div>
   );

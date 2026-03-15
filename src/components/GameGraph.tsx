@@ -128,6 +128,21 @@ const MODES = [
       return value;
     },
   },
+  {
+    name: "Agree",
+    map: function () {
+      return 0;
+    },
+    mapLabel: function () {
+      return "";
+    },
+    scaling: function (value: number) {
+      return value;
+    },
+    scaleData: function () {
+      return 1;
+    },
+  },
 ];
 
 export const GameGraph = memo(() => {
@@ -144,6 +159,9 @@ export const GameGraph = memo(() => {
     red: liveInfosObj.red.liveInfo,
     blue: liveInfosObj.blue.liveInfo,
   };
+
+  const engineAgreePly = useLiveInfo((state) => state.engineAgreePly);
+  const kibitzerAgreePly = useLiveInfo((state) => state.kibitzerAgreePly);
 
   const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
   const setCurrentMoveNumber = useLiveInfo(
@@ -164,19 +182,37 @@ export const GameGraph = memo(() => {
     (_, i) => String(i + 1 + bookPlies)
   );
 
-  const datasets = colors.map((color) => {
-    return {
-      label: color[0].toUpperCase() + color.slice(1).toLowerCase(),
-      data: liveInfos[color]
-        .slice(bookPlies)
-        .map(MODES[mode].map)
-        .map(MODES[mode].scaleData),
-      dataLabels: liveInfos[color].slice(bookPlies).map(MODES[mode].mapLabel),
-      borderColor: COLORS[color],
-      backgroundColor: COLORS[color],
-      spanGaps: true,
-    };
-  });
+  const datasets =
+    MODES[mode].name !== "Agree"
+      ? colors.map((color) => {
+          return {
+            label: color[0].toUpperCase() + color.slice(1).toLowerCase(),
+            data: liveInfos[color]
+              .slice(bookPlies)
+              .map(MODES[mode].map)
+              .map(MODES[mode].scaleData),
+            dataLabels: liveInfos[color]
+              .slice(bookPlies)
+              .map(MODES[mode].mapLabel),
+            borderColor: COLORS[color],
+            backgroundColor: COLORS[color],
+            spanGaps: true,
+          };
+        })
+      : ["Engines", "Kibitzers"].map((label) => {
+          const agreePly = (
+            label === "Engines" ? engineAgreePly : kibitzerAgreePly
+          ).slice(bookPlies);
+          const color = label === "Engines" ? "#c548c5" : "#60299e";
+          return {
+            label,
+            data: agreePly,
+            dataLabels: agreePly,
+            borderColor: color,
+            backgroundColor: color,
+            spanGaps: true,
+          };
+        });
 
   return (
     <div className="gameGraph">

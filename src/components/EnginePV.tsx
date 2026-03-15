@@ -10,7 +10,7 @@ import { useLiveInfo } from "../context/LiveInfoContext";
 
 type EnginePVProps = {
   liveInfoData: LiveEngineDataEntryObject;
-  pvDisagreementPoint: number;
+  pvDisagreementPoint?: number;
 };
 
 export function EnginePV({ liveInfoData, pvDisagreementPoint }: EnginePVProps) {

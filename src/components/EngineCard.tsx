@@ -2,7 +2,7 @@ import { useMemo, memo, useEffect } from "react";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
-import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
+import { buildPvGame, normalizePv } from "../utils";
 import { Chess, Chess960 } from "../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
 import { useKibitzerBoard } from "../hooks/BoardHook";
@@ -12,7 +12,6 @@ import { EngineMinimal } from "./EngineMinimal";
 
 type EngineCardProps = {
   color: EngineColor;
-  opponentColor?: EngineColor;
   kibitzerLayout?: boolean;
 };
 
@@ -35,7 +34,7 @@ export function formatTime(time: number) {
 }
 
 const EngineCard = memo(
-  ({ color, opponentColor, kibitzerLayout }: EngineCardProps) => {
+  ({ color, kibitzerLayout }: EngineCardProps) => {
     // This is the main re-render trigger for black / white
     const time =
       Number(
@@ -64,15 +63,8 @@ const EngineCard = memo(
     const state = useLiveInfo.getState();
     const engine = state.liveInfos[color].engineInfo;
     const liveInfo = state.liveInfos[color].liveInfo;
-    const opponentInfo = opponentColor
-      ? state.liveInfos[opponentColor].liveInfo
-      : undefined;
 
-    const pvDisagreementPoint = findPvDisagreementPoint(
-      fen,
-      liveInfo,
-      opponentInfo
-    );
+    const pvDisagreementPoint = useLiveInfo((state) => state.engineAgreePly.at(state.currentMoveNumber));
 
     const data = liveInfo?.info;
     const loading = !data || !engine || !time;

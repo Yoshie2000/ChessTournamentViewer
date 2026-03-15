@@ -103,8 +103,8 @@ export function normalizePv(
 export function findPvDisagreementPoint(
   fen: string | undefined,
   ...infos: (CCCLiveInfo | undefined)[]
-): number {
-  if (!fen || infos.length < 2) return -1;
+): number | undefined {
+  if (!fen || infos.length < 2) return undefined;
 
   // Normalize all PVs to start from the current position, then compare directly
   const allMoves = infos
@@ -115,7 +115,7 @@ export function findPvDisagreementPoint(
     })
     .filter((moves) => moves !== null);
 
-  if (allMoves.length < 2) return -1;
+  if (allMoves.length < 2) return undefined;
 
   const minLength = Math.min(...allMoves.map((m) => m.length));
 
@@ -131,5 +131,5 @@ export function findPvDisagreementPoint(
     }
   }
 
-  return -1;
+  return minLength;
 }
