@@ -12,6 +12,7 @@ import type { CCCClocks, CCCLiveInfo } from "../types";
 import { getLiveInfosForMove } from "../LiveInfo";
 import { subscribeWithSelector } from "zustand/middleware";
 import { zustandHmrFix } from "./ZustandHMRFix";
+import type { BatchTaskEntry } from "../hooks/useSANMovesBatching";
 
 type LiveInfoData = {
   liveInfos: LiveEngineDataEntry;
@@ -39,6 +40,8 @@ type LiveInfoData = {
   setCurrentFen: (fen: string) => void;
 
   game: Chess960;
+
+  patchLiveEngineData: (data: BatchTaskEntry[]) => void;
 };
 
 export const useLiveInfo = create<LiveInfoData>()(
@@ -118,6 +121,23 @@ export const useLiveInfo = create<LiveInfoData>()(
             state.currentMoveNumber,
             state.game.turnAt(state.currentMoveNumber)
           );
+        });
+      },
+      patchLiveEngineData(data) {
+        set((state) => {
+          data.forEach((el) => {
+            const index = state.liveEngineData?.[el.color]?.liveInfo.findIndex(
+              (stateEl) => stateEl?.info.ply === el.ply
+            );
+
+            if (
+              index !== -1 &&
+              state.liveEngineData[el.color].liveInfo[index]?.info
+            ) {
+              state.liveEngineData[el.color].liveInfo[index]!.info.pvSan =
+                el.pv;
+            }
+          });
         });
       },
     }))

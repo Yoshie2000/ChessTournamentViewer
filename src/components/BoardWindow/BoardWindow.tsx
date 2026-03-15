@@ -18,12 +18,14 @@ import { GameResultOverlay } from "../GameResultOverlay";
 import { useKibitzer } from "../../hooks/useKibitzer";
 import { LiveMoveList } from "../LiveMoveList";
 import { useMediaQuery } from "react-responsive";
+import { useSANMovesBatching } from "../../hooks/useSANMovesBatching";
 
 const isTCEC = window.location.search.includes("tcec");
 const _initialWS = isTCEC ? new TCECWebSocket() : new CCCWebSocket();
 
 export const BoardWindow = memo(() => {
   const ws = useRef<TournamentWebSocket>(_initialWS);
+  const { __extractLiveInfoFromGame } = useSANMovesBatching();
 
   const { Board, updateBoard } = useLiveBoard({
     animated: true,
@@ -77,8 +79,10 @@ export const BoardWindow = memo(() => {
           });
 
           // Load white + black engine live info
+          // const { liveInfosBlack, liveInfosWhite } =
+          //   extractLiveInfoFromGame(game);
           const { liveInfosBlack, liveInfosWhite } =
-            extractLiveInfoFromGame(game);
+            __extractLiveInfoFromGame(game);
           const engines = eventState.cccEvent?.tournamentDetails.engines ?? [];
           const wEngine =
             engines.find(
@@ -149,7 +153,7 @@ export const BoardWindow = memo(() => {
           break;
       }
     },
-    [cccEvent, game, handleLiveInfo, updateBoard]
+    [__extractLiveInfoFromGame, cccEvent, game, handleLiveInfo, updateBoard]
   );
 
   useEffect(() => {
@@ -182,9 +186,13 @@ export const BoardWindow = memo(() => {
   useEffect(() => {
     if (!cccEvent || !cccEventList) return;
 
-    const eventExists = cccEventList.events.some((event) => String(event.id) === cccEvent.tournamentDetails.tNr);
+    const eventExists = cccEventList.events.some(
+      (event) => String(event.id) === cccEvent.tournamentDetails.tNr
+    );
     if (!eventExists) {
-      useEventStore.getState().requestEvent(undefined, cccEventList.events[0].id)
+      useEventStore
+        .getState()
+        .requestEvent(undefined, cccEventList.events[0].id);
     }
   }, [cccEvent, cccEventList]);
 

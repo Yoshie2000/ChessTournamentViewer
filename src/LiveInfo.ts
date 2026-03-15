@@ -184,7 +184,7 @@ export function extractLiveInfoFromTCECComment(
   return liveInfo;
 }
 
-function extractLiveInfoFromTCECGame(game: Chess960) {
+export function extractLiveInfoFromTCECGame(game: Chess960) {
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
 
