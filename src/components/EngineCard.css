@@ -1,24 +1,22 @@
 .engineComponent {
   display: flex;
+  flex-direction: column;
   border-radius: 8px;
   background: #343434;
   border: 1px solid #1a1a1a;
-  overflow: hidden;
-  height: 100%;
   width: 100%;
-  max-height: var(--engine-card-height);
+  max-width: 100%;
+  overflow: hidden;
+  margin-bottom: 1rem;
 }
 
 .engineComponent .engineLeftSection {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 0.25rem 1rem 0.125rem 0.5rem;
-  width: var(--engine-card-info-width);
-  min-width: var(--engine-card-info-width);
 }
 
-.engineComponent .engineLeftSection > hr {
+.engineComponent hr {
   background: #434343;
   border: none;
   height: 1px;
@@ -27,12 +25,11 @@
 }
 
 .engineComponent .engineName {
+  display: flex;
+  align-items: center;
   font-weight: bold;
-  text-overflow: ellipsis;
   text-wrap: break-spaces;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: calc(var(--engine-card-info-width));
 }
 
@@ -40,32 +37,30 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding-bottom: 0.25rem;
+  padding: 0.25rem 1.4rem 0.125rem 0.5rem;
+  justify-content: space-between;
 }
 
 .engineComponent .engineInfoTable {
-  display: grid;
-  grid-template-columns: 1fr;
-  row-gap: 0.25rem;
-  margin-left: 0.25rem;
+  display: flex;
+  gap: 1.6rem;
   font-size: var(--font-sm);
-  padding: 0.5rem 0;
-  flex-grow: 1;
+  margin-bottom: 0.5rem;
+  padding: 0 1.25rem;
+  overflow-x: auto;
+  text-align: center;
 }
 
 .engineComponent .engineInfoEval {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
   font-weight: bold;
   font-size: var(--font-xl);
 }
 
 .engineComponent .engineField {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: inline-block;
+  padding: 0.125rem;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 .engineComponent .engineField .key {
@@ -79,18 +74,20 @@
   font-variant-numeric: tabular-nums;
 }
 
+.engineComponent .engineField .value {
+  white-space: nowrap;
+}
+
 .engineComponent .engineRightSection {
   display: flex;
   height: calc(var(--engine-board-width)) !important;
-  transform: translateY(
-    calc((var(--engine-card-height) - var(--engine-board-width)) / 2)
-  );
 }
 
 .engineComponent .board {
   border-radius: 4px;
   height: calc(var(--engine-board-width)) !important;
   width: calc(var(--engine-board-width)) !important;
+  min-width: calc(var(--engine-board-width)) !important;
   overflow: hidden;
 }
 

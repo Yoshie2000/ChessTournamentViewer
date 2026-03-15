@@ -18,7 +18,7 @@
     )
   );
   --kibitzer-movelist-height: calc(
-    var(--graph-height) - var(--kibitzer-board-size) - 45px - 45px
+    var(--engine-kibitzer-height) - var(--kibitzer-board-size) - 45px - 45px
   );
 
   container-type: size;
@@ -54,7 +54,7 @@
   .engineWindowMobile .enginePV {
     --kibitzer-board-size: 100px;
     --kibitzer-movelist-height: calc(
-      var(--graph-height) - var(--kibitzer-board-size) - 45px - 45px
+      var(--engine-kibitzer-height) - var(--kibitzer-board-size) - 45px - 45px
     );
   }
 

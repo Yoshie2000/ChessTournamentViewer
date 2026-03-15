@@ -1,6 +1,5 @@
 import { useMemo, useRef, useCallback, memo, useEffect } from "react";
 import type { CCCEngine, CCCLiveInfo } from "../types";
-import { EngineLogo } from "./EngineLogo";
 import { Board, type BoardHandle } from "../components/Board";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
@@ -8,6 +7,7 @@ import { MoveList } from "./MoveList";
 import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
 import { Chess, Chess960 } from "../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
+import { EngineMinimal } from "./EngineMinimal";
 
 type EngineCardProps = {
   info?: CCCLiveInfo;
@@ -90,12 +90,12 @@ const EngineCard = memo(
     );
 
     const fields = loading
-      ? ["Time", "Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map(
-          (label) => [label, null]
-        )
+      ? ["Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map((label) => [
+          label,
+          null,
+        ])
       : [
-          ["Time", formatTime(time)],
-          ["Depth", `${data.depth} / ${data.seldepth ?? "-"}`],
+          ["Depth", `${data.depth}/${data.seldepth ?? "-"}`],
           ["Nodes", formatLargeNumber(data.nodes)],
           ["NPS", formatLargeNumber(data.speed)],
           ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
@@ -111,58 +111,16 @@ const EngineCard = memo(
       <div
         className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}
       >
-        <div className="engineLeftSection">
-          <div className="engineInfoHeader">
-            {!engine ? (
-              <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
-            ) : (
-              <EngineLogo engine={engine!} />
-            )}
-
-            <div className="engineName" title={engine?.name ?? ""}>
-              {!engine ? (placeholder ?? "Loading…") : engine!.name}
-            </div>
-          </div>
-
-          <hr />
-
-          <div className="engineInfoTable">
-            {fields.map(([label, value]) => (
-              <div
-                className={
-                  "engineField " + label?.replace(" ", "").toLowerCase()
-                }
-                key={label}
-              >
-                {loading ? (
-                  <SkeletonText width="100%" />
-                ) : (
-                  <>
-                    <div className="key">{label}</div>
-                    <div className="value">{value}</div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <hr />
-
-          <div className="engineInfoEval">
-            {loading ? (
-              <SkeletonText width="100%" />
-            ) : (
-              <div className="engineEval">{data.score}</div>
-            )}
-          </div>
-        </div>
+        <EngineMinimal
+          info={info}
+          time={time}
+          placeholder={placeholder}
+          engine={engine}
+        />
+        <hr></hr>
 
         {loading && !isMobile ? (
-          <SkeletonBlock
-            width="100%"
-            height="calc(100% - 2 * var(--padding))"
-            style={{ margin: "var(--padding) var(--padding) var(--padding) 0" }}
-          />
+          <SkeletonBlock width="100%" className="board" />
         ) : moves && !isMobile ? (
           <div className="engineRightSection">
             <Board ref={boardHandle} animated={false} />
@@ -180,6 +138,26 @@ const EngineCard = memo(
             />
           </div>
         ) : null}
+
+        <hr></hr>
+
+        <div className="engineInfoTable">
+          {fields.map(([label, value]) => (
+            <div
+              className={"engineField " + label?.replace(" ", "").toLowerCase()}
+              key={label}
+            >
+              {loading ? (
+                <SkeletonText width="100%" />
+              ) : (
+                <>
+                  <div className="key">{label}</div>
+                  <div className="value">{value}</div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

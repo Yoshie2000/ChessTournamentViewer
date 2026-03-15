@@ -14,10 +14,7 @@ export interface IEngineWorker {
   terminate(): void;
 }
 
-export type AnalysisRequest = {
-  fen: string;
-  gameIndex: number;
-}
+export type AnalysisRequest = { fen: string; gameIndex: number };
 
 export type AnalysisResult = {
   fen: string;
