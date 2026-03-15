@@ -8,6 +8,7 @@ import type { CCCLiveInfo, CCCMessage } from "../../types";
 import {
   EmptyEngineDefinition,
   extractLiveInfoFromGame,
+  getLiveInfosForMove,
   type EngineColor,
 } from "../../LiveInfo";
 import { loadLiveInfos } from "../../LocalStorage";
@@ -29,6 +30,22 @@ export const BoardWindow = memo(() => {
     animated: true,
     id: "main-board",
   });
+
+  useEffect(() => {
+    return useLiveInfo.subscribe(
+      (state) => state.currentMoveNumber,
+      (currentMoveNumber) => {
+        const state = useLiveInfo.getState();
+        state.setLiveInfos(
+          getLiveInfosForMove(
+            state.liveEngineData,
+            currentMoveNumber,
+            state.game.turnAt(currentMoveNumber)
+          )
+        );
+      }
+    );
+  }, []);
 
   useKibitzer({ updateBoard });
 
@@ -161,11 +178,8 @@ export const BoardWindow = memo(() => {
   }, [handleMessage]);
 
   useEffect(() => {
-    useLiveInfo.subscribe(
-      (state) => state.currentMoveNumber,
-      () => updateBoard(true)
-    );
-  }, []);
+    useLiveInfo.getState().registerUpdateBoard(updateBoard);
+  }, [updateBoard]);
 
   useEffect(() => {
     const requestEvent = (gameNr?: string, eventNr?: string) => {

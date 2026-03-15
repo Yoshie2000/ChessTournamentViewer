@@ -15,6 +15,7 @@ import { zustandHmrFix } from "./ZustandHMRFix";
 
 type LiveInfoData = {
   liveInfos: LiveEngineDataEntry;
+  setLiveInfos: (liveInfos: LiveEngineDataEntry) => void;
 
   liveEngineData: LiveEngineData;
   setLiveEngineData: (
@@ -39,6 +40,9 @@ type LiveInfoData = {
   setCurrentFen: (fen: string) => void;
 
   game: Chess960;
+
+  registerUpdateBoard: (fn: (animated?: boolean) => void) => void;
+  _updateBoard: ((animated?: boolean) => void) | null;
 };
 
 export const useLiveInfo = create<LiveInfoData>()(
@@ -59,6 +63,10 @@ export const useLiveInfo = create<LiveInfoData>()(
         red: { engineInfo: EmptyEngineDefinition, liveInfo: undefined },
       },
 
+      setLiveInfos(liveInfos: LiveEngineDataEntry) {
+        set({ liveInfos });
+      },
+
       clocks: { binc: "0", winc: "0", btime: "0", wtime: "0", type: "clocks" },
       setClocks(callback) {
         set((state) => {
@@ -73,16 +81,16 @@ export const useLiveInfo = create<LiveInfoData>()(
       setCurrentFen(fen) {
         set({ currentFen: fen });
       },
+      _updateBoard: null,
+      registerUpdateBoard(fn) {
+        set({ _updateBoard: fn });
+      },
+
       setCurrentMoveNumber(callback) {
         set((state) => {
           state.currentMoveNumber = callback(state.currentMoveNumber);
           state.currentFen = state.game.fenAt(state.currentMoveNumber);
-
-          state.liveInfos = getLiveInfosForMove(
-            state.liveEngineData,
-            state.currentMoveNumber,
-            state.game.turnAt(state.currentMoveNumber)
-          );
+          useLiveInfo.getState()._updateBoard?.(true);
         });
       },
 
