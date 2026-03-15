@@ -97,7 +97,12 @@ export function EngineWindow() {
                       engine={liveInfos[color].engineInfo}
                       key={color}
                     />
-                    <span>{liveInfos[color].engineInfo.name}</span>
+                    <span
+                      className="engineName"
+                      title={liveInfos[color].engineInfo.name}
+                    >
+                      {liveInfos[color].engineInfo.name}
+                    </span>
                   </span>
                 </th>
               ))}

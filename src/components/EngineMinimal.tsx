@@ -27,10 +27,10 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
       className={`engineMinimal ${loading ? "loading" : ""} ${className ?? ""}`}
     >
       <div className="engineInfoHeader">
-        {loading ? (
-          <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
+        {engine ? (
+          <EngineLogo engine={engine} />
         ) : (
-          <EngineLogo engine={engine!} />
+          <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
         )}
 
         <div className="engineName">{loading ? color : engine!.name}</div>

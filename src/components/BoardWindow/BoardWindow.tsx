@@ -17,6 +17,7 @@ import { EngineMinimal } from "../EngineMinimal";
 import { GameResultOverlay } from "../GameResultOverlay";
 import { useKibitzer } from "../../hooks/useKibitzer";
 import { LiveMoveList } from "../LiveMoveList";
+import { useMediaQuery } from "react-responsive";
 
 const isTCEC = window.location.search.includes("tcec");
 const _initialWS = isTCEC ? new TCECWebSocket() : new CCCWebSocket();
@@ -177,9 +178,11 @@ export const BoardWindow = memo(() => {
     useEventStore.getState().setRequestEvent(requestEvent);
   }, []);
 
+  const isMobile = useMediaQuery({ maxWidth: 775 });
+
   return (
     <div className="boardWindow">
-      <EngineMinimal color="black" className="borderRadiusTop" />
+      {isMobile && <EngineMinimal color="black" className="borderRadiusTop" />}
       <div className="boardWrapper">
         {Board}
 
@@ -187,7 +190,9 @@ export const BoardWindow = memo(() => {
       </div>
 
       <LiveMoveList />
-      <EngineMinimal color="white" className="borderRadiusBottom" />
+      {isMobile && (
+        <EngineMinimal color="white" className="borderRadiusBottom" />
+      )}
     </div>
   );
 });

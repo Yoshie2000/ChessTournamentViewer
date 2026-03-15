@@ -1,5 +1,4 @@
 import { useMemo, memo, useEffect } from "react";
-import { EngineLogo } from "./EngineLogo";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
@@ -9,6 +8,7 @@ import { useMediaQuery } from "react-responsive";
 import { useKibitzerBoard } from "../hooks/BoardHook";
 import type { EngineColor } from "../LiveInfo";
 import { useLiveInfo } from "../context/LiveInfoContext";
+import { EngineMinimal } from "./EngineMinimal";
 
 type EngineCardProps = {
   color: EngineColor;
@@ -100,12 +100,12 @@ const EngineCard = memo(
     }, [moves]);
 
     const fields = loading
-      ? ["Time", "Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map(
-          (label) => [label, null]
-        )
+      ? ["Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map((label) => [
+          label,
+          null,
+        ])
       : [
-          ["Time", formatTime(time)],
-          ["Depth", `${data.depth} / ${data.seldepth ?? "-"}`],
+          ["Depth", `${data.depth}/${data.seldepth ?? "-"}`],
           ["Nodes", formatLargeNumber(data.nodes)],
           ["NPS", formatLargeNumber(data.speed)],
           ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
@@ -121,58 +121,11 @@ const EngineCard = memo(
       <div
         className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}
       >
-        <div className="engineLeftSection">
-          <div className="engineInfoHeader">
-            {!engine ? (
-              <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
-            ) : (
-              <EngineLogo engine={engine!} />
-            )}
-
-            <div className="engineName" title={engine?.name ?? ""}>
-              {!engine ? color : engine!.name}
-            </div>
-          </div>
-
-          <hr />
-
-          <div className="engineInfoTable">
-            {fields.map(([label, value]) => (
-              <div
-                className={
-                  "engineField " + label?.replace(" ", "").toLowerCase()
-                }
-                key={label}
-              >
-                {loading ? (
-                  <SkeletonText width="100%" />
-                ) : (
-                  <>
-                    <div className="key">{label}</div>
-                    <div className="value">{value}</div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <hr />
-
-          <div className="engineInfoEval">
-            {loading ? (
-              <SkeletonText width="100%" />
-            ) : (
-              <div className="engineEval">{data.score}</div>
-            )}
-          </div>
-        </div>
+        <EngineMinimal color={color} />
+        <hr></hr>
 
         {loading && !isMobile ? (
-          <SkeletonBlock
-            width="100%"
-            height="calc(100% - 2 * var(--padding))"
-            style={{ margin: "var(--padding) var(--padding) var(--padding) 0" }}
-          />
+          <SkeletonBlock width="100%" className="board" />
         ) : moves && !isMobile ? (
           <div className="engineRightSection">
             {Board}
@@ -190,6 +143,26 @@ const EngineCard = memo(
             />
           </div>
         ) : null}
+
+        <hr></hr>
+
+        <div className="engineInfoTable">
+          {fields.map(([label, value]) => (
+            <div
+              className={"engineField " + label?.replace(" ", "").toLowerCase()}
+              key={label}
+            >
+              {loading ? (
+                <SkeletonText width="100%" />
+              ) : (
+                <>
+                  <div className="key">{label}</div>
+                  <div className="value">{value}</div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

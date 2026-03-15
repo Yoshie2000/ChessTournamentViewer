@@ -13,10 +13,15 @@
   --movelist-width: max(140px, calc(var(--board-size) / 3.5));
   --board-wrapper-width: calc(var(--board-size) + var(--movelist-width));
   --graph-height: calc(var(--available-height) - var(--board-size));
-  --engine-card-height: max(calc((var(--board-size) - var(--gap)) / 2), 220px);
-  --engine-board-width: var(--engine-card-height);
-  --engine-card-movelist-width: calc(var(--engine-board-width) / 1.9);
-  --engine-card-width: max(38rem, 470px);
+  --engine-board-width: 15vw;
+  --engine-kibitzer-height: 25rem;
+  --engine-card-movelist-width: max(
+    165px,
+    calc(var(--engine-board-width) / 3.5)
+  );
+  --engine-card-width: calc(
+    var(--engine-board-width) + var(--engine-card-movelist-width)
+  );
 
   --font-sm: 0.9rem;
   --font-md: 0.95rem;
