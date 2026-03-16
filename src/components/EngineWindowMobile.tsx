@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
-import { EngineLogo } from "./EngineLogo";
+import { useState } from "react";
 import { EnginePV } from "./EnginePV";
 import { EngineStats } from "./EngineStats";
 import { findPvDisagreementPoint } from "../utils";
 import "./EngineWindowMobile.css";
 import { useLiveInfo } from "../context/LiveInfoContext";
+import { KibitzerTableHeader } from "./EngineWindow";
+import type { EngineColor } from "../LiveInfo";
+import { useShallow } from "zustand/shallow";
 
 const TABS = ["Engines", "Engine PVs", "Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
@@ -12,28 +14,40 @@ type Tab = (typeof TABS)[number];
 const PLAYING_ENGINES = ["white", "black"] as const;
 
 export function EngineWindowMobile() {
-  const liveInfos = useLiveInfo((state) => state.liveInfos);
-  const fen = useLiveInfo((state) => state.currentFen);
-
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
 
-  const activeKibitzers = (["green", "blue", "red"] as const).filter(
-    (color) => !!liveInfos[color].liveInfo
+  const {
+    kibitzerDisagreement,
+    playingEnginesDisagreement,
+    activeKibitzersJson,
+  } = useLiveInfo(
+    useShallow((state) => {
+      const liveInfos = state.liveInfos;
+
+      const activeKibitzers = (["green", "blue", "red"] as const).filter(
+        (color) => !!liveInfos[color].liveInfo
+      );
+
+      const kibitzerLiveInfos = activeKibitzers.map(
+        (color) => liveInfos[color].liveInfo
+      );
+      const playingEnginesLiveInfos = (["white", "black"] as const).map(
+        (color) => liveInfos[color].liveInfo
+      );
+      return {
+        kibitzerDisagreement: findPvDisagreementPoint(
+          state.currentFen,
+          ...kibitzerLiveInfos
+        ),
+        playingEnginesDisagreement: findPvDisagreementPoint(
+          state.currentFen,
+          ...playingEnginesLiveInfos
+        ),
+        activeKibitzersJson: JSON.stringify(activeKibitzers),
+      };
+    })
   );
-
-  const playingEnginesDisagreement = useMemo(() => {
-    const playingLiveInfos = PLAYING_ENGINES.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    return findPvDisagreementPoint(fen, ...playingLiveInfos);
-  }, [fen, JSON.stringify(activeKibitzers)]);
-
-  const kibitzerDisagreement = useMemo(() => {
-    const kibitzerLiveInfos = activeKibitzers.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    return findPvDisagreementPoint(fen, ...kibitzerLiveInfos);
-  }, [fen, JSON.stringify(activeKibitzers)]);
+  const activeKibitzers = JSON.parse(activeKibitzersJson) as EngineColor[];
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES
@@ -70,21 +84,13 @@ export function EngineWindowMobile() {
             {firstColumn && <th className="engineFieldKey"></th>}
             {headerEngines.map((color) => (
               <th key={color}>
-                <span className="engineHeader">
-                  <EngineLogo
-                    engine={liveInfos[color].engineInfo}
-                    key={color}
-                  />
-                  <span>{liveInfos[color].engineInfo.name}</span>
-                </span>
+                <KibitzerTableHeader color={color} />
               </th>
             ))}
           </tr>
         </thead>
 
-        {activeTab === "Engines" && (
-          <EngineStats colors={PLAYING_ENGINES} liveInfos={liveInfos} />
-        )}
+        {activeTab === "Engines" && <EngineStats colors={PLAYING_ENGINES} />}
 
         {activeTab === "Engine PVs" && (
           <tbody>
@@ -93,7 +99,7 @@ export function EngineWindowMobile() {
                 <td key={color}>
                   <EnginePV
                     pvDisagreementPoint={playingEnginesDisagreement}
-                    liveInfoData={liveInfos[color]}
+                    color={color}
                   />
                 </td>
               ))}
@@ -101,9 +107,7 @@ export function EngineWindowMobile() {
           </tbody>
         )}
 
-        {activeTab === "Kibitzers" && (
-          <EngineStats colors={activeKibitzers} liveInfos={liveInfos} />
-        )}
+        {activeTab === "Kibitzers" && <EngineStats colors={activeKibitzers} />}
 
         {activeTab === "Kibitzer PVs" && (
           <tbody>
@@ -112,7 +116,7 @@ export function EngineWindowMobile() {
                 <td key={color}>
                   <EnginePV
                     pvDisagreementPoint={kibitzerDisagreement}
-                    liveInfoData={liveInfos[color]}
+                    color={color}
                   />
                 </td>
               ))}

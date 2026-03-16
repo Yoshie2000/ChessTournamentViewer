@@ -33,7 +33,7 @@ export function EngineWindow() {
       );
       return {
         kibitzerDisagreement: findPvDisagreementPoint(
-          state.game.fenAt(state.currentMoveNumber),
+          state.currentFen,
           ...kibitzerLiveInfos
         ),
         activeKibitzersJson: JSON.stringify(activeKibitzers),
@@ -91,7 +91,7 @@ export function EngineWindow() {
               {firstColumn && <th className="engineFieldKey"></th>}
               {headerEngines.map((color) => (
                 <th key={color}>
-                  <KibitzerTableHeader color={color}/>
+                  <KibitzerTableHeader color={color} />
                 </th>
               ))}
             </tr>
@@ -128,7 +128,7 @@ export function EngineWindow() {
   );
 }
 
-function KibitzerTableHeader({ color }: { color: EngineColor }) {
+export function KibitzerTableHeader({ color }: { color: EngineColor }) {
   const engineInfo = useLiveInfo((state) => state.liveInfos[color].engineInfo);
 
   return (
