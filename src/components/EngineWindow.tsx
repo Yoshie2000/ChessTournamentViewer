@@ -20,7 +20,11 @@ const PLAYING_ENGINES = ["white", "black"] as const;
 export function EngineWindow() {
   useClocks();
 
-  const { kibitzerDisagreement, activeKibitzersJson } = useLiveInfo(
+  const {
+    kibitzerDisagreement,
+    playingEnginesDisagreement,
+    activeKibitzersJson,
+  } = useLiveInfo(
     useShallow((state) => {
       const liveInfos = state.liveInfos;
 
@@ -31,10 +35,17 @@ export function EngineWindow() {
       const kibitzerLiveInfos = activeKibitzers.map(
         (color) => liveInfos[color].liveInfo
       );
+      const playingEnginesLiveInfos = (["white", "black"] as const).map(
+        (color) => liveInfos[color].liveInfo
+      );
       return {
         kibitzerDisagreement: findPvDisagreementPoint(
           state.currentFen,
           ...kibitzerLiveInfos
+        ),
+        playingEnginesDisagreement: findPvDisagreementPoint(
+          state.currentFen,
+          ...playingEnginesLiveInfos
         ),
         activeKibitzersJson: JSON.stringify(activeKibitzers),
       };
@@ -121,8 +132,14 @@ export function EngineWindow() {
 
   return (
     <div className="engineWindow">
-      <EngineCard color="black" opponentColor="white" />
-      <EngineCard color="white" opponentColor="black" />
+      <EngineCard
+        color="black"
+        pvDisagreementPoint={playingEnginesDisagreement}
+      />
+      <EngineCard
+        color="white"
+        pvDisagreementPoint={playingEnginesDisagreement}
+      />
       {kibitzerWindow}
     </div>
   );
