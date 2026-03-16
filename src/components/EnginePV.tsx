@@ -14,7 +14,7 @@ type EnginePVProps = {
   pvDisagreementPoint: number;
 };
 
-const MAX_UPDATE_INTERVAL_MS = 250;
+const MAX_UPDATE_INTERVAL_MS = 100;
 
 export function EnginePV({ color, pvDisagreementPoint }: EnginePVProps) {
   const {

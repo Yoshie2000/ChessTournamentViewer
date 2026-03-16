@@ -10,48 +10,53 @@ import { EnginePV } from "./EnginePV";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { useClocks } from "../hooks/useClocks";
 import type { EngineColor } from "../LiveInfo";
-import { useShallow } from "zustand/shallow";
+import { shallow } from "zustand/shallow";
 
 const TABS = ["Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
+const MAX_UPDATE_INTERVAL_MS = 100;
 
 export function EngineWindow() {
   useClocks();
 
-  const {
-    kibitzerDisagreement,
-    playingEnginesDisagreement,
-    activeKibitzersJson,
-  } = useLiveInfo(
-    useShallow((state) => {
+  const [playingEnginesDisagreement, setPlayingEnginesDisagreement] =
+    useState(0);
+  const [kibitzerDisagreement, setKibitzerDisagreement] = useState(0);
+  const [activeKibitzers, setActiveKibitzers] = useState<
+    ("red" | "green" | "blue")[]
+  >([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = useLiveInfo.getState();
       const liveInfos = state.liveInfos;
 
       const activeKibitzers = (["green", "blue", "red"] as const).filter(
         (color) => !!liveInfos[color].liveInfo
       );
-
       const kibitzerLiveInfos = activeKibitzers.map(
         (color) => liveInfos[color].liveInfo
       );
       const playingEnginesLiveInfos = (["white", "black"] as const).map(
         (color) => liveInfos[color].liveInfo
       );
-      return {
-        kibitzerDisagreement: findPvDisagreementPoint(
-          state.currentFen,
-          ...kibitzerLiveInfos
-        ),
-        playingEnginesDisagreement: findPvDisagreementPoint(
-          state.currentFen,
-          ...playingEnginesLiveInfos
-        ),
-        activeKibitzersJson: JSON.stringify(activeKibitzers),
-      };
-    })
-  );
-  const activeKibitzers = JSON.parse(activeKibitzersJson) as EngineColor[];
+
+      setKibitzerDisagreement(
+        findPvDisagreementPoint(state.currentFen, ...kibitzerLiveInfos)
+      );
+      setPlayingEnginesDisagreement(
+        findPvDisagreementPoint(state.currentFen, ...playingEnginesLiveInfos)
+      );
+      setActiveKibitzers((previous) => {
+        if (shallow(activeKibitzers, previous)) return previous;
+        return activeKibitzers;
+      });
+    }, MAX_UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
 

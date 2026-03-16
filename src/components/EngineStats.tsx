@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import type { LiveEngineDataEntry } from "../LiveInfo";
 import type { CCCLiveInfo } from "../types";
@@ -12,10 +13,22 @@ type SingleStatProps = {
   transform: (value: any) => any;
 };
 
+const MAX_UPDATE_INTERVAL_MS = 100;
+
 function SingleStat({ color, property, transform }: SingleStatProps) {
-  return useLiveInfo((state) =>
-    transform(state.liveInfos[color].liveInfo?.info[property])
-  );
+  const [stat, setStat] = useState();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = useLiveInfo.getState();
+      const stat = transform(state.liveInfos[color].liveInfo?.info[property]);
+      setStat(stat);
+    }, MAX_UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return stat;
 }
 
 const identity = (value: any) => value;

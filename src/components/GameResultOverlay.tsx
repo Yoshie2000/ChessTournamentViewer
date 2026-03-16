@@ -1,13 +1,25 @@
+import { useEffect, useState } from "react";
 import { useEventStore } from "../context/EventContext";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import "./GameResultOverlay.css";
 
+const MAX_UPDATE_INTERVAL_MS = 100;
+
 export function GameResultOverlay() {
-  // Re-render when the position changes
-  useLiveInfo((state) => state.currentFen);
+  const [_, setCurrentFen] = useState<string>();
+  const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = useLiveInfo.getState();
+      setCurrentFen(state.currentFen);
+      setCurrentMoveNumber(state.currentMoveNumber);
+    }, MAX_UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const cccGame = useEventStore((state) => state.cccGame);
-  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
   const game = useLiveInfo.getState().game;
 
   const pgnHeaders = game.getHeaders();

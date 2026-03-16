@@ -30,7 +30,7 @@ export function formatTime(time: number) {
   return `${minutes}:${seconds}.${hundreds}`;
 }
 
-const MAX_UPDATE_INTERVAL_MS = 250;
+const MAX_UPDATE_INTERVAL_MS = 100;
 
 const EngineCard = memo(({ color, pvDisagreementPoint }: EngineCardProps) => {
   const state = useLiveInfo.getState();

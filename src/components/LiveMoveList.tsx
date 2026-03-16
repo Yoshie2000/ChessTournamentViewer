@@ -1,15 +1,32 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { Chess } from "../chess.js/chess";
 import { useEventStore } from "../context/EventContext";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { MoveList } from "./MoveList";
+import { shallow } from "zustand/shallow";
+
+const MAX_UPDATE_INTERVAL_MS = 100;
 
 const LiveMoveList = memo(() => {
   const cccGame = useEventStore((state) => state.cccGame);
-
   const game = useLiveInfo((state) => state.game);
-  const moves = useLiveInfo((state) => state.moves);
-  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
+
+  const [moves, setMoves] = useState<string[]>([]);
+  const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = useLiveInfo.getState();
+      setCurrentMoveNumber(state.currentMoveNumber);
+
+      setMoves((previous) => {
+        if (shallow(previous, state.moves)) return previous;
+        return state.moves;
+      });
+    }, MAX_UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const pgnHeaders = game.getHeaders();
   const termination =
