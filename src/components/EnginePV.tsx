@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Chess960 } from "../chess.js/chess";
 import type { LiveEngineDataEntryObject } from "../LiveInfo";
 import { normalizePv, buildPvGame } from "../utils";
@@ -13,6 +13,8 @@ type EnginePVProps = {
   pvDisagreementPoint: number;
 };
 
+const MAX_UPDATE_INTERVAL_MS = 250;
+
 export function EnginePV({ liveInfoData, pvDisagreementPoint }: EnginePVProps) {
   const data = liveInfoData.liveInfo?.info;
 
@@ -24,7 +26,16 @@ export function EnginePV({ liveInfoData, pvDisagreementPoint }: EnginePVProps) {
     setCurrentMoveNumber,
   } = useKibitzerBoard({ animated: false });
 
-  const fen = useLiveInfo((state) => state.game.fenAt(state.currentMoveNumber));
+  const state = useLiveInfo.getState();
+  const [fen, setFen] = useState(state.currentFen);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = useLiveInfo.getState();
+
+      setFen(state.currentFen);
+    }, MAX_UPDATE_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   const moves = useMemo(() => {
     if (!data?.color) return undefined;

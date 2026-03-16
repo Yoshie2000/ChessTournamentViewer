@@ -182,9 +182,13 @@ export const BoardWindow = memo(() => {
   useEffect(() => {
     if (!cccEvent || !cccEventList) return;
 
-    const eventExists = cccEventList.events.some((event) => String(event.id) === cccEvent.tournamentDetails.tNr);
+    const eventExists = cccEventList.events.some(
+      (event) => String(event.id) === cccEvent.tournamentDetails.tNr
+    );
     if (!eventExists) {
-      useEventStore.getState().requestEvent(undefined, cccEventList.events[0].id)
+      useEventStore
+        .getState()
+        .requestEvent(undefined, cccEventList.events[0].id);
     }
   }, [cccEvent, cccEventList]);
 
