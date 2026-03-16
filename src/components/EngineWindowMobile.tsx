@@ -1,53 +1,27 @@
 import { useState } from "react";
 import { EnginePV } from "./EnginePV";
 import { EngineStats } from "./EngineStats";
-import { findPvDisagreementPoint } from "../utils";
 import "./EngineWindowMobile.css";
-import { useLiveInfo } from "../context/LiveInfoContext";
 import { KibitzerTableHeader } from "./EngineWindow";
 import type { EngineColor } from "../LiveInfo";
-import { useShallow } from "zustand/shallow";
 
 const TABS = ["Engines", "Engine PVs", "Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-export function EngineWindowMobile() {
+type EngineWindowMobileProps = {
+  kibitzerDisagreement: number;
+  playingEnginesDisagreement: number;
+  activeKibitzers: EngineColor[];
+};
+
+export function EngineWindowMobile({
+  kibitzerDisagreement,
+  playingEnginesDisagreement,
+  activeKibitzers,
+}: EngineWindowMobileProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
-
-  const {
-    kibitzerDisagreement,
-    playingEnginesDisagreement,
-    activeKibitzersJson,
-  } = useLiveInfo(
-    useShallow((state) => {
-      const liveInfos = state.liveInfos;
-
-      const activeKibitzers = (["green", "blue", "red"] as const).filter(
-        (color) => !!liveInfos[color].liveInfo
-      );
-
-      const kibitzerLiveInfos = activeKibitzers.map(
-        (color) => liveInfos[color].liveInfo
-      );
-      const playingEnginesLiveInfos = (["white", "black"] as const).map(
-        (color) => liveInfos[color].liveInfo
-      );
-      return {
-        kibitzerDisagreement: findPvDisagreementPoint(
-          state.currentFen,
-          ...kibitzerLiveInfos
-        ),
-        playingEnginesDisagreement: findPvDisagreementPoint(
-          state.currentFen,
-          ...playingEnginesLiveInfos
-        ),
-        activeKibitzersJson: JSON.stringify(activeKibitzers),
-      };
-    })
-  );
-  const activeKibitzers = JSON.parse(activeKibitzersJson) as EngineColor[];
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES

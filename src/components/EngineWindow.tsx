@@ -64,7 +64,14 @@ export function EngineWindow() {
 
   // MOBILE FALLBACK: Render a different component
   const isMobile = useMediaQuery({ maxWidth: 1400 });
-  if (isMobile) return <EngineWindowMobile />;
+  if (isMobile)
+    return (
+      <EngineWindowMobile
+        activeKibitzers={activeKibitzers}
+        kibitzerDisagreement={kibitzerDisagreement}
+        playingEnginesDisagreement={playingEnginesDisagreement}
+      />
+    );
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES
