@@ -1,21 +1,39 @@
+import { useLiveInfo } from "../context/LiveInfoContext";
 import type { LiveEngineDataEntry } from "../LiveInfo";
+import type { CCCLiveInfo } from "../types";
 import { formatLargeNumber } from "./EngineCard";
 import "./EngineStats.css";
 
-type EngineStatsProps = {
-  colors: readonly (keyof LiveEngineDataEntry)[];
-  liveInfos: LiveEngineDataEntry;
+type EngineStatsProps = { colors: readonly (keyof LiveEngineDataEntry)[] };
+
+type SingleStatProps = {
+  color: keyof LiveEngineDataEntry;
+  property: keyof CCCLiveInfo["info"];
+  transform: (value: any) => any;
 };
 
-export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
+function SingleStat({ color, property, transform }: SingleStatProps) {
+  return useLiveInfo((state) =>
+    transform(state.liveInfos[color].liveInfo?.info[property])
+  );
+}
+
+const identity = (value: any) => value;
+
+export function EngineStats({ colors }: EngineStatsProps) {
   return (
     <tbody className="engineStats">
       <tr className="borderTop">
         <td className="engineFieldKey">Depth</td>
         {colors.map((color) => (
           <td key={color} className="engineFieldValue">
-            {liveInfos[color].liveInfo?.info.depth} /{" "}
-            {liveInfos[color].liveInfo?.info.seldepth}
+            <SingleStat color={color} property="depth" transform={identity} />
+            {" / "}
+            <SingleStat
+              color={color}
+              property="seldepth"
+              transform={identity}
+            />
           </td>
         ))}
       </tr>
@@ -24,7 +42,11 @@ export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
         <td className="engineFieldKey">Nodes</td>
         {colors.map((color) => (
           <td key={color} className="engineFieldValue">
-            {formatLargeNumber(liveInfos[color].liveInfo?.info.nodes)}
+            <SingleStat
+              color={color}
+              property="nodes"
+              transform={formatLargeNumber}
+            />
           </td>
         ))}
       </tr>
@@ -33,7 +55,11 @@ export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
         <td className="engineFieldKey">NPS</td>
         {colors.map((color) => (
           <td key={color} className="engineFieldValue">
-            {formatLargeNumber(liveInfos[color].liveInfo?.info.speed)}
+            <SingleStat
+              color={color}
+              property="speed"
+              transform={formatLargeNumber}
+            />
           </td>
         ))}
       </tr>
@@ -42,7 +68,11 @@ export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
         <td className="engineFieldKey">TB Hits</td>
         {colors.map((color) => (
           <td key={color} className="engineFieldValue">
-            {formatLargeNumber(liveInfos[color].liveInfo?.info.tbhits)}
+            <SingleStat
+              color={color}
+              property="tbhits"
+              transform={formatLargeNumber}
+            />
           </td>
         ))}
       </tr>
@@ -51,7 +81,11 @@ export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
         <td className="engineFieldKey">Hashfull</td>
         {colors.map((color) => (
           <td key={color} className="engineFieldValue">
-            {liveInfos[color].liveInfo?.info.hashfull}
+            <SingleStat
+              color={color}
+              property="hashfull"
+              transform={identity}
+            />
           </td>
         ))}
       </tr>
@@ -60,7 +94,7 @@ export function EngineStats({ colors, liveInfos }: EngineStatsProps) {
         <td className="engineFieldKey"></td>
         {colors.map((color) => (
           <td key={color} className="engineEvaluation">
-            {liveInfos[color].liveInfo?.info.score}
+            <SingleStat color={color} property="score" transform={identity} />
           </td>
         ))}
       </tr>

@@ -42,7 +42,6 @@ export function EngineWindow() {
   );
   const activeKibitzers = JSON.parse(activeKibitzersJson) as EngineColor[];
 
-  const { liveInfos } = useLiveInfo.getState();
   const [activeTab, setActiveTab] = useState<Tab>("Kibitzers");
 
   useEffect(() => {
@@ -92,25 +91,14 @@ export function EngineWindow() {
               {firstColumn && <th className="engineFieldKey"></th>}
               {headerEngines.map((color) => (
                 <th key={color}>
-                  <span className="engineHeader">
-                    <EngineLogo
-                      engine={liveInfos[color].engineInfo}
-                      key={color}
-                    />
-                    <span
-                      className="engineName"
-                      title={liveInfos[color].engineInfo.name}
-                    >
-                      {liveInfos[color].engineInfo.name}
-                    </span>
-                  </span>
+                  <KibitzerTableHeader color={color}/>
                 </th>
               ))}
             </tr>
           </thead>
 
           {activeTab === "Kibitzers" && (
-            <EngineStats colors={activeKibitzers} liveInfos={liveInfos} />
+            <EngineStats colors={activeKibitzers} />
           )}
 
           {activeTab === "Kibitzer PVs" && (
@@ -119,8 +107,8 @@ export function EngineWindow() {
                 {activeKibitzers.map((color) => (
                   <td key={color}>
                     <EnginePV
+                      color={color}
                       pvDisagreementPoint={kibitzerDisagreement}
-                      liveInfoData={liveInfos[color]}
                     />
                   </td>
                 ))}
@@ -137,5 +125,18 @@ export function EngineWindow() {
       <EngineCard color="white" opponentColor="black" />
       {kibitzerWindow}
     </div>
+  );
+}
+
+function KibitzerTableHeader({ color }: { color: EngineColor }) {
+  const engineInfo = useLiveInfo((state) => state.liveInfos[color].engineInfo);
+
+  return (
+    <span className="engineHeader">
+      <EngineLogo engine={engineInfo} key={color} />
+      <span className="engineName" title={engineInfo.name}>
+        {engineInfo.name}
+      </span>
+    </span>
   );
 }

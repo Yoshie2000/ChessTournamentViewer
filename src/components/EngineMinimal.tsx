@@ -9,9 +9,11 @@ import { SkeletonBlock, SkeletonText } from "./Loading";
 type EngineCardProps = { color: EngineColor; className?: string };
 
 const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
-  const { engineInfo: engine, liveInfo: info } = useLiveInfo(
-    (state) => state.liveInfos[color]
+  const engine = useLiveInfo((state) => state.liveInfos[color].engineInfo);
+  const score = useLiveInfo(
+    (state) => state.liveInfos[color].liveInfo?.info.score
   );
+
   const time =
     Number(
       useLiveInfo((state) =>
@@ -19,8 +21,7 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
       ) || 1
     ) || 1;
 
-  const data = info?.info;
-  const loading = !data || !engine || !info || !time;
+  const loading = !score || !engine || !time;
 
   return (
     <div
@@ -39,7 +40,7 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
           <div className="engineTime">
             {loading ? <SkeletonText width="80px" /> : formatTime(time)}
           </div>
-          <div> {loading ? <SkeletonText width="40px" /> : data.score}</div>
+          <div> {loading ? <SkeletonText width="40px" /> : score}</div>
         </div>
       </div>
     </div>
