@@ -266,9 +266,7 @@
 
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows:
-      auto auto auto var(--graph-height)
-      fit-content fit-content fit-content;
+    grid-template-rows: auto auto 347px auto auto auto;
     height: auto;
     overflow-y: auto;
 

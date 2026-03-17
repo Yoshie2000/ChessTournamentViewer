@@ -1817,7 +1817,7 @@ export class Chess {
   }
 
   public fenAt(idx: number) {
-    if (idx < 0 || idx === this.length())
+    if (idx < 0 || idx >= this.length())
       return this.fen();
     return this._history[idx].fen;
   }

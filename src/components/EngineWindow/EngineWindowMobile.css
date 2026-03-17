@@ -1,6 +1,6 @@
 .engineWindowMobile {
   display: grid;
-  grid-template-rows: 45px 300px;
+  grid-template-rows: auto 1fr;
   border-radius: 8px;
   background: #343434;
   border: 1px solid #1a1a1a;
@@ -25,12 +25,17 @@
   overflow-x: auto;
 }
 
+.engineWindowMobile .engineTabs {
+  padding: 0.25rem 0;
+}
+
 .engineWindowMobile table {
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed;
   text-align: center;
   min-width: 350px;
+  max-height: 300px;
 }
 
 .engineWindowMobile .engineHeader {
@@ -38,8 +43,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(0.5 * var(--gap));
   margin-bottom: calc(0.5 * var(--gap));
+}
+
+.engineWindowMobile .engineHeader .engineName {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .engineWindowMobile td:has(.enginePV) {
@@ -75,8 +86,6 @@
 @media (max-width: 1400px) {
   .engineWindowMobile {
     border: none;
-    padding-top: 0;
-    padding-bottom: 0;
     width: 100%;
 
     --kibitzer-board-size: min(
@@ -90,7 +99,7 @@
       )
     );
     --kibitzer-movelist-height: calc(
-      var(--board-size) - var(--kibitzer-board-size) - 45px - 100px - 60px
+      var(--board-size) - var(--kibitzer-board-size) - 135px
     );
   }
 
@@ -106,9 +115,13 @@
 
 @media (max-width: 775px) {
   .engineWindowMobile:has(.board) {
-    height: 400px;
     --kibitzer-board-size: 110px;
-    --kibitzer-movelist-height: 180px;
+    --kibitzer-movelist-height: 150px;
+  }
+
+  .engineWindowMobile .movesWindow {
+    padding-top: 0 !important;
+    border-radius: 0;
   }
 
   .engineWindowMobile:has(.board) table {
