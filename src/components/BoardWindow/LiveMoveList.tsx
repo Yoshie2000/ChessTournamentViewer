@@ -1,10 +1,10 @@
 import { memo, useState } from "react";
-import { Chess } from "../chess.js/chess";
-import { useEventStore } from "../context/EventContext";
-import { useLiveInfo } from "../context/LiveInfoContext";
-import { MoveList } from "./MoveList";
+import { Chess } from "../../chess.js/chess";
+import { useEventStore } from "../../context/EventContext";
+import { useLiveInfo } from "../../context/LiveInfoContext";
+import { MoveList } from "../MoveList";
 import { shallow } from "zustand/shallow";
-import { useInterval } from "../hooks/useInterval";
+import { useInterval } from "../../hooks/useInterval";
 
 const LiveMoveList = memo(() => {
   const cccGame = useEventStore((state) => state.cccGame);

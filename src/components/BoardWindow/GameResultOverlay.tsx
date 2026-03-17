@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useEventStore } from "../context/EventContext";
-import { useLiveInfo } from "../context/LiveInfoContext";
+import { useEventStore } from "../../context/EventContext";
+import { useLiveInfo } from "../../context/LiveInfoContext";
 import "./GameResultOverlay.css";
-import { useInterval } from "../hooks/useInterval";
+import { useInterval } from "../../hooks/useInterval";
 
 export function GameResultOverlay() {
   const [_, setCurrentFen] = useState<string>();

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { EngineSettings } from "../engine/EngineWorker";
-import { getDefaultKibitzerSettings } from "../components/Settings";
+import { getDefaultKibitzerSettings } from "../components/Popup/Settings";
 import { zustandHmrFix } from "./ZustandHMRFix";
 
 type KibitzerSettings = {

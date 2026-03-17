@@ -13,10 +13,10 @@ import {
 import { loadLiveInfos } from "../../LocalStorage";
 import { type Square } from "../../chess.js/chess";
 import { uciToSan } from "../../utils";
-import { EngineMinimal } from "../EngineMinimal";
-import { GameResultOverlay } from "../GameResultOverlay";
+import { EngineMinimal } from "../EngineWindow/EngineMinimal";
+import { GameResultOverlay } from "./GameResultOverlay";
 import { useKibitzer } from "../../hooks/useKibitzer";
-import { LiveMoveList } from "../LiveMoveList";
+import { LiveMoveList } from "./LiveMoveList";
 import { useMediaQuery } from "react-responsive";
 
 const isTCEC = window.location.search.includes("tcec");

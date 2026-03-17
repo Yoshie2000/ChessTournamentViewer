@@ -1,4 +1,4 @@
-import type { CCCEngine } from "../types";
+import type { CCCEngine } from "../../types";
 import "./EngineLogo.css";
 
 type EngineLogoProps = { engine?: CCCEngine; size?: number };

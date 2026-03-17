@@ -1,9 +1,9 @@
 import { MdOutlineClose } from "react-icons/md";
-import type { CCCGame } from "../types";
+import type { CCCGame } from "../../types";
 import "./Crosstable.css";
-import { useEventStore } from "../context/EventContext";
+import { useEventStore } from "../../context/EventContext";
 import { memo } from "react";
-import { usePopup } from "../context/PopupContext";
+import { usePopup } from "../../context/PopupContext";
 
 type GameResult = "win" | "loss" | "draw" | "tbd";
 type GameScore = -1 | 0 | 1;

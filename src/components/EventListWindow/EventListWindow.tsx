@@ -2,7 +2,7 @@ import { memo } from "react";
 import { useEventStore } from "../../context/EventContext";
 
 import { LuSettings } from "react-icons/lu";
-import { EventList } from "../EventList";
+import { EventList } from "./EventList";
 
 import { usePopup } from "../../context/PopupContext";
 

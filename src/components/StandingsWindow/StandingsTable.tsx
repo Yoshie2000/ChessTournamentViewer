@@ -1,6 +1,6 @@
 import { memo } from "react";
-import { EngineLogo } from "./EngineLogo";
-import { useEventStore } from "../context/EventContext";
+import { EngineLogo } from "../EngineWindow/EngineLogo";
+import { useEventStore } from "../../context/EventContext";
 
 import "./StandingsTable.css";
 
