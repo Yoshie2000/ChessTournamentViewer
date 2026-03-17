@@ -1,4 +1,4 @@
-import { useMemo, memo, useEffect } from "react";
+import { useMemo, memo, useEffect, useState } from "react";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
@@ -9,8 +9,9 @@ import { useKibitzerBoard } from "../hooks/BoardHook";
 import type { EngineColor } from "../LiveInfo";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
+import { useInterval } from "../hooks/useInterval";
 
-type EngineCardProps = { color: EngineColor; kibitzerLayout?: boolean };
+type EngineCardProps = { color: EngineColor };
 
 export function formatLargeNumber(value?: string) {
   if (!value) return "-";
@@ -30,37 +31,41 @@ export function formatTime(time: number) {
   return `${minutes}:${seconds}.${hundreds}`;
 }
 
-const EngineCard = memo(({ color, kibitzerLayout }: EngineCardProps) => {
-  // This is the main re-render trigger for black / white
-  const time =
-    Number(
-      useLiveInfo((state) =>
+const EngineCard = memo(({ color }: EngineCardProps) => {
+  const state = useLiveInfo.getState();
+
+  const [fen, setFen] = useState(state.currentFen);
+  const [time, setTime] = useState(1);
+  const [pvDisagreementPoint, setPvDisagreementPoint] = useState<number>();
+  const [_, setDepth] = useState<number>();
+
+  useInterval((state) => {
+    setFen(state.currentFen);
+    // Live engines are re-rendered if the time changes
+    setTime(
+      Number(
         color === "white"
           ? state.clocks.wtime
           : color === "black"
             ? state.clocks.btime
             : "1"
       ) || 1
-    ) || 1;
+    );
+    // Kibitzers are updated at least on every depth change >= 15, to prevent too frequent updates
+    setDepth(
+      !["black", "white"].includes(color)
+        ? Math.max(
+            15,
+            Number(state.liveInfos[color].liveInfo?.info.depth || 0) || 0
+          )
+        : undefined
+    );
 
-  // Kibitzers re-render on FEN change, or on every depth change after depth 15
-  const fen = useLiveInfo((state) => state.game.fenAt(state.currentMoveNumber));
-  useLiveInfo((state) =>
-    !["black", "white"].includes(color)
-      ? Math.max(
-          15,
-          Number(state.liveInfos[color].liveInfo?.info.depth || 0) || 0
-        )
-      : undefined
-  );
+    setPvDisagreementPoint(state.engineAgreePly.at(state.currentMoveNumber));
+  });
 
-  const state = useLiveInfo.getState();
   const engine = state.liveInfos[color].engineInfo;
   const liveInfo = state.liveInfos[color].liveInfo;
-
-  const pvDisagreementPoint = useLiveInfo((state) =>
-    state.engineAgreePly.at(state.currentMoveNumber)
-  );
 
   const data = liveInfo?.info;
   const loading = !data || !engine || !time;
@@ -106,9 +111,7 @@ const EngineCard = memo(({ color, kibitzerLayout }: EngineCardProps) => {
   const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
   return (
-    <div
-      className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}
-    >
+    <div className={`engineComponent ${loading ? "loading" : ""}`}>
       <EngineMinimal color={color} />
       <hr></hr>
 

@@ -1,30 +1,21 @@
 import { useState } from "react";
-import { EngineLogo } from "./EngineLogo";
 import { EnginePV } from "./EnginePV";
 import { EngineStats } from "./EngineStats";
 import "./EngineWindowMobile.css";
-import { useLiveInfo } from "../context/LiveInfoContext";
+import { KibitzerTableHeader } from "./EngineWindow";
+import type { EngineColor } from "../LiveInfo";
 
 const TABS = ["Engines", "Engine PVs", "Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-export function EngineWindowMobile() {
-  const liveInfos = useLiveInfo((state) => state.liveInfos);
+type EngineWindowMobileProps = { activeKibitzers: EngineColor[] };
 
+export function EngineWindowMobile({
+  activeKibitzers,
+}: EngineWindowMobileProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
-
-  const activeKibitzers = (["green", "blue", "red"] as const).filter(
-    (color) => !!liveInfos[color].liveInfo
-  );
-
-  const playingEnginesDisagreement = useLiveInfo((state) =>
-    state.engineAgreePly.at(state.currentMoveNumber)
-  );
-  const kibitzerDisagreement = useLiveInfo((state) =>
-    state.kibitzerAgreePly.at(state.currentMoveNumber)
-  );
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES
@@ -61,50 +52,34 @@ export function EngineWindowMobile() {
             {firstColumn && <th className="engineFieldKey"></th>}
             {headerEngines.map((color) => (
               <th key={color}>
-                <span className="engineHeader">
-                  <EngineLogo
-                    engine={liveInfos[color].engineInfo}
-                    key={color}
-                  />
-                  <span>{liveInfos[color].engineInfo.name}</span>
-                </span>
+                <KibitzerTableHeader color={color} />
               </th>
             ))}
           </tr>
         </thead>
 
-        {activeTab === "Engines" && (
-          <EngineStats colors={PLAYING_ENGINES} liveInfos={liveInfos} />
-        )}
+        {activeTab === "Engines" && <EngineStats colors={PLAYING_ENGINES} />}
 
         {activeTab === "Engine PVs" && (
           <tbody>
             <tr>
               {PLAYING_ENGINES.map((color) => (
                 <td key={color}>
-                  <EnginePV
-                    pvDisagreementPoint={playingEnginesDisagreement}
-                    liveInfoData={liveInfos[color]}
-                  />
+                  <EnginePV color={color} />
                 </td>
               ))}
             </tr>
           </tbody>
         )}
 
-        {activeTab === "Kibitzers" && (
-          <EngineStats colors={activeKibitzers} liveInfos={liveInfos} />
-        )}
+        {activeTab === "Kibitzers" && <EngineStats colors={activeKibitzers} />}
 
         {activeTab === "Kibitzer PVs" && (
           <tbody>
             <tr>
               {activeKibitzers.map((color) => (
                 <td key={color}>
-                  <EnginePV
-                    pvDisagreementPoint={kibitzerDisagreement}
-                    liveInfoData={liveInfos[color]}
-                  />
+                  <EnginePV color={color} />
                 </td>
               ))}
             </tr>

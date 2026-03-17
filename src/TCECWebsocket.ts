@@ -227,7 +227,7 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   isConnected() {
-    return !!this.socket;
+    return !!this.socket && this.socket.connected;
   }
 
   setHandler(onMessage: (message: CCCMessage) => void) {
