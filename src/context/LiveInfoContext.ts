@@ -12,6 +12,7 @@ import type { CCCClocks, CCCLiveInfo } from "../types";
 import { getLiveInfosForMove } from "../LiveInfo";
 import { subscribeWithSelector } from "zustand/middleware";
 import { zustandHmrFix } from "./ZustandHMRFix";
+import { findPvDisagreementPoint } from "../utils";
 
 type LiveInfoData = {
   liveInfos: LiveEngineDataEntry;
@@ -34,6 +35,9 @@ type LiveInfoData = {
 
   currentMoveNumber: number;
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
+
+  engineAgreePly: (number | undefined)[];
+  kibitzerAgreePly: (number | undefined)[];
 
   currentFen: string;
   setCurrentFen: (fen: string) => void;
@@ -105,6 +109,27 @@ export const useLiveInfo = create<LiveInfoData>()(
             state.currentMoveNumber,
             state.game.turnAt(state.currentMoveNumber)
           );
+
+          if (data.liveInfo) {
+            state.engineAgreePly = [];
+            state.kibitzerAgreePly = [];
+            for (let ply = 0; ply < state.game.length(); ply++) {
+              const fen = state.game.fenAt(ply);
+              state.engineAgreePly[ply] = findPvDisagreementPoint(
+                fen,
+                state.liveEngineData.white.liveInfo[ply] ??
+                  state.liveEngineData.white.liveInfo[ply - 1],
+                state.liveEngineData.black.liveInfo[ply] ??
+                  state.liveEngineData.black.liveInfo[ply - 1]
+              );
+              state.kibitzerAgreePly[ply] = findPvDisagreementPoint(
+                fen,
+                state.liveEngineData.red.liveInfo[ply],
+                state.liveEngineData.blue.liveInfo[ply],
+                state.liveEngineData.green.liveInfo[ply]
+              );
+            }
+          }
         });
       },
       updateLiveEngineData(color, data) {
@@ -118,8 +143,25 @@ export const useLiveInfo = create<LiveInfoData>()(
             state.currentMoveNumber,
             state.game.turnAt(state.currentMoveNumber)
           );
+
+          state.engineAgreePly[data.info.ply] = findPvDisagreementPoint(
+            state.game.fenAt(data.info.ply),
+            state.liveEngineData.white.liveInfo[data.info.ply] ??
+              state.liveEngineData.white.liveInfo[data.info.ply - 1],
+            state.liveEngineData.black.liveInfo[data.info.ply] ??
+              state.liveEngineData.black.liveInfo[data.info.ply - 1]
+          );
+          state.kibitzerAgreePly[data.info.ply] = findPvDisagreementPoint(
+            state.game.fenAt(data.info.ply),
+            state.liveEngineData.red.liveInfo[data.info.ply],
+            state.liveEngineData.blue.liveInfo[data.info.ply],
+            state.liveEngineData.green.liveInfo[data.info.ply]
+          );
         });
       },
+
+      engineAgreePly: [],
+      kibitzerAgreePly: [],
     }))
   )
 );

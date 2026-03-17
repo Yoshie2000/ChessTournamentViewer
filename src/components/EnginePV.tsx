@@ -10,12 +10,9 @@ import { useLiveInfo } from "../context/LiveInfoContext";
 import { shallow } from "zustand/shallow";
 import { useInterval } from "../hooks/useInterval";
 
-type EnginePVProps = {
-  color: keyof LiveEngineDataEntry;
-  pvDisagreementPoint: number;
-};
+type EnginePVProps = { color: keyof LiveEngineDataEntry };
 
-export function EnginePV({ color, pvDisagreementPoint }: EnginePVProps) {
+export function EnginePV({ color }: EnginePVProps) {
   const {
     Board,
     currentMoveNumber,
@@ -27,11 +24,15 @@ export function EnginePV({ color, pvDisagreementPoint }: EnginePVProps) {
   const state = useLiveInfo.getState();
   const [fen, setFen] = useState(state.currentFen);
   const [moves, setMoves] = useState<string[]>();
+  const [pvDisagreementPoint, setPvDisagreementPoint] = useState<number>();
 
   useInterval((state) => {
     // Update the FEN
-
     setFen(state.currentFen);
+    const disagreementList = ["white", "black"].includes(color)
+      ? state.engineAgreePly
+      : state.kibitzerAgreePly;
+    setPvDisagreementPoint(disagreementList.at(state.currentMoveNumber));
 
     const data = state.liveInfos[color].liveInfo?.info;
     if (!data) return;

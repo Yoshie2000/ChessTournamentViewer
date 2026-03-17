@@ -3,7 +3,6 @@ import { useMediaQuery } from "react-responsive";
 import { EngineCard } from "./EngineCard";
 import "./EngineWindow.css";
 import { EngineWindowMobile } from "./EngineWindowMobile";
-import { findPvDisagreementPoint } from "../utils";
 import { EngineLogo } from "./EngineLogo";
 import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
@@ -21,9 +20,6 @@ const PLAYING_ENGINES = ["white", "black"] as const;
 export function EngineWindow() {
   useClocks();
 
-  const [playingEnginesDisagreement, setPlayingEnginesDisagreement] =
-    useState(0);
-  const [kibitzerDisagreement, setKibitzerDisagreement] = useState(0);
   const [activeKibitzers, setActiveKibitzers] = useState<
     ("red" | "green" | "blue")[]
   >([]);
@@ -34,19 +30,7 @@ export function EngineWindow() {
     const activeKibitzers = (["green", "blue", "red"] as const).filter(
       (color) => !!liveInfos[color].liveInfo
     );
-    const kibitzerLiveInfos = activeKibitzers.map(
-      (color) => liveInfos[color].liveInfo
-    );
-    const playingEnginesLiveInfos = (["white", "black"] as const).map(
-      (color) => liveInfos[color].liveInfo
-    );
 
-    setKibitzerDisagreement(
-      findPvDisagreementPoint(state.currentFen, ...kibitzerLiveInfos)
-    );
-    setPlayingEnginesDisagreement(
-      findPvDisagreementPoint(state.currentFen, ...playingEnginesLiveInfos)
-    );
     setActiveKibitzers((previous) => {
       if (shallow(activeKibitzers, previous)) return previous;
       return activeKibitzers;
@@ -64,14 +48,7 @@ export function EngineWindow() {
 
   // MOBILE FALLBACK: Render a different component
   const isMobile = useMediaQuery({ maxWidth: 1400 });
-  if (isMobile)
-    return (
-      <EngineWindowMobile
-        activeKibitzers={activeKibitzers}
-        kibitzerDisagreement={kibitzerDisagreement}
-        playingEnginesDisagreement={playingEnginesDisagreement}
-      />
-    );
+  if (isMobile) return <EngineWindowMobile activeKibitzers={activeKibitzers} />;
 
   const headerEngines = activeTab.includes("Engine")
     ? PLAYING_ENGINES
@@ -124,10 +101,7 @@ export function EngineWindow() {
               <tr>
                 {activeKibitzers.map((color) => (
                   <td key={color}>
-                    <EnginePV
-                      color={color}
-                      pvDisagreementPoint={kibitzerDisagreement}
-                    />
+                    <EnginePV color={color} />
                   </td>
                 ))}
               </tr>
@@ -139,14 +113,8 @@ export function EngineWindow() {
 
   return (
     <div className="engineWindow">
-      <EngineCard
-        color="black"
-        pvDisagreementPoint={playingEnginesDisagreement}
-      />
-      <EngineCard
-        color="white"
-        pvDisagreementPoint={playingEnginesDisagreement}
-      />
+      <EngineCard color="black" />
+      <EngineCard color="white" />
       {kibitzerWindow}
     </div>
   );

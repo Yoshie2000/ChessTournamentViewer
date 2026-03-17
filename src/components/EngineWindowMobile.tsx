@@ -10,15 +10,9 @@ type Tab = (typeof TABS)[number];
 
 const PLAYING_ENGINES = ["white", "black"] as const;
 
-type EngineWindowMobileProps = {
-  kibitzerDisagreement: number;
-  playingEnginesDisagreement: number;
-  activeKibitzers: EngineColor[];
-};
+type EngineWindowMobileProps = { activeKibitzers: EngineColor[] };
 
 export function EngineWindowMobile({
-  kibitzerDisagreement,
-  playingEnginesDisagreement,
   activeKibitzers,
 }: EngineWindowMobileProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Engines");
@@ -71,10 +65,7 @@ export function EngineWindowMobile({
             <tr>
               {PLAYING_ENGINES.map((color) => (
                 <td key={color}>
-                  <EnginePV
-                    pvDisagreementPoint={playingEnginesDisagreement}
-                    color={color}
-                  />
+                  <EnginePV color={color} />
                 </td>
               ))}
             </tr>
@@ -88,10 +79,7 @@ export function EngineWindowMobile({
             <tr>
               {activeKibitzers.map((color) => (
                 <td key={color}>
-                  <EnginePV
-                    pvDisagreementPoint={kibitzerDisagreement}
-                    color={color}
-                  />
+                  <EnginePV color={color} />
                 </td>
               ))}
             </tr>

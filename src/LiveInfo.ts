@@ -348,7 +348,9 @@ export function extractLiveInfoFromInfoString(
       nodes: data[data.indexOf("nodes") + 1],
       pv: pvMoves.join(" "),
       pvSan: sanMoves.join(" "),
-      seldepth: data.includes("seldepth") ? data[data.indexOf("seldepth") + 1] : "-",
+      seldepth: data.includes("seldepth")
+        ? data[data.indexOf("seldepth") + 1]
+        : "-",
       speed: data[data.indexOf("nps") + 1],
       tbhits: data[data.indexOf("tbhits") + 1] ?? "-",
       time: data[data.indexOf("time") + 1],

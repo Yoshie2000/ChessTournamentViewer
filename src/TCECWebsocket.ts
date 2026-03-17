@@ -291,7 +291,9 @@ export class TCECWebSocket implements TournamentWebSocket {
     let comments = this.game.getComments();
     const gameStartIndex = comments.findIndex(
       (_, index, list) =>
-        list[index + 1] && list[index + 1].comment && !list[index + 1].comment?.includes("book")
+        list[index + 1] &&
+        list[index + 1].comment &&
+        !list[index + 1].comment?.includes("book")
     );
     comments = comments.slice(gameStartIndex);
 

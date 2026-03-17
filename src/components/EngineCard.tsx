@@ -11,7 +11,7 @@ import { useLiveInfo } from "../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
 import { useInterval } from "../hooks/useInterval";
 
-type EngineCardProps = { color: EngineColor; pvDisagreementPoint?: number };
+type EngineCardProps = { color: EngineColor };
 
 export function formatLargeNumber(value?: string) {
   if (!value) return "-";
@@ -31,11 +31,12 @@ export function formatTime(time: number) {
   return `${minutes}:${seconds}.${hundreds}`;
 }
 
-const EngineCard = memo(({ color, pvDisagreementPoint }: EngineCardProps) => {
+const EngineCard = memo(({ color }: EngineCardProps) => {
   const state = useLiveInfo.getState();
 
   const [fen, setFen] = useState(state.currentFen);
   const [time, setTime] = useState(1);
+  const [pvDisagreementPoint, setPvDisagreementPoint] = useState<number>();
   const [_, setDepth] = useState<number>();
 
   useInterval((state) => {
@@ -59,6 +60,8 @@ const EngineCard = memo(({ color, pvDisagreementPoint }: EngineCardProps) => {
           )
         : undefined
     );
+
+    setPvDisagreementPoint(state.engineAgreePly.at(state.currentMoveNumber));
   });
 
   const engine = state.liveInfos[color].engineInfo;
