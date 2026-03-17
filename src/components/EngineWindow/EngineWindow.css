@@ -3,7 +3,6 @@
   display: flex;
   justify-content: center;
   border-bottom: 1px solid #333;
-  padding: 0.3rem 0;
   gap: 0.5rem;
 }
 
@@ -14,7 +13,7 @@
 
 .kibitzerWindow {
   display: grid;
-  grid-template-rows: 45px 1fr;
+  grid-template-rows: auto 1fr;
   border-radius: 8px;
   background: #343434;
   border: 1px solid #1a1a1a;
@@ -24,7 +23,7 @@
   max-height: calc(var(--engine-kibitzer-height));
   width: 100%;
   padding: 0 var(--padding);
-  padding-top: calc(0.5 * var(--padding));
+  padding-top: calc(0.5 * var(--gap));
 
   --kibitzer-board-size: min(
     160px,

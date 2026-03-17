@@ -255,7 +255,7 @@ export const GameGraph = memo(() => {
 
                   const element = ctx.element as PointElement | undefined;
                   if (
-                    !element?.$animations?.y?.active() &&
+                    !element?.$animations?.y &&
                     dataIndex ===
                       chart.data.datasets[datasetIndex].data.length - 1
                   ) {
