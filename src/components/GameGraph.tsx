@@ -5,6 +5,8 @@ import "./GameGraph.css";
 import { formatLargeNumber, formatTime } from "./EngineCard";
 import type { PointElement } from "chart.js";
 import { useLiveInfo } from "../context/LiveInfoContext";
+import type { LiveEngineData } from "../LiveInfo";
+import { useInterval } from "../hooks/useInterval";
 
 const COLORS = {
   white: "rgba(255, 255, 255, 0.7)",
@@ -135,7 +137,15 @@ export const GameGraph = memo(() => {
     "(prefers-reduced-motion: reduce)"
   ).matches;
 
-  const liveInfosObj = useLiveInfo((state) => state.liveEngineData);
+  const [liveInfosObj, setLiveInfosObj] = useState<LiveEngineData>(
+    useLiveInfo.getInitialState().liveEngineData
+  );
+  const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
+
+  useInterval((state) => {
+    setLiveInfosObj(state.liveEngineData);
+    setCurrentMoveNumber(state.currentMoveNumber);
+  });
 
   const liveInfos = {
     white: liveInfosObj.white.liveInfo,
@@ -144,11 +154,6 @@ export const GameGraph = memo(() => {
     red: liveInfosObj.red.liveInfo,
     blue: liveInfosObj.blue.liveInfo,
   };
-
-  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
-  const setCurrentMoveNumber = useLiveInfo(
-    (state) => state.setCurrentMoveNumber
-  );
 
   const [mode, setMode] = useState(0);
 
@@ -242,7 +247,9 @@ export const GameGraph = memo(() => {
             },
             onClick: (_, elements) => {
               if (!elements || !elements[0]) return;
-              setCurrentMoveNumber(() => elements[0].index + bookPlies);
+              useLiveInfo
+                .getState()
+                .setCurrentMoveNumber(() => elements[0].index + bookPlies);
             },
             scales: {
               y: {

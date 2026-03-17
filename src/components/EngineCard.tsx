@@ -1,20 +1,17 @@
-import { useMemo, memo, useEffect } from "react";
+import { useMemo, memo, useEffect, useState } from "react";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
 import { MoveList } from "./MoveList";
-import { buildPvGame, findPvDisagreementPoint, normalizePv } from "../utils";
+import { buildPvGame, normalizePv } from "../utils";
 import { Chess, Chess960 } from "../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
 import { useKibitzerBoard } from "../hooks/BoardHook";
 import type { EngineColor } from "../LiveInfo";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
+import { useInterval } from "../hooks/useInterval";
 
-type EngineCardProps = {
-  color: EngineColor;
-  opponentColor?: EngineColor;
-  kibitzerLayout?: boolean;
-};
+type EngineCardProps = { color: EngineColor; pvDisagreementPoint?: number };
 
 export function formatLargeNumber(value?: string) {
   if (!value) return "-";
@@ -34,25 +31,27 @@ export function formatTime(time: number) {
   return `${minutes}:${seconds}.${hundreds}`;
 }
 
-const EngineCard = memo(
-  ({ color, opponentColor, kibitzerLayout }: EngineCardProps) => {
-    // This is the main re-render trigger for black / white
-    const time =
-      Number(
-        useLiveInfo((state) =>
-          color === "white"
-            ? state.clocks.wtime
-            : color === "black"
-              ? state.clocks.btime
-              : "1"
-        ) || 1
-      ) || 1;
+const EngineCard = memo(({ color, pvDisagreementPoint }: EngineCardProps) => {
+  const state = useLiveInfo.getState();
 
-    // Kibitzers re-render on FEN change, or on every depth change after depth 15
-    const fen = useLiveInfo((state) =>
-      state.game.fenAt(state.currentMoveNumber)
+  const [fen, setFen] = useState(state.currentFen);
+  const [time, setTime] = useState(1);
+  const [_, setDepth] = useState<number>();
+
+  useInterval((state) => {
+    setFen(state.currentFen);
+    // Live engines are re-rendered if the time changes
+    setTime(
+      Number(
+        color === "white"
+          ? state.clocks.wtime
+          : color === "black"
+            ? state.clocks.btime
+            : "1"
+      ) || 1
     );
-    useLiveInfo((state) =>
+    // Kibitzers are updated at least on every depth change >= 15, to prevent too frequent updates
+    setDepth(
       !["black", "white"].includes(color)
         ? Math.max(
             15,
@@ -60,112 +59,100 @@ const EngineCard = memo(
           )
         : undefined
     );
+  });
 
-    const state = useLiveInfo.getState();
-    const engine = state.liveInfos[color].engineInfo;
-    const liveInfo = state.liveInfos[color].liveInfo;
-    const opponentInfo = opponentColor
-      ? state.liveInfos[opponentColor].liveInfo
-      : undefined;
+  const engine = state.liveInfos[color].engineInfo;
+  const liveInfo = state.liveInfos[color].liveInfo;
 
-    const pvDisagreementPoint = findPvDisagreementPoint(
-      fen,
-      liveInfo,
-      opponentInfo
-    );
+  const data = liveInfo?.info;
+  const loading = !data || !engine || !time;
 
-    const data = liveInfo?.info;
-    const loading = !data || !engine || !time;
+  const {
+    Board,
+    currentMoveNumber,
+    game,
+    setCurrentFen,
+    setCurrentMoveNumber,
+  } = useKibitzerBoard({ animated: false });
 
-    const {
-      Board,
-      currentMoveNumber,
-      game,
-      setCurrentFen,
-      setCurrentMoveNumber,
-    } = useKibitzerBoard({ animated: false });
+  const moves = useMemo(() => {
+    if (loading || !fen || !data?.color) return undefined;
 
-    const moves = useMemo(() => {
-      if (loading || !fen || !data?.color) return undefined;
+    setCurrentMoveNumber(-1);
+    return normalizePv(data.pvSan, data.color, fen);
+  }, [loading, data?.pvSan, data?.color, fen]);
 
-      setCurrentMoveNumber(-1);
-      return normalizePv(data.pvSan, data.color, fen);
-    }, [loading, data?.pvSan, data?.color, fen]);
+  useEffect(() => {
+    if (!fen || !moves) return;
 
-    useEffect(() => {
-      if (!fen || !moves) return;
+    game.current = buildPvGame(fen, moves, -1);
+    setCurrentFen(game.current.fen());
+  }, [moves]);
 
-      game.current = buildPvGame(fen, moves, -1);
-      setCurrentFen(game.current.fen());
-    }, [moves]);
+  const fields = loading
+    ? ["Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map((label) => [
+        label,
+        null,
+      ])
+    : [
+        ["Depth", `${data.depth}/${data.seldepth ?? "-"}`],
+        ["Nodes", formatLargeNumber(data.nodes)],
+        ["NPS", formatLargeNumber(data.speed)],
+        ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
+        ["Hashfull", data.hashfull ?? "-"],
+      ];
 
-    const fields = loading
-      ? ["Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map((label) => [
-          label,
-          null,
-        ])
-      : [
-          ["Depth", `${data.depth}/${data.seldepth ?? "-"}`],
-          ["Nodes", formatLargeNumber(data.nodes)],
-          ["NPS", formatLargeNumber(data.speed)],
-          ["TB Hits", formatLargeNumber(data.tbhits) ?? "-"],
-          ["Hashfull", data.hashfull ?? "-"],
-        ];
+  const isMobile = useMediaQuery({ maxWidth: 1400 });
 
-    const isMobile = useMediaQuery({ maxWidth: 1400 });
+  const safeFen = fen ?? new Chess().fen();
+  const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
-    const safeFen = fen ?? new Chess().fen();
-    const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
+  return (
+    <div className={`engineComponent ${loading ? "loading" : ""}`}>
+      <EngineMinimal color={color} />
+      <hr></hr>
 
-    return (
-      <div
-        className={`engineComponent ${loading ? "loading" : ""} ${kibitzerLayout ? "kibitzer" : ""}`}
-      >
-        <EngineMinimal color={color} />
-        <hr></hr>
+      {loading && !isMobile ? (
+        <SkeletonBlock width="100%" className="board" />
+      ) : moves && !isMobile ? (
+        <div className="engineRightSection">
+          {Board}
 
-        {loading && !isMobile ? (
-          <SkeletonBlock width="100%" className="board" />
-        ) : moves && !isMobile ? (
-          <div className="engineRightSection">
-            {Board}
-
-            <MoveList
-              startFen={safeFen}
-              moves={moves}
-              currentMoveNumber={currentMoveNumber}
-              setCurrentMoveNumber={setCurrentMoveNumber}
-              controllers={false}
-              disagreementMoveIndex={
-                pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
-              }
-              moveNumberOffset={moveNumberOffset}
-            />
-          </div>
-        ) : null}
-
-        <hr></hr>
-
-        <div className="engineInfoTable">
-          {fields.map(([label, value]) => (
-            <div
-              className={"engineField " + label?.replace(" ", "").toLowerCase()}
-              key={label}
-            >
-              {loading ? (
-                <SkeletonText width="100%" />
-              ) : (
-                <>
-                  <div className="key">{label}</div>
-                  <div className="value">{value}</div>
-                </>
-              )}
-            </div>
-          ))}
+          <MoveList
+            startFen={safeFen}
+            moves={moves}
+            currentMoveNumber={currentMoveNumber}
+            setCurrentMoveNumber={setCurrentMoveNumber}
+            controllers={false}
+            disagreementMoveIndex={
+              pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
+            }
+            moveNumberOffset={moveNumberOffset}
+          />
         </div>
+      ) : null}
+
+      <hr></hr>
+
+      <div className="engineInfoTable">
+        {fields.map(([label, value]) => (
+          <div
+            className={"engineField " + label?.replace(" ", "").toLowerCase()}
+            key={label}
+          >
+            {loading ? (
+              <SkeletonText width="100%" />
+            ) : (
+              <>
+                <div className="key">{label}</div>
+                <div className="value">{value}</div>
+              </>
+            )}
+          </div>
+        ))}
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 export { EngineCard };

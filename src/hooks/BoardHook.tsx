@@ -41,9 +41,14 @@ export function useKibitzerBoard({ animated, id }: BoardProps) {
 
   useEffect(() => {
     setTimeout(() => {
-      boardHandle.current?.updateBoard(game.current, currentMoveNumber);
+      boardHandle.current?.updateBoard(
+        game.current,
+        currentMoveNumber,
+        undefined,
+        true
+      );
     }, 10);
-  }, [currentMoveNumber, currentFen]);
+  }, [currentMoveNumber, currentFen, boardHandle.current]);
 
   return {
     Board: <BoardComponent id={id} ref={boardHandle} animated={animated} />,
