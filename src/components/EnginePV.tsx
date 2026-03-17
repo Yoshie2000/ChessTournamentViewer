@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Chess960 } from "../chess.js/chess";
 import type { LiveEngineDataEntry } from "../LiveInfo";
 import { normalizePv, buildPvGame } from "../utils";
@@ -8,13 +8,12 @@ import "./EnginePV.css";
 import { useKibitzerBoard } from "../hooks/BoardHook";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { shallow } from "zustand/shallow";
+import { useInterval } from "../hooks/useInterval";
 
 type EnginePVProps = {
   color: keyof LiveEngineDataEntry;
   pvDisagreementPoint: number;
 };
-
-const MAX_UPDATE_INTERVAL_MS = 100;
 
 export function EnginePV({ color, pvDisagreementPoint }: EnginePVProps) {
   const {
@@ -29,28 +28,25 @@ export function EnginePV({ color, pvDisagreementPoint }: EnginePVProps) {
   const [fen, setFen] = useState(state.currentFen);
   const [moves, setMoves] = useState<string[]>();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Update the FEN
-      const state = useLiveInfo.getState();
-      setFen(state.currentFen);
+  useInterval((state) => {
+    // Update the FEN
 
-      const data = state.liveInfos[color].liveInfo?.info;
-      if (!data) return;
+    setFen(state.currentFen);
 
-      // If the PV is different, re-build the game & re-render it
-      const moves = normalizePv(data.pvSan, data.color, fen);
-      setMoves((previous) => {
-        if (shallow(moves, previous)) return previous;
+    const data = state.liveInfos[color].liveInfo?.info;
+    if (!data) return;
 
-        setCurrentMoveNumber(-1);
-        game.current = buildPvGame(fen, moves, -1);
-        setCurrentFen(game.current.fen());
-        return moves;
-      });
-    }, MAX_UPDATE_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
+    // If the PV is different, re-build the game & re-render it
+    const moves = normalizePv(data.pvSan, data.color, fen);
+    setMoves((previous) => {
+      if (shallow(moves, previous)) return previous;
+
+      setCurrentMoveNumber(-1);
+      game.current = buildPvGame(fen, moves, -1);
+      setCurrentFen(game.current.fen());
+      return moves;
+    });
+  });
 
   const moveNumberOffset = new Chess960(fen).moveNumber() - 1;
 

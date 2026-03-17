@@ -1,11 +1,12 @@
 import { Line } from "react-chartjs-2";
 import type { CCCLiveInfo } from "../types";
-import { memo, useEffect, useState } from "react";
+import { memo, useState } from "react";
 import "./GameGraph.css";
 import { formatLargeNumber, formatTime } from "./EngineCard";
 import type { PointElement } from "chart.js";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import type { LiveEngineData } from "../LiveInfo";
+import { useInterval } from "../hooks/useInterval";
 
 const COLORS = {
   white: "rgba(255, 255, 255, 0.7)",
@@ -131,8 +132,6 @@ const MODES = [
   },
 ];
 
-const MAX_UPDATE_INTERVAL_MS = 100;
-
 export const GameGraph = memo(() => {
   const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
@@ -143,15 +142,10 @@ export const GameGraph = memo(() => {
   );
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const state = useLiveInfo.getState();
-      setLiveInfosObj(state.liveEngineData);
-      setCurrentMoveNumber(state.currentMoveNumber);
-    }, MAX_UPDATE_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, []);
+  useInterval((state) => {
+    setLiveInfosObj(state.liveEngineData);
+    setCurrentMoveNumber(state.currentMoveNumber);
+  });
 
   const liveInfos = {
     white: liveInfosObj.white.liveInfo,

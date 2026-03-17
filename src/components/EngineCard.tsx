@@ -9,6 +9,7 @@ import { useKibitzerBoard } from "../hooks/BoardHook";
 import type { EngineColor } from "../LiveInfo";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
+import { useInterval } from "../hooks/useInterval";
 
 type EngineCardProps = { color: EngineColor; pvDisagreementPoint?: number };
 
@@ -30,8 +31,6 @@ export function formatTime(time: number) {
   return `${minutes}:${seconds}.${hundreds}`;
 }
 
-const MAX_UPDATE_INTERVAL_MS = 100;
-
 const EngineCard = memo(({ color, pvDisagreementPoint }: EngineCardProps) => {
   const state = useLiveInfo.getState();
 
@@ -39,34 +38,28 @@ const EngineCard = memo(({ color, pvDisagreementPoint }: EngineCardProps) => {
   const [time, setTime] = useState(1);
   const [_, setDepth] = useState<number>();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const state = useLiveInfo.getState();
-
-      setFen(state.currentFen);
-      // Live engines are re-rendered if the time changes
-      setTime(
-        Number(
-          color === "white"
-            ? state.clocks.wtime
-            : color === "black"
-              ? state.clocks.btime
-              : "1"
-        ) || 1
-      );
-      // Kibitzers are updated at least on every depth change >= 15, to prevent too frequent updates
-      setDepth(
-        !["black", "white"].includes(color)
-          ? Math.max(
-              15,
-              Number(state.liveInfos[color].liveInfo?.info.depth || 0) || 0
-            )
-          : undefined
-      );
-    }, MAX_UPDATE_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, []);
+  useInterval((state) => {
+    setFen(state.currentFen);
+    // Live engines are re-rendered if the time changes
+    setTime(
+      Number(
+        color === "white"
+          ? state.clocks.wtime
+          : color === "black"
+            ? state.clocks.btime
+            : "1"
+      ) || 1
+    );
+    // Kibitzers are updated at least on every depth change >= 15, to prevent too frequent updates
+    setDepth(
+      !["black", "white"].includes(color)
+        ? Math.max(
+            15,
+            Number(state.liveInfos[color].liveInfo?.info.depth || 0) || 0
+          )
+        : undefined
+    );
+  });
 
   const engine = state.liveInfos[color].engineInfo;
   const liveInfo = state.liveInfos[color].liveInfo;

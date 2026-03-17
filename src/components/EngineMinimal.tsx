@@ -1,14 +1,13 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useState } from "react";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { type EngineColor } from "../LiveInfo";
 import { formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
+import { useInterval } from "../hooks/useInterval";
 
 type EngineCardProps = { color: EngineColor; className?: string };
-
-const MAX_UPDATE_INTERVAL_MS = 100;
 
 const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
   const engine = useLiveInfo((state) => state.liveInfos[color].engineInfo);
@@ -16,17 +15,12 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
   const [score, setScore] = useState<string>();
   const [time, setTime] = useState<number>(1);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const state = useLiveInfo.getState();
-      setScore(state.liveInfos[color].liveInfo?.info.score);
-      setTime(
-        Number(color === "white" ? state.clocks.wtime : state.clocks.btime) || 1
-      );
-    }, MAX_UPDATE_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, []);
+  useInterval((state) => {
+    setScore(state.liveInfos[color].liveInfo?.info.score);
+    setTime(
+      Number(color === "white" ? state.clocks.wtime : state.clocks.btime) || 1
+    );
+  });
 
   const loading = !score || !engine || !time;
 
