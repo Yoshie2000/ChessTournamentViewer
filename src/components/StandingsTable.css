@@ -1,104 +1,61 @@
-.standingsWrapper {
+.standings {
   height: 100%;
   overflow: auto;
 }
 
-.standings {
-  background: #2a2a2a;
-  border: 1px solid #232323;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-sm);
-}
-
 .standingsEntry {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: 40px 40px 1fr 100px 60px 60px;
+  height: 40px;
   border-bottom: 1px solid #232323;
+  border-left: 1px solid #232323;
+  border-right: 1px solid #232323;
+  font-size: var(--font-sm);
+  background: #2a2a2a;
 }
 
-.standingsEntry .engineLogo {
-  margin: 0 !important;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+.standingsEntry:first-child {
+  border-top: 1px solid #232323;
 }
 
-.standings tr:nth-child(2n) td {
-  background: #323232;
+.standingsEntry:nth-child(2n) {
+  background: #343434;
 }
 
-td.placement {
-  width: 2.25rem;
+.standings .placement {
   text-align: center;
   color: #a1a1a1;
 }
 
-td.logo {
+.standings .logo {
   position: relative;
-  height: 50px;
-  width: 50px;
   padding-right: 0;
 }
 
-td.name {
+.standings .name {
   padding-left: 0;
 }
 
-td.score,
-td.perf,
-td.rating {
+.standings .score,
+.standings .perf,
+.standings .rating {
   color: #a1a1a1;
 }
 
-td.score {
-  width: 110px;
-}
-
-td.perf {
-  width: 70px;
-}
-
-td.rating {
-  width: 70px;
-}
-
-@media (max-width: 1775px) {
-  td.placement {
-    width: 2.25rem;
+@media ((min-width: 1401px) and (max-width: 1550px)) or (max-width: 450px) {
+  .standingsEntry {
+    grid-template-columns: 40px 40px 1fr 100px 60px;
   }
 
-  td.logo {
-    width: 45px;
-    overflow: hidden;
-  }
-
-  td.score {
-    width: 120px;
-    text-align: right;
-  }
-
-  td.perf {
-    width: 80px;
-    text-align: right;
-    padding-right: var(--padding);
-  }
-
-  td.rating {
+  .standings .rating {
     display: none;
   }
 }
 
-@media (max-width: 1550px) {
-  td.perf {
-    width: 70px;
-  }
-}
-
-@media (max-width: 775px) {
-  .standingsWrapper {
-    margin-top: calc(var(--padding) / 2);
-  }
-
-  .standingsWindow h4 {
-    margin-top: calc(var(--padding) / 2) !important;
+@media (max-width: 400px) {
+  .standingsEntry {
+    grid-template-columns: 30px 40px 1fr 100px 50px;
   }
 }

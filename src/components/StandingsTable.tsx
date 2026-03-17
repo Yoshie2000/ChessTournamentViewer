@@ -8,25 +8,19 @@ export const StandingsTable = memo(function () {
   const engines = useEventStore((state) => state.engines) ?? [];
 
   return (
-    <div className="standingsWrapper">
-      <table className="standings">
-        <tbody>
-          {engines.map((engine, index) => (
-            <tr key={engine.id} className="standingsEntry">
-              <td className="placement">#{index + 1}</td>
-              <td className="logo">
-                <EngineLogo engine={engine} />
-              </td>
-              <td className="name">{engine.name}</td>
-              <td className="score">
-                {engine.points} / {engine.playedGames}
-              </td>
-              <td className="perf">{engine.perf}%</td>
-              <td className="rating">{engine.rating}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="standings">
+      {engines.map((engine, index) => (
+        <div key={engine.id} className="standingsEntry">
+          <div className="placement">#{index + 1}</div>
+          <EngineLogo engine={engine} size={28} />
+          <div className="name">{engine.name}</div>
+          <div className="score">
+            {engine.points} / {engine.playedGames}
+          </div>
+          <div className="perf">{engine.perf}%</div>
+          <div className="rating">{engine.rating}</div>
+        </div>
+      ))}
     </div>
   );
 });
