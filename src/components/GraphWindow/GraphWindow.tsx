@@ -1,5 +1,5 @@
 import { Spinner } from "../Loading";
-import { GameGraph } from "../GameGraph";
+import { GameGraph } from "./GameGraph";
 import { useEventStore } from "../../context/EventContext";
 import { memo } from "react";
 

@@ -9,8 +9,7 @@ import {
   Tooltip,
 } from "chart.js";
 import "./App.css";
-import "./components/Popup.css";
-import { EngineWindow } from "./components/EngineWindow";
+import { EngineWindow } from "./components/EngineWindow/EngineWindow";
 import { EventListWindow } from "./components/EventListWindow/EventListWindow";
 import { GraphWindow } from "./components/GraphWindow/GraphWindow";
 import { StandingsWindow } from "./components/StandingsWindow/StandingsWindow";

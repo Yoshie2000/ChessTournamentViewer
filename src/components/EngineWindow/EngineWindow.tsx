@@ -6,11 +6,11 @@ import { EngineWindowMobile } from "./EngineWindowMobile";
 import { EngineLogo } from "./EngineLogo";
 import { EngineStats } from "./EngineStats";
 import { EnginePV } from "./EnginePV";
-import { useLiveInfo } from "../context/LiveInfoContext";
-import { useClocks } from "../hooks/useClocks";
-import type { EngineColor } from "../LiveInfo";
+import { useLiveInfo } from "../../context/LiveInfoContext";
+import { useClocks } from "../../hooks/useClocks";
+import type { EngineColor } from "../../LiveInfo";
 import { shallow } from "zustand/shallow";
-import { useInterval } from "../hooks/useInterval";
+import { useInterval } from "../../hooks/useInterval";
 
 const TABS = ["Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];

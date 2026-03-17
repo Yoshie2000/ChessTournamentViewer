@@ -1,6 +1,6 @@
 import { useEventStore } from "../../context/EventContext";
 import { Spinner } from "../Loading";
-import { Schedule } from "../Schedule";
+import { Schedule } from "./Schedule";
 
 export const ScheduleWindow = () => {
   const cccEvent = useEventStore((state) => state.cccEvent);

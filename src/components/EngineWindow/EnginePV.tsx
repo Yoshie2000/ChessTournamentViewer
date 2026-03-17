@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Chess960 } from "../chess.js/chess";
-import type { LiveEngineDataEntry } from "../LiveInfo";
-import { normalizePv, buildPvGame } from "../utils";
-import { SkeletonBlock } from "./Loading";
-import { MoveList } from "./MoveList";
+import { Chess960 } from "../../chess.js/chess";
+import type { LiveEngineDataEntry } from "../../LiveInfo";
+import { normalizePv, buildPvGame } from "../../utils";
+import { SkeletonBlock } from "../Loading";
+import { MoveList } from "../MoveList";
 import "./EnginePV.css";
-import { useKibitzerBoard } from "../hooks/BoardHook";
-import { useLiveInfo } from "../context/LiveInfoContext";
+import { useKibitzerBoard } from "../../hooks/BoardHook";
+import { useLiveInfo } from "../../context/LiveInfoContext";
 import { shallow } from "zustand/shallow";
-import { useInterval } from "../hooks/useInterval";
+import { useInterval } from "../../hooks/useInterval";
 
 type EnginePVProps = { color: keyof LiveEngineDataEntry };
 

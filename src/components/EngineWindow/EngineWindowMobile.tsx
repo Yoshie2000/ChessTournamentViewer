@@ -3,7 +3,7 @@ import { EnginePV } from "./EnginePV";
 import { EngineStats } from "./EngineStats";
 import "./EngineWindowMobile.css";
 import { KibitzerTableHeader } from "./EngineWindow";
-import type { EngineColor } from "../LiveInfo";
+import type { EngineColor } from "../../LiveInfo";
 
 const TABS = ["Engines", "Engine PVs", "Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
