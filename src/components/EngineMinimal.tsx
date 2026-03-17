@@ -1,28 +1,30 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { type EngineColor } from "../LiveInfo";
 import { formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "./Loading";
+import { useInterval } from "../hooks/useInterval";
 
 type EngineCardProps = { color: EngineColor; className?: string };
 
 const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
-  const { engineInfo: engine, liveInfo: info } = useLiveInfo(
-    (state) => state.liveInfos[color]
-  );
-  const time =
-    Number(
-      useLiveInfo((state) =>
-        color === "white"
-          ? state.liveInfos.white.liveInfo?.info.timeLeft
-          : state.liveInfos.black.liveInfo?.info.timeLeft
-      )
-    ) || 1;
+  const engine = useLiveInfo((state) => state.liveInfos[color].engineInfo);
 
-  const data = info?.info;
-  const loading = !data || !engine || !info || !time;
+  const [score, setScore] = useState<string>();
+  const [time, setTime] = useState<number>(1);
+
+  useInterval((state) => {
+    const wtime = state.liveInfos.white.liveInfo?.info.timeLeft;
+    const btime = state.liveInfos.black.liveInfo?.info.timeLeft;
+    setTime(
+      Number(color === "white" ? wtime : color === "black" ? btime : "1") || 1
+    );
+    setScore(state.liveInfos[color].liveInfo?.info.score);
+  });
+
+  const loading = !score || !engine || !time;
 
   return (
     <div
@@ -41,7 +43,7 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
           <div className="engineTime">
             {loading ? <SkeletonText width="80px" /> : formatTime(time)}
           </div>
-          <div> {loading ? <SkeletonText width="40px" /> : data.score}</div>
+          <div> {loading ? <SkeletonText width="40px" /> : score}</div>
         </div>
       </div>
     </div>

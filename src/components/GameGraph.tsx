@@ -5,6 +5,8 @@ import "./GameGraph.css";
 import { formatLargeNumber, formatTime } from "./EngineCard";
 import type { PointElement } from "chart.js";
 import { useLiveInfo } from "../context/LiveInfoContext";
+import type { LiveEngineData } from "../LiveInfo";
+import { useInterval } from "../hooks/useInterval";
 
 const COLORS = {
   white: "rgba(255, 255, 255, 0.7)",
@@ -128,6 +130,21 @@ const MODES = [
       return value;
     },
   },
+  {
+    name: "Agree",
+    map: function () {
+      return 0;
+    },
+    mapLabel: function () {
+      return "";
+    },
+    scaling: function (value: number) {
+      return value;
+    },
+    scaleData: function () {
+      return 1;
+    },
+  },
 ];
 
 export const GameGraph = memo(() => {
@@ -135,7 +152,23 @@ export const GameGraph = memo(() => {
     "(prefers-reduced-motion: reduce)"
   ).matches;
 
-  const liveInfosObj = useLiveInfo((state) => state.liveEngineData);
+  const [liveInfosObj, setLiveInfosObj] = useState<LiveEngineData>(
+    useLiveInfo.getInitialState().liveEngineData
+  );
+  const [engineAgreePly, setEngineAgreePly] = useState<(number | undefined)[]>(
+    []
+  );
+  const [kibitzerAgreePly, setKibitzerAgreePly] = useState<
+    (number | undefined)[]
+  >([]);
+  const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
+
+  useInterval((state) => {
+    setLiveInfosObj(state.liveEngineData);
+    setEngineAgreePly(state.engineAgreePly);
+    setKibitzerAgreePly(state.kibitzerAgreePly);
+    setCurrentMoveNumber(state.currentMoveNumber);
+  });
 
   const liveInfos = {
     white: liveInfosObj.white.liveInfo,
@@ -144,11 +177,6 @@ export const GameGraph = memo(() => {
     red: liveInfosObj.red.liveInfo,
     blue: liveInfosObj.blue.liveInfo,
   };
-
-  const currentMoveNumber = useLiveInfo((state) => state.currentMoveNumber);
-  const setCurrentMoveNumber = useLiveInfo(
-    (state) => state.setCurrentMoveNumber
-  );
 
   const [mode, setMode] = useState(0);
 
@@ -164,19 +192,37 @@ export const GameGraph = memo(() => {
     (_, i) => String(i + 1 + bookPlies)
   );
 
-  const datasets = colors.map((color) => {
-    return {
-      label: color[0].toUpperCase() + color.slice(1).toLowerCase(),
-      data: liveInfos[color]
-        .slice(bookPlies)
-        .map(MODES[mode].map)
-        .map(MODES[mode].scaleData),
-      dataLabels: liveInfos[color].slice(bookPlies).map(MODES[mode].mapLabel),
-      borderColor: COLORS[color],
-      backgroundColor: COLORS[color],
-      spanGaps: true,
-    };
-  });
+  const datasets =
+    MODES[mode].name !== "Agree"
+      ? colors.map((color) => {
+          return {
+            label: color[0].toUpperCase() + color.slice(1).toLowerCase(),
+            data: liveInfos[color]
+              .slice(bookPlies)
+              .map(MODES[mode].map)
+              .map(MODES[mode].scaleData),
+            dataLabels: liveInfos[color]
+              .slice(bookPlies)
+              .map(MODES[mode].mapLabel),
+            borderColor: COLORS[color],
+            backgroundColor: COLORS[color],
+            spanGaps: true,
+          };
+        })
+      : ["Engines", "Kibitzers"].map((label) => {
+          const agreePly = (
+            label === "Engines" ? engineAgreePly : kibitzerAgreePly
+          ).slice(bookPlies);
+          const color = label === "Engines" ? "#c548c5" : "#60299e";
+          return {
+            label,
+            data: agreePly,
+            dataLabels: agreePly.map((ply) => String(ply)),
+            borderColor: color,
+            backgroundColor: color,
+            spanGaps: true,
+          };
+        });
 
   return (
     <div className="gameGraph">
@@ -242,7 +288,9 @@ export const GameGraph = memo(() => {
             },
             onClick: (_, elements) => {
               if (!elements || !elements[0]) return;
-              setCurrentMoveNumber(() => elements[0].index + bookPlies);
+              useLiveInfo
+                .getState()
+                .setCurrentMoveNumber(() => elements[0].index + bookPlies);
             },
             scales: {
               y: {
