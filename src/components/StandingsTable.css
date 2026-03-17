@@ -59,3 +59,9 @@
     grid-template-columns: 30px 40px 1fr 100px 50px;
   }
 }
+
+@media (max-width: 775px) {
+  .standingsWindow button {
+    transform: translateY(-6px);
+  }
+}
