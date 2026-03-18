@@ -70,6 +70,15 @@ export function parseTCECLiveInfo(
     }
   }
 
+  let score = String(json.eval);
+  const scoreNumber = Number(score);
+  if (!isNaN(scoreNumber)) {
+    score = scoreNumber.toFixed(2);
+    if (!score.startsWith("+") && !score.startsWith("-")) score = "+" + score;
+  } else {
+    score = score.replaceAll("#", "");
+  }
+
   return {
     type: "liveInfo",
     info: {
@@ -81,7 +90,7 @@ export function parseTCECLiveInfo(
       nodes: String(json.nodes),
       pv: lanMoves.join(" "),
       pvSan: pvMoves.join(" "),
-      score: String(json.eval),
+      score,
       seldepth: json.depth.split("/")[1],
       speed: String(
         Number(json.speed.split(" ")[0]) * (color === "blue" ? 1000 : 1000000)
@@ -151,7 +160,10 @@ export function extractLiveInfoFromTCECComment(
   if (data[0] === "book") return;
 
   let score = data[data.findIndex((s) => s.includes("wv="))].split("=")[1];
-  if (score.startsWith("M")) {
+  if (
+    score.startsWith("M") ||
+    (!score.startsWith("+") && !score.startsWith("-"))
+  ) {
     score = "+" + score;
   }
 

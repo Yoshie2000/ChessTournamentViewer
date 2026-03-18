@@ -316,11 +316,6 @@ export class TCECWebSocket implements TournamentWebSocket {
         } else {
           lc0Move.eval *= -1;
         }
-      } else if (
-        typeof lc0Move.eval === "string" &&
-        !lc0Move.eval.startsWith("+")
-      ) {
-        lc0Move.eval = "+" + lc0Move.eval;
       }
       this.callback?.(parseTCECLiveInfo(lc0Move, comments[i].fen, "blue"));
     });
@@ -334,11 +329,6 @@ export class TCECWebSocket implements TournamentWebSocket {
         } else {
           sfMove.eval *= -1;
         }
-      } else if (
-        typeof sfMove.eval === "string" &&
-        !sfMove.eval.startsWith("+")
-      ) {
-        sfMove.eval = "+" + sfMove.eval;
       }
       this.callback?.(parseTCECLiveInfo(sfMove, comments[i].fen, "red"));
     });
@@ -401,7 +391,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           }
         );
 
-        function toCccGame(game: any): CCCGame {
+        function toCccGame(game: any, index: number): CCCGame {
           if (!game) return undefined as unknown as CCCGame;
 
           const [time, , date] = game.Start?.split(" ") ?? [
@@ -427,7 +417,7 @@ export class TCECWebSocket implements TournamentWebSocket {
             blackId: black,
             blackName: black,
             estimatedStartTime: "",
-            gameNr: String(game.Game),
+            gameNr: String(index + 1),
             matchNr: "",
             opening: game.Opening,
             openingType: game.Opening,
@@ -444,15 +434,15 @@ export class TCECWebSocket implements TournamentWebSocket {
           };
         }
 
-        const past = (schedule as any[])
-          .filter((game) => !!game.Result && game.Result !== "*")
-          .map(toCccGame);
-        const present = toCccGame(
-          (schedule as any[]).find((game) => game.Termination === "in progress")
+        const cccGameSchedule = (schedule as any[]).map(toCccGame);
+
+        const past = cccGameSchedule.filter((game) => !!game.timeEnd);
+        const present = cccGameSchedule.find(
+          (game) => !!game.timeStart && !game.timeEnd
         );
-        const future = (schedule as any[])
-          .filter((game) => !game.Result && game.Termination !== "in progress")
-          .map(toCccGame);
+        const future = cccGameSchedule.filter(
+          (game) => !game.outcome && !game.timeStart
+        );
 
         const allGames = [...past, ...(present ? [present] : []), ...future];
 
