@@ -192,7 +192,6 @@ const MoveList = memo(
           blackMove={blackMove}
           whiteActive={whiteActive}
           blackActive={blackActive}
-          rowActive={whiteActive}
           disagreementWhite={disagreementMoveIndex === i}
           disagreementBlack={disagreementMoveIndex === i + 1}
           bookMoveWhite={i < bookMoves}
@@ -322,7 +321,6 @@ type MoveRowProps = {
   blackMove: string;
   whiteActive: boolean;
   blackActive: boolean;
-  rowActive: boolean;
   disagreementWhite: boolean;
   disagreementBlack: boolean;
   bookMoveWhite: boolean;
@@ -338,7 +336,6 @@ const MoveRow = memo(
     blackMove,
     whiteActive,
     blackActive,
-    rowActive,
     disagreementWhite,
     disagreementBlack,
     bookMoveWhite,
@@ -348,7 +345,10 @@ const MoveRow = memo(
     return (
       <tr>
         <th
-          className={"move right" + (rowActive ? " currentMove" : "")}
+          className={
+            "move right " +
+            moveClass(whiteActive, disagreementWhite, bookMoveWhite)
+          }
           onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
         >
           {moveNumber}.

@@ -112,6 +112,8 @@ export const useLiveInfo = create<LiveInfoData>()(
       setCurrentMoveNumber(callback) {
         set((state) => {
           state.currentMoveNumber = callback(state.currentMoveNumber);
+          if (state.currentMoveNumber === state.game.length())
+            state.currentMoveNumber = -1;
           state.currentFen = state.game.fenAt(state.currentMoveNumber);
 
           state.liveInfos = getLiveInfosForMove(

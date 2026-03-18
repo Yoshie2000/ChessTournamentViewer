@@ -5,8 +5,11 @@ import { MdOutlineClose } from "react-icons/md";
 import { useEventStore } from "../../context/EventContext";
 
 function formatDuration(value: number) {
+  if (value === 1) return `ìn 1 minute`;
   if (value < 60) return `in ${value.toFixed(0)} minutes`;
-  return `in ${(value / 60).toFixed(0)} hours`;
+  value = Math.round(value / 60);
+  if (value === 1) return `in 1 hour`;
+  return `in ${value.toFixed(0)} hours`;
 }
 
 function formatOutcome(outcome: string) {

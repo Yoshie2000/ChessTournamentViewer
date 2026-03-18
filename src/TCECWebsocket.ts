@@ -133,7 +133,7 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket.on("pgn", (json: any) => {
       if (!this.live) return;
 
-      if (this.game.getHeaders()["Result"] !== "*") {
+      if (this.live && this.game.getHeaders()["Result"] !== "*") {
         this.disconnect();
         this.connect(this.callback ?? function () {});
         return;
@@ -210,8 +210,11 @@ export class TCECWebSocket implements TournamentWebSocket {
       }
     });
 
-    this.socket.on("schedule", (json: any) => {
-      console.log("schedule", json);
+    this.socket.on("schedule", () => {
+      if (this.live) {
+        this.disconnect();
+        this.connect(this.callback ?? function () {});
+      }
     });
 
     // this.socket.on("updeng", (json: any) => {
