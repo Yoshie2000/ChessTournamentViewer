@@ -4,7 +4,7 @@ import {
   Board as BoardComponent,
   type BoardHandle,
   type BoardProps,
-} from "../components/Board";
+} from "../components/BoardWindow/Board";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { getLiveInfosForMove } from "../LiveInfo";
 

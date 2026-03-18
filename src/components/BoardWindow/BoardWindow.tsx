@@ -14,10 +14,10 @@ import {
 import { loadLiveInfos } from "../../LocalStorage";
 import { type Square } from "../../chess.js/chess";
 import { uciToSan } from "../../utils";
-import { EngineMinimal } from "../EngineMinimal";
-import { GameResultOverlay } from "../GameResultOverlay";
+import { EngineMinimal } from "../EngineWindow/EngineMinimal";
+import { GameResultOverlay } from "./GameResultOverlay";
 import { useKibitzer } from "../../hooks/useKibitzer";
-import { LiveMoveList } from "../LiveMoveList";
+import { LiveMoveList } from "./LiveMoveList";
 import { useMediaQuery } from "react-responsive";
 
 const isTCEC = window.location.search.includes("tcec");
@@ -73,9 +73,10 @@ export const BoardWindow = memo(() => {
           liveInfoState.setCurrentMoveNumber(() => -1);
 
           // Reset kibitzer live infos
+          const event = eventState.cccEvent;
           liveInfoState.setLiveEngineData("green", {
             engineInfo: EmptyEngineDefinition,
-            liveInfo: cccEvent ? loadLiveInfos(cccEvent, msg) : [],
+            liveInfo: event ? loadLiveInfos(event, msg) : [],
           });
           liveInfoState.setLiveEngineData("blue", {
             engineInfo: EmptyEngineDefinition,
@@ -152,6 +153,7 @@ export const BoardWindow = memo(() => {
           liveInfoState.setLiveEngineData(msg.color as EngineColor, {
             engineInfo: msg.engine,
           });
+          updateBoard(true);
           break;
 
         case "result":
@@ -161,7 +163,7 @@ export const BoardWindow = memo(() => {
           break;
       }
     },
-    [cccEvent, game, handleLiveInfo, updateBoard]
+    [game, handleLiveInfo, updateBoard]
   );
 
   useEffect(() => {

@@ -71,11 +71,6 @@ export class CCCWebSocket implements TournamentWebSocket {
     this.socket.onclose = () => {
       this.socket = null;
     };
-
-    this.socket.onerror = () => {
-      // this.ws?.close();
-      console.log("on error");
-    };
   }
 
   isConnected() {

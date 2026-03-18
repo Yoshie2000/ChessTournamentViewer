@@ -1,5 +1,5 @@
-import { useEventStore } from "../context/EventContext";
-import type { CCCEventsListUpdate, CCCEventUpdate } from "../types";
+import { useEventStore } from "../../context/EventContext";
+import type { CCCEventsListUpdate, CCCEventUpdate } from "../../types";
 import "./EventList.css";
 
 type EventListProps = {

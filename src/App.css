@@ -14,7 +14,7 @@
   --board-wrapper-width: calc(var(--board-size) + var(--movelist-width));
   --graph-height: calc(var(--available-height) - var(--board-size));
   --engine-board-width: 15vw;
-  --engine-kibitzer-height: 25rem;
+  --engine-kibitzer-height: 20rem;
   --engine-card-movelist-width: max(
     165px,
     calc(var(--engine-board-width) / 3.5)
@@ -266,9 +266,7 @@
 
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows:
-      auto auto auto var(--graph-height)
-      fit-content fit-content fit-content;
+    grid-template-rows: auto auto 347px auto auto auto;
     height: auto;
     overflow-y: auto;
 

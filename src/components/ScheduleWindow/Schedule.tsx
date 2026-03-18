@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { EngineLogo } from "./EngineLogo";
+import { EngineLogo } from "../EngineWindow/EngineLogo";
 import "./Schedule.css";
 import { MdOutlineClose } from "react-icons/md";
-import { useEventStore } from "../context/EventContext";
+import { useEventStore } from "../../context/EventContext";
 
 function formatDuration(value: number) {
   if (value < 60) return `in ${value.toFixed(0)} minutes`;

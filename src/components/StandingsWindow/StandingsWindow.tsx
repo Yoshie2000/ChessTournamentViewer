@@ -3,7 +3,7 @@ import { memo } from "react";
 import { useEventStore } from "../../context/EventContext";
 
 import { Spinner } from "../Loading";
-import { StandingsTable } from "../StandingsTable";
+import { StandingsTable } from "./StandingsTable";
 
 import { usePopup } from "../../context/PopupContext";
 

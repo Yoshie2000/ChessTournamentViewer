@@ -42,12 +42,12 @@
 }
 
 .engineComponent .engineInfoTable {
-  display: flex;
-  gap: 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  justify-content: center;
   font-size: var(--font-sm);
   margin: 0.25rem 0 0.5rem;
-  padding: 0 1.25rem;
-  overflow-x: auto;
   text-align: center;
 }
 
@@ -57,10 +57,8 @@
 }
 
 .engineComponent .engineField {
-  display: inline-block;
   padding: 0.125rem;
   white-space: nowrap;
-  width: fit-content;
 }
 
 .engineComponent .engineField .key {

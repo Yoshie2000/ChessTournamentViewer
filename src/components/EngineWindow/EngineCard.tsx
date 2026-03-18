@@ -1,15 +1,15 @@
 import { useMemo, memo, useEffect, useState } from "react";
 import "./EngineCard.css";
-import { SkeletonBlock, SkeletonText } from "./Loading";
-import { MoveList } from "./MoveList";
-import { buildPvGame, normalizePv } from "../utils";
-import { Chess, Chess960 } from "../chess.js/chess";
+import { SkeletonBlock, SkeletonText } from "../Loading";
+import { MoveList } from "../MoveList";
+import { buildPvGame, normalizePv } from "../../utils";
+import { Chess, Chess960 } from "../../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
-import { useKibitzerBoard } from "../hooks/BoardHook";
-import type { EngineColor } from "../LiveInfo";
-import { useLiveInfo } from "../context/LiveInfoContext";
+import { useKibitzerBoard } from "../../hooks/BoardHook";
+import type { EngineColor } from "../../LiveInfo";
+import { useLiveInfo } from "../../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
-import { useInterval } from "../hooks/useInterval";
+import { useInterval } from "../../hooks/useInterval";
 
 type EngineCardProps = { color: EngineColor };
 
@@ -62,7 +62,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
     setPvDisagreementPoint(state.engineAgreePly.at(state.currentMoveNumber));
   });
 
-  const engine = state.liveInfos[color].engineInfo;
+  const engine = useLiveInfo((state) => state.liveInfos[color].engineInfo);
   const liveInfo = state.liveInfos[color].liveInfo;
 
   const data = liveInfo?.info;

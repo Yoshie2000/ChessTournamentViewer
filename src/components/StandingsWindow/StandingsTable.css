@@ -1,0 +1,74 @@
+.standings {
+  height: 100%;
+  overflow: auto;
+}
+
+.standingsEntry {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: 40px 40px 1fr 100px 60px 60px;
+  height: 40px;
+  border-bottom: 1px solid #232323;
+  border-left: 1px solid #232323;
+  border-right: 1px solid #232323;
+  font-size: var(--font-sm);
+  background: #2a2a2a;
+}
+
+.standingsEntry:first-child {
+  border-top: 1px solid #232323;
+}
+
+.standingsEntry:nth-child(2n) {
+  background: #343434;
+}
+
+.standings .placement {
+  text-align: center;
+  color: #a1a1a1;
+}
+
+.standings .logo {
+  position: relative;
+  padding-right: 0;
+}
+
+.standings .name {
+  padding-left: 0;
+}
+
+.standings .score,
+.standings .perf,
+.standings .rating {
+  color: #a1a1a1;
+}
+
+.standingsWindow button {
+  position: absolute;
+  top: calc(0.5 * var(--gap));
+  right: var(--gap);
+}
+
+@media ((min-width: 1401px) and (max-width: 1550px)) or (max-width: 450px) {
+  .standingsEntry {
+    grid-template-columns: 40px 40px 1fr 100px 60px;
+  }
+
+  .standings .rating {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .standingsEntry {
+    grid-template-columns: 30px 40px 1fr 100px 50px;
+  }
+}
+
+@media (max-height: 850px) {
+  .standingsWindow button {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+}
