@@ -33,7 +33,7 @@ export function useLiveBoard({ animated, id }: BoardProps) {
 }
 
 export function useKibitzerBoard({ animated, id }: BoardProps) {
-  const boardHandle = useRef<BoardHandle>(null);
+  const [boardHandle, setBoardHandle] = useState<BoardHandle | null>(null);
   const game = useRef(new Chess960());
 
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
@@ -41,17 +41,17 @@ export function useKibitzerBoard({ animated, id }: BoardProps) {
 
   useEffect(() => {
     setTimeout(() => {
-      boardHandle.current?.updateBoard(
+      boardHandle?.updateBoard(
         game.current,
         currentMoveNumber,
         undefined,
         true
       );
     }, 10);
-  }, [currentMoveNumber, currentFen, boardHandle.current]);
+  }, [currentMoveNumber, currentFen, boardHandle]);
 
   return {
-    Board: <BoardComponent id={id} ref={boardHandle} animated={animated} />,
+    Board: <BoardComponent id={id} ref={setBoardHandle} animated={animated} />,
     game,
     currentMoveNumber,
     setCurrentMoveNumber,

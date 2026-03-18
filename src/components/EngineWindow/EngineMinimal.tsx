@@ -16,10 +16,12 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
   const [time, setTime] = useState<number>(1);
 
   useInterval((state) => {
-    setScore(state.liveInfos[color].liveInfo?.info.score);
+    const wtime = state.liveInfos.white.liveInfo?.info.timeLeft;
+    const btime = state.liveInfos.black.liveInfo?.info.timeLeft;
     setTime(
-      Number(color === "white" ? state.clocks.wtime : state.clocks.btime) || 1
+      Number(color === "white" ? wtime : color === "black" ? btime : "1") || 1
     );
+    setScore(state.liveInfos[color].liveInfo?.info.score);
   });
 
   const loading = !score || !engine || !time;

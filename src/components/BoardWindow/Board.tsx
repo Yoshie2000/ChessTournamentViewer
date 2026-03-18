@@ -35,107 +35,116 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
     });
   }, []);
 
-  useImperativeHandle(ref, () => ({
-    updateBoard(game, currentMoveNumber, liveInfos, bypassRateLimit) {
-      if (!boardRef.current) return;
+  useImperativeHandle(
+    ref,
+    () => ({
+      updateBoard(game, currentMoveNumber, liveInfos, bypassRateLimit) {
+        if (!boardRef.current) return;
 
-      const currentTime = new Date().getTime();
-      if (
-        !bypassRateLimit &&
-        currentTime - lastBoardUpdateRef.current <= BOARD_THROTTLE_MS
-      )
-        return;
+        const currentTime = new Date().getTime();
+        if (
+          !bypassRateLimit &&
+          currentTime - lastBoardUpdateRef.current <= BOARD_THROTTLE_MS
+        )
+          return;
 
-      const fen = game.fenAt(currentMoveNumber);
-      const turn = game.turnAt(currentMoveNumber);
-      const lastMove = game.moveAt(currentMoveNumber);
+        const fen = game.fenAt(currentMoveNumber);
+        const turn = game.turnAt(currentMoveNumber);
+        const lastMove = game.moveAt(currentMoveNumber);
 
-      const arrows: DrawShape[] = [];
+        const arrows: DrawShape[] = [];
 
-      let moveWhite: string | null = null;
-      if (liveInfos?.white.liveInfo) {
-        const pv = liveInfos.white.liveInfo.info.pv.split(" ");
-        const nextMove = turn === "w" ? pv[0] : pv[1];
-        if (nextMove && nextMove.length >= 4) {
-          moveWhite = nextMove;
-          arrows.push({
-            orig: (nextMove.slice(0, 2) as Square) || "a1",
-            dest: (nextMove.slice(2, 4) as Square) || "a1",
-            brush: liveInfos.white.liveInfo.info.color,
-          });
-        }
-      }
-
-      if (liveInfos?.black.liveInfo) {
-        const pv = liveInfos.black.liveInfo.info.pv.split(" ");
-        const nextMove = turn === "b" ? pv[0] : pv[1];
-        if (nextMove && nextMove === moveWhite) {
-          arrows[0].brush = "agree";
-        } else if (nextMove && nextMove.length >= 4) {
-          arrows.push({
-            orig: (nextMove.slice(0, 2) as Square) || "a1",
-            dest: (nextMove.slice(2, 4) as Square) || "a1",
-            brush: liveInfos.black.liveInfo.info.color,
-          });
-        }
-      }
-
-      for (const color of ["green", "red", "blue"] as const) {
-        if (liveInfos?.[color].liveInfo) {
-          const pv = liveInfos[color].liveInfo.info.pv.split(" ");
-          const nextMove = pv[0];
+        let moveWhite: string | null = null;
+        if (liveInfos?.white.liveInfo) {
+          const pv = liveInfos.white.liveInfo.info.pv.split(" ");
+          const nextMove = turn === "w" ? pv[0] : pv[1];
           if (nextMove && nextMove.length >= 4) {
+            moveWhite = nextMove;
             arrows.push({
               orig: (nextMove.slice(0, 2) as Square) || "a1",
               dest: (nextMove.slice(2, 4) as Square) || "a1",
-              brush: color,
+              brush: liveInfos.white.liveInfo.info.color,
             });
           }
         }
-      }
 
-      const config: Config = {
-        drawable: {
-          // @ts-ignore
-          brushes: {
-            white: { key: "white", color: "#fff", opacity: 1, lineWidth: 10 },
-            black: { key: "black", color: "#000", opacity: 1, lineWidth: 10 },
-            agree: {
-              key: "agree",
-              color: "#c548c5",
-              opacity: 1,
-              lineWidth: 10,
+        if (liveInfos?.black.liveInfo) {
+          const pv = liveInfos.black.liveInfo.info.pv.split(" ");
+          const nextMove = turn === "b" ? pv[0] : pv[1];
+          if (nextMove && nextMove === moveWhite) {
+            arrows[0].brush = "agree";
+          } else if (nextMove && nextMove.length >= 4) {
+            arrows.push({
+              orig: (nextMove.slice(0, 2) as Square) || "a1",
+              dest: (nextMove.slice(2, 4) as Square) || "a1",
+              brush: liveInfos.black.liveInfo.info.color,
+            });
+          }
+        }
+
+        for (const color of ["green", "red", "blue"] as const) {
+          if (liveInfos?.[color].liveInfo) {
+            const pv = liveInfos[color].liveInfo.info.pv.split(" ");
+            const nextMove = pv[0];
+            if (nextMove && nextMove.length >= 4) {
+              arrows.push({
+                orig: (nextMove.slice(0, 2) as Square) || "a1",
+                dest: (nextMove.slice(2, 4) as Square) || "a1",
+                brush: color,
+              });
+            }
+          }
+        }
+
+        const config: Config = {
+          drawable: {
+            // @ts-ignore
+            brushes: {
+              white: { key: "white", color: "#fff", opacity: 1, lineWidth: 10 },
+              black: { key: "black", color: "#000", opacity: 1, lineWidth: 10 },
+              agree: {
+                key: "agree",
+                color: "#c548c5",
+                opacity: 1,
+                lineWidth: 10,
+              },
+              red: {
+                key: "red",
+                color: "#ff1f1f",
+                opacity: 0.75,
+                lineWidth: 4,
+              },
+              blue: {
+                key: "blue",
+                color: "#0D47A1",
+                opacity: 0.75,
+                lineWidth: 4,
+              },
+              green: {
+                key: "green",
+                color: "#17a01d",
+                opacity: 0.75,
+                lineWidth: 7,
+              },
             },
-            red: { key: "red", color: "#ff1f1f", opacity: 0.75, lineWidth: 4 },
-            blue: {
-              key: "blue",
-              color: "#0D47A1",
-              opacity: 0.75,
-              lineWidth: 4,
-            },
-            green: {
-              key: "green",
-              color: "#17a01d",
-              opacity: 0.75,
-              lineWidth: 7,
-            },
+            enabled: false,
+            eraseOnMovablePieceClick: false,
+            shapes: arrows,
           },
-          enabled: false,
-          eraseOnMovablePieceClick: false,
-          shapes: arrows,
-        },
-        fen,
-        ...(lastMove
-          ? { lastMove: [lastMove.from, lastMove.to] }
-          : { lastMove: [] }),
-      };
+          fen,
+          ...(lastMove
+            ? { lastMove: [lastMove.from, lastMove.to] }
+            : { lastMove: [] }),
+        };
 
-      requestAnimationFrame(() => {
-        boardRef.current?.set(config);
-      });
-      lastBoardUpdateRef.current = new Date().getTime();
-    },
-  }));
+        requestAnimationFrame(() => {
+          boardRef.current?.set(config);
+        });
+        lastBoardUpdateRef.current = new Date().getTime();
+      },
+    }),
+    []
+  );
 
   return <div ref={boardElementRef} className="board" {...props} />;
 });

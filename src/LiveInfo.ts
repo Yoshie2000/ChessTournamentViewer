@@ -88,6 +88,7 @@ export function parseTCECLiveInfo(
       ),
       tbhits: String(json.tbhits),
       time: "-",
+      timeLeft: 0,
       ply,
     },
   };
@@ -139,7 +140,10 @@ export function getLiveInfosForMove(
 
 export function extractLiveInfoFromTCECComment(
   comment: string,
-  fenBeforeMove: string
+  fenBeforeMove: string,
+  array?: LiveInfoEntry[],
+  tcBase?: number,
+  tcIncrement?: number
 ): LiveInfoEntry {
   const ply = plyFromFen(fenBeforeMove);
   const data = comment.split(", ") ?? [];
@@ -157,6 +161,13 @@ export function extractLiveInfoFromTCECComment(
     .replace("pv=", "")
     .replaceAll('"', "");
   const uciMoves = sanToUci(fenBeforeMove, sanMoves.split(" "));
+
+  const time = data[data.findIndex((s) => s.includes("mt="))].split("=")[1];
+  let timeLeft: number = 0;
+  if (array && tcBase && tcIncrement) {
+    const previousTimeLeft = array.at(-1)?.info.timeLeft ?? tcBase;
+    timeLeft = previousTimeLeft + tcIncrement - Number(time);
+  }
 
   const liveInfo: CCCLiveInfo = {
     type: "liveInfo",
@@ -178,7 +189,8 @@ export function extractLiveInfoFromTCECComment(
       tbhits: data[data.findIndex((s) => s.includes("tb="))]
         .split("=")[1]
         .replace("null", "-"),
-      time: data[data.findIndex((s) => s.includes("mt="))].split("=")[1],
+      time,
+      timeLeft,
     },
   };
   return liveInfo;
@@ -188,29 +200,45 @@ function extractLiveInfoFromTCECGame(game: Chess960) {
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
 
+  const { tcBase, tcIncrement } = getTimeControl(game);
+
   game
     .getComments()
     .slice(1)
     .forEach((value) => {
       const ply = plyFromFen(value.fen);
       const fenBeforeMove = game.fenAt(ply - 1);
+      const array = fenBeforeMove.includes(" w ")
+        ? liveInfosWhite
+        : liveInfosBlack;
       const liveInfo = extractLiveInfoFromTCECComment(
         value.comment ?? "",
-        fenBeforeMove
+        fenBeforeMove,
+        array,
+        tcBase,
+        tcIncrement
       );
       if (!liveInfo) return;
 
-      if (fenBeforeMove.includes(" w "))
-        liveInfosWhite[liveInfo.info.ply] = liveInfo;
-      else liveInfosBlack[liveInfo.info.ply] = liveInfo;
+      array[liveInfo.info.ply] = liveInfo;
     });
 
   return { liveInfosWhite, liveInfosBlack };
 }
 
+export function getTimeControl(game: Chess960) {
+  const timeControl = game.getHeaders()["TimeControl"];
+  if (!timeControl) return { tcBase: 0, tcIncrement: 0 };
+  const tcBase = 1000 * Number(timeControl.split("+")[0]);
+  const tcIncrement = 1000 * Number(timeControl.split("+")[1]);
+  return { tcBase, tcIncrement };
+}
+
 export function extractLiveInfoFromGame(game: Chess960) {
   if (game.getHeaders()["Site"]?.includes("tcec"))
     return extractLiveInfoFromTCECGame(game);
+
+  const { tcBase, tcIncrement } = getTimeControl(game);
 
   const startingFen = game.getHeaders()["FEN"] ?? "";
 
@@ -233,6 +261,11 @@ export function extractLiveInfoFromGame(game: Chess960) {
     const pvString = data[8].replace("pv=", "").replaceAll('"', "");
     const sanPv = uciToSan(fenBeforeMove, pvString.split(" ")).join(" ");
 
+    const array = color === "white" ? liveInfosWhite : liveInfosBlack;
+    const time = data[0].split(" ")[1].split("s")[0].replace(".", "");
+    const previousTimeLeft = array.at(-1)?.info.timeLeft ?? tcBase;
+    const timeLeft = previousTimeLeft + tcIncrement - Number(time);
+
     const liveInfo: CCCLiveInfo = {
       type: "liveInfo",
       info: {
@@ -249,37 +282,15 @@ export function extractLiveInfoFromGame(game: Chess960) {
         seldepth: data[4].split("=")[1],
         speed: data[5].split("=")[1],
         tbhits: data[7].split("=")[1],
-        time: data[0].split(" ")[1].split("s")[0].replace(".", ""),
+        time,
+        timeLeft,
       },
     };
 
-    if (color === "white") liveInfosWhite[liveInfo.info.ply] = liveInfo;
-    else liveInfosBlack[liveInfo.info.ply] = liveInfo;
+    array[liveInfo.info.ply] = liveInfo;
   });
 
   return { liveInfosWhite, liveInfosBlack };
-}
-
-export function emptyLiveInfo(): CCCLiveInfo {
-  return {
-    type: "liveInfo",
-    info: {
-      color: "b",
-      depth: "0",
-      hashfull: "0",
-      multipv: "1",
-      name: "",
-      nodes: "0",
-      ply: 0,
-      pv: "",
-      pvSan: "",
-      score: "+0.00",
-      seldepth: "0",
-      speed: "0",
-      tbhits: "0",
-      time: "0",
-    },
-  };
 }
 
 export function plyFromFen(fen: string): number {
@@ -353,7 +364,8 @@ export function extractLiveInfoFromInfoString(
         : "-",
       speed: data[data.indexOf("nps") + 1],
       tbhits: data[data.indexOf("tbhits") + 1] ?? "-",
-      time: data[data.indexOf("time") + 1],
+      time: String(time),
+      timeLeft: 0,
     },
   };
 

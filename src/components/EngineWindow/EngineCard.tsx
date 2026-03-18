@@ -41,16 +41,14 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
 
   useInterval((state) => {
     setFen(state.currentFen);
+
     // Live engines are re-rendered if the time changes
+    const wtime = state.liveInfos.white.liveInfo?.info.timeLeft;
+    const btime = state.liveInfos.black.liveInfo?.info.timeLeft;
     setTime(
-      Number(
-        color === "white"
-          ? state.clocks.wtime
-          : color === "black"
-            ? state.clocks.btime
-            : "1"
-      ) || 1
+      Number(color === "white" ? wtime : color === "black" ? btime : "1") || 1
     );
+
     // Kibitzers are updated at least on every depth change >= 15, to prevent too frequent updates
     setDepth(
       !["black", "white"].includes(color)
@@ -81,7 +79,6 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const moves = useMemo(() => {
     if (loading || !fen || !data?.color) return undefined;
 
-    setCurrentMoveNumber(-1);
     return normalizePv(data.pvSan, data.color, fen);
   }, [loading, data?.pvSan, data?.color, fen]);
 
@@ -90,6 +87,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
 
     game.current = buildPvGame(fen, moves, -1);
     setCurrentFen(game.current.fen());
+    setCurrentMoveNumber(-1);
   }, [moves]);
 
   const fields = loading
