@@ -135,7 +135,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
       });
       lastBoardUpdateRef.current = new Date().getTime();
     },
-  }));
+  }), []);
 
   return <div ref={boardElementRef} className="board" {...props} />;
 });

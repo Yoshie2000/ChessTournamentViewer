@@ -79,7 +79,6 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const moves = useMemo(() => {
     if (loading || !fen || !data?.color) return undefined;
 
-    setCurrentMoveNumber(-1);
     return normalizePv(data.pvSan, data.color, fen);
   }, [loading, data?.pvSan, data?.color, fen]);
 
@@ -88,6 +87,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
 
     game.current = buildPvGame(fen, moves, -1);
     setCurrentFen(game.current.fen());
+    setCurrentMoveNumber(-1);
   }, [moves]);
 
   const fields = loading
