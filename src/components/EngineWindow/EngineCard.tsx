@@ -64,7 +64,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
     setPvDisagreementPoint(state.engineAgreePly.at(state.currentMoveNumber));
   });
 
-  const engine = state.liveInfos[color].engineInfo;
+  const engine = useLiveInfo((state) => state.liveInfos[color].engineInfo);
   const liveInfo = state.liveInfos[color].liveInfo;
 
   const data = liveInfo?.info;

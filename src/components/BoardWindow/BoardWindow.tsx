@@ -63,9 +63,10 @@ export const BoardWindow = memo(() => {
           liveInfoState.setCurrentMoveNumber(() => -1);
 
           // Reset kibitzer live infos
+          const event = eventState.cccEvent;
           liveInfoState.setLiveEngineData("green", {
             engineInfo: EmptyEngineDefinition,
-            liveInfo: cccEvent ? loadLiveInfos(cccEvent, msg) : [],
+            liveInfo: event ? loadLiveInfos(event, msg) : [],
           });
           liveInfoState.setLiveEngineData("blue", {
             engineInfo: EmptyEngineDefinition,
@@ -140,6 +141,7 @@ export const BoardWindow = memo(() => {
           liveInfoState.setLiveEngineData(msg.color as EngineColor, {
             engineInfo: msg.engine,
           });
+          updateBoard(true);
           break;
 
         case "result":
@@ -149,7 +151,7 @@ export const BoardWindow = memo(() => {
           break;
       }
     },
-    [cccEvent, game, handleLiveInfo, updateBoard]
+    [game, handleLiveInfo, updateBoard]
   );
 
   useEffect(() => {

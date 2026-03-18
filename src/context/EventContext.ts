@@ -153,7 +153,7 @@ function calculateNewEngineStandings(event: CCCEventUpdate): CCCEngine[] {
       const perf = (100 * points) / playedGames.length;
       return {
         ...engine,
-        perf: perf.toFixed(1),
+        perf: (perf || 0).toFixed(1),
         points: points.toFixed(1),
         playedGames: playedGames.length.toFixed(1),
       };

@@ -19,6 +19,7 @@ import {
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
   private callback: ((message: CCCMessage) => void) | null = null;
+  private connected: boolean = false;
 
   private live: boolean = true;
   private game: Chess960 = new Chess960();
@@ -82,6 +83,7 @@ export class TCECWebSocket implements TournamentWebSocket {
   connect(onMessage: (message: CCCMessage) => void) {
     this.callback = onMessage;
     if (this.isConnected()) return;
+    this.connected = true;
 
     this.socket = io.connect("https://tcec-chess.com", {
       transports: ["polling", "websocket"],
@@ -103,7 +105,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         this.game.fen()
       );
 
-      if (liveInfo) {
+      if (infoString && liveInfo) {
         this.callback?.(liveInfo.liveInfo);
       }
     });
@@ -137,9 +139,17 @@ export class TCECWebSocket implements TournamentWebSocket {
         return;
       }
 
-      const ignoreIndex = (json.Moves as any[]).findIndex(
-        (moveData) => moveData.fen === this.game.fen()
-      );
+      // For some reason, the halfmove numbers sometimes differ
+      const fenParts = this.game
+        .fen({ forceEnpassantSquare: false })
+        .split(" ");
+      const fen = fenParts.slice(0, -2).join(" ") + " " + fenParts.at(-1);
+      const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
+        const moveFenParts = moveData.fen.split(" ");
+        const moveFen =
+          moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
+        return fen === moveFen;
+      });
 
       for (const moveData of json.Moves.slice(ignoreIndex + 1)) {
         const fenBeforeMove = this.game.fen();
@@ -204,9 +214,9 @@ export class TCECWebSocket implements TournamentWebSocket {
       }
     });
 
-    // this.socket.on("schedule", (json: any) => {
-    //   console.log("schedule", json);
-    // });
+    this.socket.on("schedule", (json: any) => {
+      console.log("schedule", json);
+    });
 
     // this.socket.on("updeng", (json: any) => {
     //   console.log("updeng", json);
@@ -227,7 +237,7 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   isConnected() {
-    return !!this.socket && this.socket.connected;
+    return !!this.socket && this.connected;
   }
 
   setHandler(onMessage: (message: CCCMessage) => void) {
@@ -570,5 +580,6 @@ export class TCECWebSocket implements TournamentWebSocket {
 
   disconnect(): void {
     this.socket?.close();
+    this.connected = false;
   }
 }

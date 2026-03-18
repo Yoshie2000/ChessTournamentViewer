@@ -24,6 +24,7 @@
   width: 100%;
   padding: 0 var(--padding);
   padding-top: calc(0.5 * var(--gap));
+  padding-bottom: calc(0.25 * var(--gap));
 
   --kibitzer-board-size: min(
     160px,
@@ -53,7 +54,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(0.5 * var(--gap));
   margin-bottom: calc(0.5 * var(--gap));
 }
 

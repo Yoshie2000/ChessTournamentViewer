@@ -42,6 +42,14 @@ export function GameResultOverlay() {
         return "White mates";
       case "blackmates":
         return "Black mates";
+      case "blackdc":
+        return "Black disconnects";
+      case "whitedc":
+        return "White disconnects";
+      case "blackillegal":
+        return "Black makes illegal move";
+      case "whiteillegal":
+        return "White makes illegal move";
       case "adjudication":
         if (result === "1/2-1/2") return "Draw Adjudication";
         else return "Adjudication";

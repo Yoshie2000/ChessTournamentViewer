@@ -91,6 +91,11 @@ export const useKibitzer = ({
   useEffect(() => {
     if (!cccGame?.gameDetails.live || !kibitzerSettings.enableKibitzer) return;
 
+    activeKibitzer?.analyze({
+      fen: useLiveInfo.getState().currentFen,
+      gameIndex: game.length(),
+    });
+
     const unsubscribe = useLiveInfo.subscribe(
       (state) => state.currentFen,
       (currentFen) => {
