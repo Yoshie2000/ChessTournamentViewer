@@ -358,7 +358,7 @@ export const EventList = memo(function EventList() {
     >
       <TreeSelect
         className="eventListContainer"
-        style={{ width: "100%", minWidth: "20rem", height: "35px" }}
+        style={{ width: "100%", height: "35px" }}
         styles={{ popup: { root: { width: "0" } } }}
         treeExpandAction="click"
         treeData={treeData}
