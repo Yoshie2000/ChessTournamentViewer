@@ -347,18 +347,21 @@ export const EventList = memo(function EventList() {
         algorithm: theme.darkAlgorithm,
         token: {
           colorBgElevated: "#343434",
-          colorPrimary: "#4d4d4d",
+          colorPrimary: "#fafafa",
           controlOutline: "transparent",
           colorPrimaryBg: "#4d4d4d",
         },
+        components: { TreeSelect: { indentSize: 14, switcherSize: 15 } },
       }}
     >
       <TreeSelect
         className="eventListContainer"
-        style={{ width: "100%", minWidth: "20rem" }}
-        showSearch
+        style={{ width: "100%", minWidth: "20rem", height: "35px" }}
+        styles={{ popup: { root: { width: "0" } } }}
+        treeExpandAction="click"
         treeData={treeData}
-        virtual={false}
+        virtual={true}
+        popupMatchSelectWidth={false}
         value={selectedValue}
         onChange={handleChange}
         treeNodeLabelProp="fullLabel"
