@@ -1,13 +1,17 @@
-import type { CCCLiveInfo, CCCMessage } from "./types";
+import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
 
 export interface TournamentWebSocket {
-  connect: (onMessage: (message: CCCMessage) => void) => void;
+  connect: (
+    onMessage: (message: CCCMessage) => void,
+    initialEventId?: string
+  ) => void;
   setHandler: (onMessage: (message: CCCMessage) => void) => void;
 
   isConnected: () => boolean;
 
   disconnect: () => void;
   send: (msg: unknown) => void;
+  fetchEventList: (onEventList: (msg: CCCEventsListUpdate) => void) => void;
 }
 
 const TIMEOUT_RECONNECT_MS = 5000;
@@ -20,7 +24,9 @@ export class CCCWebSocket implements TournamentWebSocket {
 
   private timeoutId: number | undefined = undefined;
 
-  connect(onMessage: (message: CCCMessage) => void) {
+  // initialEventId is unused for CCC since the server always sends the
+  // current event on connect — included only to satisfy the interface.
+  connect(onMessage: (message: CCCMessage) => void, _initialEventId?: string) {
     if (this.isConnected()) {
       return;
     }
@@ -45,7 +51,7 @@ export class CCCWebSocket implements TournamentWebSocket {
         (message) => message.type === "gameUpdate"
       );
       if (hasGameUpdate) {
-        clearTimeout(this.timeoutId)
+        clearTimeout(this.timeoutId);
       }
 
       const lastLiveInfoIdx = messages.findLastIndex(
@@ -87,6 +93,28 @@ export class CCCWebSocket implements TournamentWebSocket {
     this.socket.onclose = () => {
       this.socket = null;
     };
+  }
+
+  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
+    const tempSocket = new WebSocket(this.url);
+
+    tempSocket.onopen = () => {
+      tempSocket.send(JSON.stringify({ type: "requestEventsListUpdate" }));
+    };
+
+    tempSocket.onmessage = (e) => {
+      const messages = JSON.parse(e.data) as CCCMessage[];
+      const found = messages.find((m) => m.type === "eventsListUpdate") as
+        | CCCEventsListUpdate
+        | undefined;
+
+      if (found) {
+        onEventList(found);
+        tempSocket.close();
+      }
+    };
+
+    tempSocket.onerror = () => tempSocket.close();
   }
 
   isConnected() {

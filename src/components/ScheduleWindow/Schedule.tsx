@@ -23,8 +23,8 @@ const Schedule = memo(() => {
   const [scrolledToCurrentGame, setScrolledToCurrentGame] = useState(false);
   const userClickedRef = useRef(false);
 
-  const selectedGame = useEventStore((state) => state.cccGame);
-  const event = useEventStore((state) => state.cccEvent);
+  const selectedGame = useEventStore((state) => state.activeGame);
+  const event = useEventStore((state) => state.activeEvent);
   const engines = useEventStore((state) => state.engines);
   const requestEvent = useEventStore((state) => state.requestEvent);
 

@@ -80,7 +80,7 @@ export class TCECWebSocket implements TournamentWebSocket {
     }
   }
 
-  connect(onMessage: (message: CCCMessage) => void) {
+  connect(onMessage: (message: CCCMessage) => void, initialEventId?: string) {
     this.callback = onMessage;
     if (this.isConnected()) return;
     this.connected = true;
@@ -225,27 +225,23 @@ export class TCECWebSocket implements TournamentWebSocket {
       this.socket?.emit("room", "roomall");
     });
 
-    this.openEvent(
-      "https://ctv.yoshie2000.de/tcec/schedule.json",
-      "https://ctv.yoshie2000.de/tcec/crosstable.json",
-      "https://ctv.yoshie2000.de/tcec/live.pgn",
-      "https://ctv.yoshie2000.de/tcec/liveeval.json",
-      "https://ctv.yoshie2000.de/tcec/liveeval1.json"
-    );
-    this.loadEventList();
+    if (initialEventId) {
+      this.live = false;
+      this.send({ type: "requestEvent", eventNr: initialEventId });
+    } else {
+      this.openEvent(
+        "https://ctv.yoshie2000.de/tcec/schedule.json",
+        "https://ctv.yoshie2000.de/tcec/crosstable.json",
+        "https://ctv.yoshie2000.de/tcec/live.pgn",
+        "https://ctv.yoshie2000.de/tcec/liveeval.json",
+        "https://ctv.yoshie2000.de/tcec/liveeval1.json"
+      );
+    }
+
+    this.fetchEventList((msg) => this.callback?.(msg));
   }
 
-  isConnected() {
-    return !!this.socket && this.connected;
-  }
-
-  setHandler(onMessage: (message: CCCMessage) => void) {
-    this.callback = onMessage;
-  }
-
-  private loadEventList() {
-    if (!this.callback) return;
-
+  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
     fetch("https://ctv.yoshie2000.de/tcec/archive/gamelist.json")
       .then((response) => response.json())
       .then((seasons) => {
@@ -273,8 +269,16 @@ export class TCECWebSocket implements TournamentWebSocket {
             });
           }
         }
-        this.callback?.(eventList);
+        onEventList(eventList);
       });
+  }
+
+  isConnected() {
+    return !!this.socket && this.connected;
+  }
+
+  setHandler(onMessage: (message: CCCMessage) => void) {
+    this.callback = onMessage;
   }
 
   private loadKibitzerData(lc0: any, sf: any) {

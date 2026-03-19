@@ -4,12 +4,12 @@ import { useEventStore } from "../../context/EventContext";
 import { memo } from "react";
 
 export const GraphWindow = memo(() => {
-  const cccEvent = useEventStore((state) => state.cccEvent);
-  const cccGame = useEventStore((state) => state.cccGame);
+  const activeEvent = useEventStore((state) => state.activeEvent);
+  const activeGame = useEventStore((state) => state.activeGame);
 
   return (
     <div className="graphWindow">
-      {cccEvent && cccGame ? (
+      {activeEvent && activeGame ? (
         <GameGraph />
       ) : (
         <>

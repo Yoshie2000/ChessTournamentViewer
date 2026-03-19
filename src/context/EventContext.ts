@@ -3,124 +3,169 @@ import type {
   CCCEventsListUpdate,
   CCCEventUpdate,
   CCCGameUpdate,
-  _Nullish,
   CCCEngine,
 } from "../types";
 import { zustandHmrFix } from "./ZustandHMRFix";
 
+export type ProviderKey = "ccc" | "tcec";
+
+export const PROVIDERS: Record<ProviderKey, { label: string }> = {
+  ccc: { label: "CCC" },
+  tcec: { label: "TCEC" },
+};
+
 type RequestEventFn = (gameNr?: string, eventNr?: string) => void;
 
-type EventContext = _Nullish<{
-  cccEventList: CCCEventsListUpdate;
-  cccEvent: CCCEventUpdate;
-  cccGame: CCCGameUpdate;
+type ProviderState = {
+  eventList: CCCEventsListUpdate | null;
+  selectedEvent: CCCEventUpdate | null;
+};
+
+type EventContext = {
+  activeProvider: ProviderKey;
+  setActiveProvider: (provider: ProviderKey) => void;
+
+  providerData: Record<ProviderKey, ProviderState>;
+
+  activeEvent: CCCEventUpdate | null;
+  activeEventList: CCCEventsListUpdate | null;
+
+  activeGame: CCCGameUpdate | null;
   engines: CCCEngine[];
 
-  setEventList: (eventList: CCCEventsListUpdate) => void;
+  pendingEventId: string | null;
+  setPendingEventId: (id: string | null) => void;
+
+  setEventList: (provider: ProviderKey, eventList: CCCEventsListUpdate) => void;
   setGame: (game: CCCGameUpdate) => void;
-  setEvent: (cccEvent: CCCEventUpdate) => void;
+  setEvent: (provider: ProviderKey, event: CCCEventUpdate) => void;
   updateCCCEngines: () => void;
-}> & {
+
   requestEvent: RequestEventFn;
   setRequestEvent: (fn: RequestEventFn) => void;
 };
 
+const _emptyProviderData: Record<ProviderKey, ProviderState> = {
+  ccc: { eventList: null, selectedEvent: null },
+  tcec: { eventList: null, selectedEvent: null },
+};
+
+const _initialProvider: ProviderKey = window.location.search.includes("tcec")
+  ? "tcec"
+  : "ccc";
+
 export const useEventStore = create<EventContext>((set, get) => {
   return {
-    cccEvent: null,
-    cccGame: null,
-    cccEventList: null,
+    activeProvider: _initialProvider,
+    providerData: _emptyProviderData,
+
+    activeEvent: null,
+    activeEventList: null,
+
+    activeGame: null,
     engines: [],
 
-    setEvent: (cccEvent) => {
-      if (cccEvent === null) {
-        return;
+    pendingEventId: null,
+    setPendingEventId: (id) => set({ pendingEventId: id }),
+    setActiveProvider(provider) {
+      const { providerData } = get();
+      const activeEvent = providerData[provider].selectedEvent;
+      const activeEventList = providerData[provider].eventList;
+
+      set({ activeProvider: provider, activeEvent, activeEventList });
+
+      if (activeEvent) {
+        get().updateCCCEngines();
       }
+    },
+
+    setEventList(provider, eventList) {
+      if (!eventList) return;
+
+      set((state) => {
+        const prev = state.providerData[provider].eventList;
+        const lengthChanged =
+          prev === null || prev.events.length !== eventList.events.length;
+
+        if (!lengthChanged) return state;
+
+        const newProviderData = {
+          ...state.providerData,
+          [provider]: { ...state.providerData[provider], eventList },
+        };
+
+        const isActive = provider === state.activeProvider;
+        return {
+          providerData: newProviderData,
+          ...(isActive && { activeEventList: eventList }),
+        };
+      });
+    },
+
+    setEvent(provider, event) {
+      if (!event) return;
 
       let eventUpdated = false;
 
       set((state) => {
-        // checks below needed to prevent unnecessary state updates
-        // that would trigger re-renders on all state subs
+        const prevEvent = state.providerData[provider].selectedEvent;
 
-        const prevTournamentLen: number =
-          state.cccEvent?.tournamentDetails.schedule.past.length || -1;
-        const incomingTournamentLen: number =
-          cccEvent.tournamentDetails.schedule.past.length || -1;
+        const prevLen = prevEvent?.tournamentDetails.schedule.past.length ?? -1;
+        const nextLen = event.tournamentDetails.schedule.past.length ?? -1;
+        const prevName = prevEvent?.tournamentDetails.name ?? "_A";
+        const nextName = event.tournamentDetails.name ?? "_A";
 
-        const prevTournamentName: string =
-          state.cccEvent?.tournamentDetails.name || "_A";
-        const incomingTournamentName: string =
-          cccEvent.tournamentDetails.name || "_A";
-
-        const tournamentDidUpdate =
-          prevTournamentLen !== incomingTournamentLen ||
-          prevTournamentName !== incomingTournamentName;
-
-        if (!tournamentDidUpdate) {
-          return state;
-        }
+        if (prevLen === nextLen && prevName === nextName) return state;
 
         eventUpdated = true;
 
-        return { cccEvent };
+        const newProviderData = {
+          ...state.providerData,
+          [provider]: { ...state.providerData[provider], selectedEvent: event },
+        };
+
+        const isActive = provider === state.activeProvider;
+        return {
+          providerData: newProviderData,
+          ...(isActive && { activeEvent: event }),
+        };
       });
 
       if (eventUpdated) {
         // recalculate engine standings as a side effect
-        get().updateCCCEngines(null);
+        get().updateCCCEngines();
       }
     },
+
     setGame: (game) => {
       if (game === null) {
         return;
       }
 
-      set({ cccGame: game });
+      set({ activeGame: game, pendingEventId: null });
     },
-    setEventList: (eventList) => {
-      if (eventList === null) {
-        return;
-      }
 
-      set((state) => {
-        if (state.cccEventList === null) {
-          return { cccEventList: eventList };
-        }
-
-        const eventListChangedLength =
-          state.cccEventList.events.length !== eventList.events.length;
-
-        if (eventListChangedLength) {
-          return { cccEventList: eventList };
-        }
-
-        return state;
-      });
-    },
     updateCCCEngines() {
       set((state) => {
-        const event = state.cccEvent;
-        if (!event?.tournamentDetails?.engines) {
-          return state;
-        }
-
-        const updatedEngines: CCCEngine[] = calculateNewEngineStandings(event);
-
-        return { engines: updatedEngines };
+        const event = state.activeEvent;
+        if (!event?.tournamentDetails?.engines) return state;
+        return { engines: calculateNewEngineStandings(event) };
       });
     },
 
-    //
     requestEvent: () => {},
     setRequestEvent(fn) {
-      set({ requestEvent: fn });
+      set({
+        requestEvent: (gameNr, eventNr) => {
+          fn(gameNr, eventNr);
+        },
+      });
     },
   };
 });
 
 function calculateNewEngineStandings(event: CCCEventUpdate): CCCEngine[] {
-  const updatedEngines = event.tournamentDetails.engines
+  return event.tournamentDetails.engines
     .map((engine) => {
       const playedGames = event.tournamentDetails.schedule.past.filter(
         (game) => game.blackId === engine.id || game.whiteId === engine.id
@@ -159,8 +204,6 @@ function calculateNewEngineStandings(event: CCCEventUpdate): CCCEngine[] {
       };
     })
     .sort((a, b) => Number(b.perf) - Number(a.perf));
-
-  return updatedEngines;
 }
 
 zustandHmrFix("eventContext", useEventStore);

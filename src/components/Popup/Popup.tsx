@@ -5,14 +5,14 @@ import { Crosstable } from "./Crosstable";
 import "./Popup.css";
 
 export const Popup = () => {
-  const cccEvent = useEventStore((state) => state.cccEvent);
+  const activeEvent = useEventStore((state) => state.activeEvent);
   const popupState = usePopup((state) => state.popupState);
 
   return (
     <>
       {popupState !== "none" && (
         <div className="popup">
-          {popupState === "crosstable" && cccEvent && <Crosstable />}
+          {popupState === "crosstable" && activeEvent && <Crosstable />}
           {popupState === "settings" && <Settings />}
         </div>
       )}

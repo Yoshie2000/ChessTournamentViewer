@@ -13,12 +13,12 @@ export function GameResultOverlay() {
     setCurrentMoveNumber(state.currentMoveNumber);
   });
 
-  const cccGame = useEventStore((state) => state.cccGame);
+  const activeGame = useEventStore((state) => state.activeGame);
   const game = useLiveInfo.getState().game;
 
   const pgnHeaders = game.getHeaders();
   const termination =
-    cccGame?.gameDetails?.termination ??
+    activeGame?.gameDetails?.termination ??
     pgnHeaders["Termination"] ??
     pgnHeaders["TerminationDetails"] ??
     "";
