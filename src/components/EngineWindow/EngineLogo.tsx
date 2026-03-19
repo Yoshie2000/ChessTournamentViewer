@@ -1,14 +1,18 @@
 import type { CCCEngine } from "../../types";
+import { useEventStore } from "../../context/EventContext";
 import "./EngineLogo.css";
 
 type EngineLogoProps = { engine?: CCCEngine; size?: number };
 
-function getImageUrl(engine?: CCCEngine) {
+function getImageUrl(
+  engine: CCCEngine | undefined,
+  provider: "ccc" | "tcec"
+): string {
   if (engine?.imageUrl.includes("https")) {
     return engine.imageUrl;
   }
 
-  if (window.location.search.includes("tcec")) {
+  if (provider === "tcec") {
     if (engine?.imageUrl) {
       const engineName = `${engine.imageUrl[0].toUpperCase()}${engine.imageUrl.slice(1).toLowerCase()}`;
       return `https://ctv.yoshie2000.de/tcec/image/engine/${engineName}.png`;
@@ -25,7 +29,8 @@ function getImageUrl(engine?: CCCEngine) {
 }
 
 export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
-  const src = getImageUrl(engine);
+  const activeProvider = useEventStore((state) => state.activeProvider);
+  const src = getImageUrl(engine, activeProvider);
 
   return (
     <img
