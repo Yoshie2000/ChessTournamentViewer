@@ -22,7 +22,7 @@ public:
     }
 
     void reset(const std::string& fen, bool isChess960) {
-        states   = StateListPtr(new std::deque<StateInfo>(1));
+        states->resize(1);
         this->err = pos.set(fen, isChess960, &states->back());
     }
 
@@ -34,20 +34,12 @@ public:
         return err.has_value() ? *err : "";
     }
 
-    uintptr_t getSanMoves() const { // might read from the U8 buffer later idk lol
-        return (uintptr_t)sanMoves;
-    }
-
-    uintptr_t getSanMovesEnd() const {
-        return (uintptr_t)sanMovesEnd;
-    }
-
     std::string getSanMovesString() const {
         return std::string(sanMoves, sanMovesEnd - sanMoves);
     }
 
-    /** Returns true if an error occurred, false otherwise. The SAN result can be fetched with getSanMoves. */
-    bool playMoves(const std::string& moves) {
+    /** Returns true if an error occurred, false otherwise. The converted result can be fetched with getSanMoves. Both LAN and SAN moves are accepted as input. */
+    bool playMoves(const std::string& moves, bool emitLAN = false) {
         err = std::nullopt;
 
         // istringstream is slop and slow
@@ -218,8 +210,6 @@ EMSCRIPTEN_BINDINGS(chess_module) {
         .function("hasErr", &ChessGame::hasErr)
         .function("getErr", &ChessGame::getErr)
         .function("playMoves", &ChessGame::playMoves)
-        .function("getSanMoves", &ChessGame::getSanMoves)
-        .function("getSanMovesEnd", &ChessGame::getSanMovesEnd)
         .function("getSanMovesString", &ChessGame::getSanMovesString)
         .function("fenAt", &ChessGame::fenAt)
         .function("moveAt", &ChessGame::moveAt);

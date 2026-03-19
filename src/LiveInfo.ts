@@ -2,6 +2,7 @@ import type { DrawShape } from "@lichess-org/chessground/draw";
 import { Chess960, type Color, type Square } from "./chess.js/chess";
 import type { CCCEngine, CCCLiveInfo } from "./types";
 import { sanToUci, uciToSan } from "./utils";
+import { Module } from "./utils";
 
 export type EngineColor = "white" | "black" | "red" | "blue" | "green";
 export type LiveInfoEntry = CCCLiveInfo | undefined;
@@ -40,6 +41,8 @@ export const EmptyEngineDefinition: CCCEngine = {
   year: "",
 };
 
+let game = new Module.ChessGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", /*chess960=*/true);
+
 export function parseTCECLiveInfo(
   json: any,
   fen: string,
@@ -51,24 +54,15 @@ export function parseTCECLiveInfo(
     : Number(json.pv.split(".")[0]);
   const ply = 2 * (fullmove - 1) + (blackToMove ? 1 : 0);
 
-  const tmpGame = new Chess960(fen);
+  game.reset(fen, true);
   const pvMoves = json.pv
     .split(/ |\.\.\./)
     .filter((str: string) => !str.match(/^\d+\.?$/));
 
-  const lanMoves: string[] = [];
-  for (let pvMove of pvMoves) {
-    try {
-      const move = tmpGame.move(pvMove, { strict: false });
-      if (move) {
-        lanMoves.push(move.lan);
-      } else {
-        break;
-      }
-    } catch (_) {
-      break;
-    }
-  }
+  const joined = pvMoves.join(" ");
+  game.playMoves(joined, /*emitLAN=*/true);
+
+  const lanMoves = game.getLanMovesString();
 
   let score = String(json.eval);
   const scoreNumber = Number(score);

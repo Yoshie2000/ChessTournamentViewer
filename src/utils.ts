@@ -1,31 +1,24 @@
 import { Chess960 } from "./chess.js/chess";
 import type { CCCLiveInfo } from "./types";
+import ChessModule from "./chess.js/chess_api";
 
-export function uciToSan(fen: string, moves: string[]): string[] {
-  const game = new Chess960(fen);
+export const Module = await ChessModule();
+Module.initChess();
 
-  const sanMoves: string[] = [];
-  for (let i = 0; i < moves.length; i++) {
-    const uci = moves[i];
-    if (!uci || uci.length < 4) {
-      break;
-    }
+let game = new Module.ChessGame("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", /*chess960=*/true);
 
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion = uci[4];
-
-    try {
-      const result = game.move({ from, to, promotion: promotion as any });
-      if (!result) break;
-
-      sanMoves.push(result.san);
-    } catch {
-      break;
-    }
+export function uciToSan(fen: string, san: string | string[]): string[] {
+  game.reset(fen, /*chess960=*/ true);
+  if (Array.isArray(san)) {
+    san = san.join(" ");
   }
 
-  return sanMoves;
+  const err = game.playMoves(san);
+  if (err) {
+    throw new Error("uciToSan: " + game.getErr());
+  }
+
+  return game.getSanMovesString().split(" ");
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
