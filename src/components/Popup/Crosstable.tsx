@@ -214,24 +214,24 @@ function formatPenta(penta: Penta): string {
 }
 
 export const Crosstable = memo(() => {
-  const cccEvent = useEventStore((state) => state.cccEvent);
+  const activeEvent = useEventStore((state) => state.activeEvent);
   const engines = useEventStore((state) => state.engines) ?? [];
   const requestEvent = useEventStore((state) => state.requestEvent);
 
   const setPopupState = usePopup((state) => state.setPopupState);
 
-  if (!cccEvent) {
-    // we don't event render the crosstable without cccEvent
+  if (!activeEvent) {
+    // we don't event render the crosstable without activeEvent
     // so this is only needed for typescript
     return <></>;
   }
 
   const allGames = [
-    ...cccEvent.tournamentDetails.schedule.past,
-    ...(cccEvent.tournamentDetails.schedule.present
-      ? [cccEvent.tournamentDetails.schedule.present]
+    ...activeEvent.tournamentDetails.schedule.past,
+    ...(activeEvent.tournamentDetails.schedule.present
+      ? [activeEvent.tournamentDetails.schedule.present]
       : []),
-    ...cccEvent.tournamentDetails.schedule.future,
+    ...activeEvent.tournamentDetails.schedule.future,
   ];
 
   return (

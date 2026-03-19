@@ -8,15 +8,15 @@ import { StandingsTable } from "./StandingsTable";
 import { usePopup } from "../../context/PopupContext";
 
 export const StandingsWindow = memo(() => {
-  const cccEvent = useEventStore((state) => state.cccEvent);
-  const cccGame = useEventStore((state) => state.cccGame);
+  const activeEvent = useEventStore((state) => state.activeEvent);
+  const activeGame = useEventStore((state) => state.activeGame);
 
   const setPopupState = usePopup((state) => state.setPopupState);
 
   return (
     <div className="standingsWindow">
       <h4>Standings</h4>
-      {cccEvent && cccGame ? (
+      {activeEvent && activeGame ? (
         <>
           <button
             onClick={() => setPopupState("crosstable")}

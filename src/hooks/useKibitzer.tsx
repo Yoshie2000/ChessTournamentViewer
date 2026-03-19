@@ -19,8 +19,8 @@ export const useKibitzer = ({
 
   const game = useLiveInfo((state) => state.game);
 
-  const cccEvent = useEventStore((state) => state.cccEvent);
-  const cccGame = useEventStore((state) => state.cccGame);
+  const activeEvent = useEventStore((state) => state.activeEvent);
+  const activeGame = useEventStore((state) => state.activeGame);
 
   const setLiveEngineData = useLiveInfo((state) => state.setLiveEngineData);
   const updateLiveEngineData = useLiveInfo(
@@ -64,10 +64,10 @@ export const useKibitzer = ({
 
           updateBoard();
 
-          if (cccEvent && cccGame) {
+          if (activeEvent && activeGame) {
             saveLiveInfos(
-              cccEvent,
-              cccGame,
+              activeEvent,
+              activeGame,
               useLiveInfo.getState().liveEngineData["green"].liveInfo
             );
           }
@@ -76,10 +76,10 @@ export const useKibitzer = ({
     );
   }, [
     activeKibitzer,
-    cccEvent,
-    cccEvent?.tournamentDetails.tNr,
-    cccGame,
-    cccGame?.gameDetails.gameNr,
+    activeEvent,
+    activeEvent?.tournamentDetails.tNr,
+    activeGame,
+    activeGame?.gameDetails.gameNr,
     updateLiveEngineData,
     updateBoard,
     game,
@@ -89,7 +89,8 @@ export const useKibitzer = ({
   const _kibitzerId = activeKibitzer?.getID();
 
   useEffect(() => {
-    if (!cccGame?.gameDetails.live || !kibitzerSettings.enableKibitzer) return;
+    if (!activeGame?.gameDetails.live || !kibitzerSettings.enableKibitzer)
+      return;
 
     activeKibitzer?.analyze({
       fen: useLiveInfo.getState().currentFen,
@@ -106,9 +107,9 @@ export const useKibitzer = ({
     return unsubscribe;
   }, [
     _kibitzerId,
-    cccGame?.gameDetails.gameNr,
+    activeGame?.gameDetails.gameNr,
     kibitzerSettings.enableKibitzer,
-    cccGame?.gameDetails.live,
+    activeGame?.gameDetails.live,
     activeKibitzer,
     game,
   ]);

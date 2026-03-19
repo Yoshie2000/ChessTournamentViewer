@@ -3,28 +3,23 @@ import { useEventStore } from "../../context/EventContext";
 
 import { LuSettings } from "react-icons/lu";
 import { EventList } from "./EventList";
-
 import { usePopup } from "../../context/PopupContext";
 
 export const EventListWindow = memo(() => {
-  const cccEvent = useEventStore((state) => state.cccEvent);
-  const cccEventList = useEventStore((state) => state.cccEventList);
+  const activeEvent = useEventStore((state) => state.activeEvent);
 
   const setPopupState = usePopup((state) => state.setPopupState);
+
+  const eventName = activeEvent?.tournamentDetails.name;
 
   return (
     <header className="topBar">
       <div className="currentEvent">
         Chess Tournament Viewer
-        {cccEvent?.tournamentDetails.name
-          ? " - " + cccEvent?.tournamentDetails.name
-          : ""}
+        {eventName ? " - " + eventName : ""}
       </div>
       <div className="settingsRow">
-        <EventList
-          eventList={cccEventList || undefined}
-          selectedEvent={cccEvent || undefined}
-        />
+        <EventList />
         <button onClick={() => setPopupState("settings")} title="Settings">
           <LuSettings />
         </button>

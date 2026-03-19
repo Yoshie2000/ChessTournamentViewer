@@ -3,7 +3,7 @@ import { useLiveBoard } from "../../hooks/BoardHook";
 import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { TCECWebSocket } from "../../TCECWebsocket";
-import { CCCWebSocket, type TournamentWebSocket } from "../../CCCWebsocket";
+import { CCCWebSocket } from "../../CCCWebsocket";
 import type { CCCLiveInfo, CCCMessage } from "../../types";
 import {
   EmptyEngineDefinition,
@@ -20,11 +20,17 @@ import { useKibitzer } from "../../hooks/useKibitzer";
 import { LiveMoveList } from "./LiveMoveList";
 import { useMediaQuery } from "react-responsive";
 
-const isTCEC = window.location.search.includes("tcec");
-const _initialWS = isTCEC ? new TCECWebSocket() : new CCCWebSocket();
+const wsByProvider = {
+  ccc: new CCCWebSocket(),
+  tcec: new TCECWebSocket(),
+} as const;
+
+const _initialProvider = window.location.search.includes("tcec")
+  ? "tcec"
+  : "ccc";
 
 export const BoardWindow = memo(() => {
-  const ws = useRef<TournamentWebSocket>(_initialWS);
+  const activeWSRef = useRef(wsByProvider[_initialProvider]);
 
   const { Board, updateBoard } = useLiveBoard({
     animated: true,
@@ -33,13 +39,13 @@ export const BoardWindow = memo(() => {
 
   useKibitzer({ updateBoard });
 
-  const cccEventList = useEventStore((state) => state.cccEventList);
-  const cccEvent = useEventStore((state) => state.cccEvent);
+  const activeProvider = useEventStore((state) => state.activeProvider);
+  const activeEvent = useEventStore((state) => state.activeEvent);
   const game = useLiveInfo((state) => state.game);
 
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
-      if (ws.current instanceof CCCWebSocket) {
+      if (activeWSRef.current instanceof CCCWebSocket) {
         msg.info.pvSan = uciToSan(game.fen(), msg.info.pv.split(" ")).join(" ");
       }
 
@@ -62,10 +68,11 @@ export const BoardWindow = memo(() => {
     function (msg: CCCMessage) {
       const liveInfoState = useLiveInfo.getState();
       const eventState = useEventStore.getState();
+      const currentProvider = eventState.activeProvider;
 
       switch (msg.type) {
         case "eventUpdate":
-          eventState.setEvent(msg);
+          eventState.setEvent(currentProvider, msg);
           break;
 
         case "gameUpdate": {
@@ -73,7 +80,7 @@ export const BoardWindow = memo(() => {
           liveInfoState.setCurrentMoveNumber(() => -1);
 
           // Reset kibitzer live infos
-          const event = eventState.cccEvent;
+          const event = eventState.activeEvent;
           liveInfoState.setLiveEngineData("green", {
             engineInfo: EmptyEngineDefinition,
             liveInfo: event ? loadLiveInfos(event, msg) : [],
@@ -90,7 +97,8 @@ export const BoardWindow = memo(() => {
           // Load white + black engine live info
           const { liveInfosBlack, liveInfosWhite } =
             extractLiveInfoFromGame(game);
-          const engines = eventState.cccEvent?.tournamentDetails.engines ?? [];
+          const engines =
+            eventState.activeEvent?.tournamentDetails.engines ?? [];
           const wEngine =
             engines.find(
               (engine) => engine.name === game.getHeaders()["White"]
@@ -127,7 +135,7 @@ export const BoardWindow = memo(() => {
         }
 
         case "eventsListUpdate":
-          eventState.setEventList(msg);
+          eventState.setEventList(currentProvider, msg);
           break;
 
         case "clocks":
@@ -167,44 +175,64 @@ export const BoardWindow = memo(() => {
   );
 
   useEffect(() => {
-    if (!ws.current.isConnected()) {
-      ws.current.connect(handleMessage);
-    } else {
-      ws.current.setHandler(handleMessage);
+    const newWS = wsByProvider[activeProvider];
+    const { pendingEventId } = useEventStore.getState();
+
+    if (activeWSRef.current !== newWS) {
+      activeWSRef.current.disconnect();
+      activeWSRef.current = newWS;
     }
-  }, [handleMessage]);
+
+    if (!newWS.isConnected()) {
+      newWS.connect(handleMessage, pendingEventId ?? undefined);
+    } else {
+      newWS.setHandler(handleMessage);
+      if (pendingEventId) {
+        newWS.send({ type: "requestEvent", eventNr: pendingEventId });
+      }
+    }
+
+    const requestEvent = (gameNr?: string, eventNr?: string) => {
+      const message: Record<string, string> = { type: "requestEvent" };
+      if (gameNr) message["gameNr"] = gameNr;
+      if (eventNr) message["eventNr"] = eventNr;
+      newWS.send(message);
+    };
+
+    useEventStore.getState().setRequestEvent(requestEvent);
+  }, [activeProvider, handleMessage]);
 
   useEffect(() => {
-    useLiveInfo.subscribe(
+    const passiveProvider = _initialProvider === "ccc" ? "tcec" : "ccc";
+    const passiveWS = wsByProvider[passiveProvider];
+    const eventState = useEventStore.getState();
+
+    if (!eventState.providerData[passiveProvider]?.eventList) {
+      passiveWS.fetchEventList((msg) => {
+        useEventStore.getState().setEventList(passiveProvider, msg);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    return useLiveInfo.subscribe(
       (state) => state.currentMoveNumber,
       () => updateBoard(true)
     );
   }, []);
 
   useEffect(() => {
-    const requestEvent = (gameNr?: string, eventNr?: string) => {
-      const message: Record<string, string> = { type: "requestEvent" };
-      if (gameNr) message["gameNr"] = gameNr;
-      if (eventNr) message["eventNr"] = eventNr;
+    const eventState = useEventStore.getState();
+    const eventList = eventState.providerData[activeProvider]?.eventList;
+    if (!activeEvent || !eventList || eventState.pendingEventId) return;
 
-      ws.current.send(message);
-    };
-
-    useEventStore.getState().setRequestEvent(requestEvent);
-  }, []);
-
-  useEffect(() => {
-    if (!cccEvent || !cccEventList) return;
-
-    const eventExists = cccEventList.events.some(
-      (event) => String(event.id) === cccEvent.tournamentDetails.tNr
+    const eventExists = eventList.events.some(
+      (event) => String(event.id) === activeEvent.tournamentDetails.tNr
     );
     if (!eventExists) {
-      useEventStore
-        .getState()
-        .requestEvent(undefined, cccEventList.events[0].id);
+      eventState.requestEvent(undefined, eventList.events[0]?.id);
     }
-  }, [cccEvent, cccEventList]);
+  }, [activeEvent, activeProvider]);
 
   const isMobile = useMediaQuery({ maxWidth: 775 });
 

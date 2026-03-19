@@ -7,7 +7,7 @@ import { shallow } from "zustand/shallow";
 import { useInterval } from "../../hooks/useInterval";
 
 const LiveMoveList = memo(() => {
-  const cccGame = useEventStore((state) => state.cccGame);
+  const activeGame = useEventStore((state) => state.activeGame);
   const game = useLiveInfo((state) => state.game);
 
   const [moves, setMoves] = useState<string[]>([]);
@@ -31,7 +31,7 @@ const LiveMoveList = memo(() => {
 
   const pgnHeaders = game.getHeaders();
   const termination =
-    cccGame?.gameDetails?.termination ??
+    activeGame?.gameDetails?.termination ??
     pgnHeaders["Termination"] ??
     pgnHeaders["TerminationDetails"];
   const result = pgnHeaders["Result"];
@@ -45,7 +45,7 @@ const LiveMoveList = memo(() => {
       bookMoves={bookMoves}
       downloadURL={
         termination && result && result !== "*"
-          ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${cccGame?.gameDetails.gameNr}.log`
+          ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${activeGame?.gameDetails.gameNr}.log`
           : undefined
       }
       controllers={true}
