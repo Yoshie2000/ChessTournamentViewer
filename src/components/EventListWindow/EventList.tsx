@@ -330,11 +330,12 @@ export const EventList = memo(function EventList() {
     setOptimisticValue(encodeEventValue(provider, eventId));
 
     setPendingEventId(eventId);
-
     if (provider !== activeProvider) {
       setActiveProvider(provider);
     } else {
-      requestEvent(undefined, eventId);
+      const isLiveEvent =
+        providerData[provider]?.eventList?.events.at(0)?.id === eventId;
+      requestEvent(undefined, isLiveEvent ? undefined : eventId);
     }
   };
 
