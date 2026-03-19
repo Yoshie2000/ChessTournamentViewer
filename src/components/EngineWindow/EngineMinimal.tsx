@@ -37,7 +37,7 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
           <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
         )}
 
-        <div className="engineName">{loading ? color : engine!.name}</div>
+        <div className="engineName">{engine.name ? engine.name : color}</div>
 
         <div className="engineOutput">
           <div className="engineTime">
