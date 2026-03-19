@@ -62,7 +62,7 @@ export function parseTCECLiveInfo(
   const joined = pvMoves.join(" ");
   game.playMoves(joined, /*emitLAN=*/true);
 
-  const lanMoves = game.getLanMovesString();
+  const lanMoves = game.getSanMovesString().split(" ");
 
   let score = String(json.eval);
   const scoreNumber = Number(score);

@@ -11,6 +11,15 @@ using namespace Stockfish;
 
 static bool initialized = false;
 
+bool isspace(char c) {
+    return c == '\n' || c == '\t' || c == ' ';
+}
+
+constexpr PieceType promoMap[26] = {
+    [0] = NO_PIECE_TYPE, ['b'-'a'] = BISHOP, ['n'-'a'] = KNIGHT,
+    ['q'-'a'] = QUEEN, ['r'-'a'] = ROOK,
+};
+
 class ChessGame {
 public:
     ChessGame(const std::string& fen, bool isChess960) {
@@ -38,131 +47,286 @@ public:
         return std::string(sanMoves, sanMovesEnd - sanMoves);
     }
 
-    /** Returns true if an error occurred, false otherwise. The converted result can be fetched with getSanMoves. Both LAN and SAN moves are accepted as input. */
-    bool playMoves(const std::string& moves, bool emitLAN = false) {
+    /** Returns true if an error occurred, false otherwise. The converted result can be fetched with getSanMovesString. Both LAN and SAN moves are accepted as input. */
+    bool playMoves(const std::string& moves, bool emitLAN) {
         err = std::nullopt;
-
-        // istringstream is slop and slow
         const char* read = moves.data();
+        constexpr char pieceChar[] = " PNBRQK";
 
-        auto read_square = [&] () -> std::optional<Square> {
-            int file = *read - 'a';
-            if (file < 0 || file >= 8) return std::nullopt;
-            read++;
+        auto peek_file = [&] () -> std::optional<File> {
+            int f = *read - 'a';
+            if (f < 0 || f >= 8) return std::nullopt;
+            return File(f);
+        };
 
-            int rank = *read - '1';
-            if (rank < 0 || rank >= 8) return std::nullopt;
-            read++;
+        auto peek_rank = [&] () -> std::optional<Rank> {
+            int r = *read - '1';
+            if (r < 0 || r >= 8) return std::nullopt;
+            return Rank(r);
+        };
 
-            return make_square(File(file), Rank(rank));
+        auto eat_file = [&] () -> std::optional<File> {
+            auto f = peek_file();
+            if (f) read++;
+            return f;
+        };
+
+        auto eat_rank = [&] () -> std::optional<Rank> {
+            auto r = peek_rank();
+            if (r) read++;
+            return r;
+        };
+
+        auto eat_square = [&] () -> std::optional<Square> {
+            auto f = eat_file();
+            if (!f) return std::nullopt;
+            auto r = eat_rank();
+            if (!r) { read--; return std::nullopt; } // put back the file
+            return make_square(*f, *r);
         };
 
         sanMovesEnd = sanMoves;
 
         for (;;) {
-            char c = *read;
-            if (c == '\0') break;
+            while (isspace(*read)) read++;
+            if (*read == '\0') break;
 
-            if (c == ' ' || c == '\t' || c == '\n') { read++; continue; }
-
-            auto sq1 = read_square();
-            auto sq2 = read_square();
-            if (!sq1.has_value() || !sq2.has_value()) {
-                err = "Failed to read UCI move at " + std::to_string(read - moves.data());
-                return true;
-            }
-
+            PieceType pt = PAWN;
+            std::optional<File> disambigFile;
+            std::optional<Rank> disambigRank;
+            std::optional<Square> target;
+            bool capture = false;
             PieceType promo = NO_PIECE_TYPE;
-            if (*read == 'n' || *read == 'b' || *read == 'r' || *read == 'q') {
-                constexpr PieceType promoMap[26] = {
-                    [0] = NO_PIECE_TYPE, ['b'-'a'] = BISHOP, ['n'-'a'] = KNIGHT,
-                    ['q'-'a'] = QUEEN, ['r'-'a'] = ROOK,
-                };
-                promo = promoMap[*read - 'a'];
+            bool isCastling = false;
+            bool isKingside = false;
+
+            // Castling: O-O or O-O-O :owo:
+            if (*read == 'O' || *read == '0') {
+                char castleChar = *read;
+                if (read[0] == castleChar && read[1] == '-' && read[2] == castleChar) {
+                    isCastling = true;
+                    read += 3;
+                    if (read[0] == '-' && read[1] == castleChar) {
+                        read += 2; // O-O-O
+                        isKingside = false;
+                    } else {
+                        isKingside = true;
+                    }
+                } else {
+                    err = "Bad castling at " + std::to_string(read - moves.data());
+                    return true;
+                }
+            }
+            // Piece letter
+            else if (*read == 'N' || *read == 'B' || *read == 'R' || *read == 'Q' || *read == 'K') {
+                pt = promoMap[(*read | 0x20) - 'a'];
                 read++;
             }
 
-            Move selected = Move::none();
-            auto legal = MoveList<LEGAL>(pos);
+            if (!isCastling) {
+                // [file][rank][x]<square>[=promo]
+                // or just: <square>[=promo] (no disambiguation)
+                // or LAN: <square><square>[promo] :sob:
 
-            // Accept >1 king moves in either direction as castling, but SF encodes castling as king captures rook
-            bool putativelyCastling = type_of(pos.piece_on(*sq1)) == KING &&
-               std::abs(file_of(*sq1) - file_of(*sq2)) >= 2 &&
-               rank_of(*sq1) == rank_of(*sq2);
-            for (const auto& m : legal) {
-                if (m.from_sq() == *sq1 && m.to_sq() == *sq2
-                    && (promo == NO_PIECE_TYPE || m.promotion_type() == promo)) {
-                    selected = m;
-                    break;
+                // Try reading a square
+                const char* save = read;
+                auto sq = eat_square();
+
+                if (sq) {
+                    // Target square, or first square of LAN, or disambig+more
+                    if (*read == 'x' || peek_file()) {
+                        // This was disambig or LAN from-square
+                        disambigFile = file_of(*sq);
+                        disambigRank = rank_of(*sq);
+
+                        if (*read == 'x') { capture = true; read++; }
+
+                        target = eat_square();
+                        if (!target) {
+                            err = "Bad target square at " + std::to_string(read - moves.data());
+                            return true;
+                        }
+                    } else {
+                        // The square we read IS the target (e4, Nf3)
+                        target = sq;
+                    }
+                } else {
+                    // maybe just a file disambig (Rae1) or 'x' capture
+                    auto f = eat_file();
+                    if (f) {
+                        disambigFile = f;
+                        if (*read == 'x') { capture = true; read++; }
+                        target = eat_square();
+                    } else if (*read == 'x') {
+                        capture = true; read++;
+                        target = eat_square();
+                    } else {
+                        err = "Cannot parse move at " + std::to_string(read - moves.data());
+                        return true;
+                    }
+
+                    if (!target) {
+                        err = "Bad target square at " + std::to_string(read - moves.data());
+                        return true;
+                    }
                 }
 
-                if (putativelyCastling && m.type_of() == CASTLING && m.from_sq() == *sq1 && (*sq2 > *sq1) == (m.to_sq() > m.from_sq())) {
-                    selected = m;  // :like:
-                    break;
+                // Promotion: =Q or just q
+                if (*read == '=') read++;
+                if (*read >= 'a' && *read <= 'z') {
+                    PieceType p = promoMap[*read - 'a'];
+                    if (p != NO_PIECE_TYPE) { promo = p; read++; }
+                } else if (*read >= 'A' && *read <= 'Z') {
+                    PieceType p = promoMap[(*read | 0x20) - 'a'];
+                    if (p != NO_PIECE_TYPE) { promo = p; read++; }
+                }
+            }
+
+            // Skip check/checkmate symbolsssss
+            while (*read == '+' || *read == '#' || *read == '!' || *read == '?') read++;
+
+            // Now find the legal move
+            Move selected = Move::none();
+            auto legal = MoveList<LEGAL>(pos);
+            Color us = pos.side_to_move();
+
+            if (isCastling) {
+                Square ksq = pos.square<KING>(us);
+                for (const auto& m : legal) {
+                    if (m.type_of() == CASTLING && m.from_sq() == ksq
+                        && (isKingside == (m.to_sq() > ksq))) {
+                        selected = m;
+                        break;
+                    }
+                }
+            } else if (pt == PAWN && disambigFile && disambigRank) {
+                // LAN: we have from-square and to-square
+                Square from = make_square(*disambigFile, *disambigRank);
+                for (const auto& m : legal) {
+                    if (m.from_sq() == from && m.to_sq() == *target
+                        && (promo == NO_PIECE_TYPE || m.promotion_type() == promo)) {
+                        selected = m;
+                        break;
+                    }
+                    // LAN castling: king moves 2+ squares
+                    if (type_of(pos.piece_on(from)) == KING && m.type_of() == CASTLING
+                        && m.from_sq() == from
+                        && (*target > from) == (m.to_sq() > from)) {
+                        selected = m;
+                        break;
+                    }
+                }
+            } else {
+                // SAN: use attackers_to to find candidates
+                Bitboard candidates = pos.attackers_to(*target) & pos.pieces(us, pt);
+
+                if (disambigFile)
+                    candidates &= file_bb(*disambigFile);
+                if (disambigRank)
+                    candidates &= rank_bb(*disambigRank);
+
+                for (const auto& m : legal) {
+                    if (m.to_sq() == *target && (candidates & square_bb(m.from_sq()))
+                        && type_of(pos.piece_on(m.from_sq())) == pt
+                        && (promo == NO_PIECE_TYPE || m.promotion_type() == promo)) {
+                        selected = m;
+                        break;
+                    }
+                }
+
+                // e.p., pawn captures to target but target is empty :woozy_face:
+                if (selected == Move::none() && pt == PAWN) {
+                    for (const auto& m : legal) {
+                        if (m.type_of() == EN_PASSANT && m.to_sq() == *target
+                            && (!disambigFile || file_of(m.from_sq()) == *disambigFile)) {
+                            selected = m;
+                            break;
+                        }
+                    }
                 }
             }
 
             if (selected == Move::none()) {
-                err = std::string("Illegal move: ")
-                    + char('a' + file_of(*sq1)) + char('1' + rank_of(*sq1))
-                    + char('a' + file_of(*sq2)) + char('1' + rank_of(*sq2));
+                err = "Illegal move at " + std::to_string(read - moves.data());
                 return true;
             }
 
             if (sanMovesEnd != sanMoves)
                 *sanMovesEnd++ = ' ';
 
-            constexpr char pieceChar[] = " PNBRQK";
             Square from = selected.from_sq(), to = selected.to_sq();
-            PieceType pt = type_of(pos.piece_on(from));
+            PieceType movedPt = type_of(pos.piece_on(from));
 
-            if (selected.type_of() == CASTLING) {
-                bool kingside = file_of(to) > file_of(from);
-                if (kingside) { *sanMovesEnd++ = 'O'; *sanMovesEnd++ = '-'; *sanMovesEnd++ = 'O'; }
-                else          { *sanMovesEnd++ = 'O'; *sanMovesEnd++ = '-'; *sanMovesEnd++ = 'O'; *sanMovesEnd++ = '-'; *sanMovesEnd++ = 'O'; }
+            if (emitLAN) {
+                if (selected.type_of() == CASTLING) {
+                    // Emit as king's actual movement (e.g. e1g1) rather than SF slop
+                    // should work ok for chess960 :prayge:
+                    bool ks = to > from;
+                    Square lanTo = make_square(ks ? FILE_G : FILE_C, rank_of(from));
+                    *sanMovesEnd++ = 'a' + file_of(from);
+                    *sanMovesEnd++ = '1' + rank_of(from);
+                    *sanMovesEnd++ = 'a' + file_of(lanTo);
+                    *sanMovesEnd++ = '1' + rank_of(lanTo);
+                } else {
+                    *sanMovesEnd++ = 'a' + file_of(from);
+                    *sanMovesEnd++ = '1' + rank_of(from);
+                    *sanMovesEnd++ = 'a' + file_of(to);
+                    *sanMovesEnd++ = '1' + rank_of(to);
+                    if (selected.type_of() == PROMOTION)
+                        *sanMovesEnd++ = char('a' + (selected.promotion_type() - KNIGHT) + ('n' - 'a'));
+                }
             } else {
-                bool capture = pos.capture(selected);
+                // SAN
+                if (selected.type_of() == CASTLING) {
+                    bool ks = to > from;
+                    if (ks) { *sanMovesEnd++ = 'O'; *sanMovesEnd++ = '-'; *sanMovesEnd++ = 'O'; }
+                    else    { *sanMovesEnd++ = 'O'; *sanMovesEnd++ = '-'; *sanMovesEnd++ = 'O'; *sanMovesEnd++ = '-'; *sanMovesEnd++ = 'O'; }
+                } else {
+                    bool cap = pos.capture(selected);
 
-                if (pt != PAWN) {
-                    *sanMovesEnd++ = pieceChar[pt];
+                    if (movedPt != PAWN) {
+                        *sanMovesEnd++ = pieceChar[movedPt];
 
-                    // Disambiguation
-                    Bitboard others = 0;
-                    for (const auto& m : legal) {
-                        if (m != selected && type_of(pos.piece_on(m.from_sq())) == pt
-                            && m.to_sq() == to)
-                            others |= square_bb(m.from_sq());
-                    }
-                    if (others) {
-                        if (!(others & file_bb(from)))
-                            *sanMovesEnd++ = char('a' + file_of(from));
-                        else if (!(others & rank_bb(from)))
-                            *sanMovesEnd++ = char('1' + rank_of(from));
-                        else {
-                            *sanMovesEnd++ = char('a' + file_of(from));
-                            *sanMovesEnd++ = char('1' + rank_of(from));
+                        // Disambiguation
+                        Bitboard others = 0;
+                        for (const auto& m : legal) {
+                            if (m != selected && type_of(pos.piece_on(m.from_sq())) == movedPt
+                                && m.to_sq() == to)
+                                others |= square_bb(m.from_sq());
                         }
+                        if (others) {
+                            if (!(others & file_bb(from)))
+                                *sanMovesEnd++ = 'a' + file_of(from);
+                            else if (!(others & rank_bb(from)))
+                                *sanMovesEnd++ = '1' + rank_of(from);
+                            else {
+                                *sanMovesEnd++ = 'a' + file_of(from);
+                                *sanMovesEnd++ = '1' + rank_of(from);
+                            }
+                        }
+                    } else if (cap) {
+                        *sanMovesEnd++ = 'a' + file_of(from);
                     }
-                } else if (capture) {
-                    *sanMovesEnd++ = char('a' + file_of(from));
+
+                    if (cap)
+                        *sanMovesEnd++ = 'x';
+
+                    *sanMovesEnd++ = 'a' + file_of(to);
+                    *sanMovesEnd++ = '1' + rank_of(to);
+
+                    if (selected.type_of() == PROMOTION) {
+                        *sanMovesEnd++ = '=';
+                        *sanMovesEnd++ = pieceChar[selected.promotion_type()];
+                    }
                 }
 
-                if (capture)
-                    *sanMovesEnd++ = 'x';
-
-                *sanMovesEnd++ = char('a' + file_of(to));
-                *sanMovesEnd++ = char('1' + rank_of(to));
-
-                if (selected.type_of() == PROMOTION) {
-                    *sanMovesEnd++ = '=';
-                    *sanMovesEnd++ = pieceChar[selected.promotion_type()];
-                }
             }
 
             states->emplace_back();
             pos.do_move(selected, states->back());
 
-            if (pos.checkers()) {
+            // Check/checkmate suffix (SAN only)
+            if (!emitLAN && pos.checkers()) {
                 if (MoveList<LEGAL>(pos).size() == 0)
                     *sanMovesEnd++ = '#';
                 else
@@ -175,12 +339,12 @@ public:
     }
 
     std::string fenAt(int index) const {
-        // :poop:
+        // todo
         return "";
     }
 
     std::string moveAt(int index) const {
-        // :poop:
+        // todo
         return "";
     }
 

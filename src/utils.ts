@@ -13,7 +13,7 @@ export function uciToSan(fen: string, san: string | string[]): string[] {
     san = san.join(" ");
   }
 
-  const err = game.playMoves(san);
+  const err = game.playMoves(san, false);
   if (err) {
     throw new Error("uciToSan: " + game.getErr());
   }
@@ -22,26 +22,11 @@ export function uciToSan(fen: string, san: string | string[]): string[] {
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
-  const game = new Chess960(fen);
+  game.reset(fen, true)
 
-  const uciMoves: string[] = [];
-  for (let i = 0; i < moves.length; i++) {
-    const san = moves[i];
-    if (!san) {
-      break;
-    }
+  game.playMoves(moves.join(" "), true);
 
-    try {
-      const result = game.move(san, { strict: false });
-      if (!result) break;
-
-      uciMoves.push(result.lan);
-    } catch {
-      break;
-    }
-  }
-
-  return uciMoves;
+  return game.getSanMovesString().split(" ");
 }
 
 export function buildPvGame(

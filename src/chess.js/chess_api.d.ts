@@ -14,11 +14,9 @@ export interface ClassHandle {
 }
 export interface ChessGame extends ClassHandle {
   hasErr(): boolean;
-  getSanMoves(): number;
-  getSanMovesEnd(): number;
   reset(_0: EmbindString, _1: boolean): void;
   getErr(): string;
-  playMoves(_0: EmbindString): boolean;
+  playMoves(_0: EmbindString, _1: boolean): boolean;
   getSanMovesString(): string;
   fenAt(_0: number): string;
   moveAt(_0: number): string;
