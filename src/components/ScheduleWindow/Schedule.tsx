@@ -141,15 +141,7 @@ const Schedule = memo(() => {
             game.gameNr === event.tournamentDetails.schedule.present?.gameNr;
           const isSelectedGame =
             game.gameNr === String(selectedGame.gameDetails.gameNr);
-          const tournamentOver =
-            !event.tournamentDetails.schedule.present &&
-            event.tournamentDetails.schedule.future.length === 0;
-          const ref =
-            isCurrentGame || (isSelectedGame && tournamentOver)
-              ? currentGameRef
-              : isSelectedGame
-                ? currentGameRef
-                : null;
+          const ref = isSelectedGame ? currentGameRef : null;
 
           let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
           gameClass += !game.outcome && !isCurrentGame ? " future" : "";

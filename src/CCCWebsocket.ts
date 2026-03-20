@@ -3,7 +3,8 @@ import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
 export interface TournamentWebSocket {
   connect: (
     onMessage: (message: CCCMessage) => void,
-    initialEventId?: string
+    initialEventId?: string,
+    initialGameId?: string
   ) => void;
   setHandler: (onMessage: (message: CCCMessage) => void) => void;
 
@@ -24,9 +25,11 @@ export class CCCWebSocket implements TournamentWebSocket {
 
   private timeoutId: number | undefined = undefined;
 
-  // initialEventId is unused for CCC since the server always sends the
-  // current event on connect — included only to satisfy the interface.
-  connect(onMessage: (message: CCCMessage) => void, _initialEventId?: string) {
+  connect(
+    onMessage: (message: CCCMessage) => void,
+    initialEventId?: string,
+    initialGameId?: string
+  ) {
     if (this.isConnected()) {
       return;
     }
@@ -35,13 +38,17 @@ export class CCCWebSocket implements TournamentWebSocket {
     this.socket = new WebSocket(this.url);
 
     this.socket.onopen = () => {
-      this.send({ type: "requestEvent" });
+      this.send({
+        type: "requestEvent",
+        eventNr: initialEventId,
+        gameNr: initialGameId,
+      });
       this.send({ type: "requestEventsListUpdate" });
     };
 
     this.timeoutId = setTimeout(() => {
       this.disconnect();
-      this.connect(this.callback);
+      this.connect(this.callback, initialEventId, initialGameId);
     }, TIMEOUT_RECONNECT_MS);
 
     this.socket.onmessage = (e) => {

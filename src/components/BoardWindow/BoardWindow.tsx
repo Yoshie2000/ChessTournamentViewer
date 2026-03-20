@@ -25,9 +25,12 @@ const wsByProvider = {
   tcec: new TCECWebSocket(),
 } as const;
 
-const _initialProvider = window.location.search.includes("tcec")
-  ? "tcec"
-  : "ccc";
+const searchParams = new URL(location.href).searchParams;
+
+const _initialProvider =
+  searchParams.get("provider") === "tcec" ? "tcec" : "ccc";
+const _initialEvent = searchParams.get("event");
+const _initialGame = searchParams.get("game");
 
 export const BoardWindow = memo(() => {
   const activeWSRef = useRef(wsByProvider[_initialProvider]);
@@ -42,6 +45,9 @@ export const BoardWindow = memo(() => {
   const activeProvider = useEventStore((state) => state.activeProvider);
   const activeEvent = useEventStore((state) => state.activeEvent);
   const game = useLiveInfo((state) => state.game);
+
+  const initialEvent = useRef<string | null>(_initialEvent);
+  const initialGame = useRef<string | null>(_initialGame);
 
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
@@ -184,12 +190,15 @@ export const BoardWindow = memo(() => {
     }
 
     if (!newWS.isConnected()) {
-      newWS.connect(handleMessage, pendingEventId ?? undefined);
+      newWS.connect(
+        handleMessage,
+        initialEvent.current ?? pendingEventId ?? undefined,
+        initialGame.current ?? undefined
+      );
+      initialEvent.current = null;
+      initialGame.current = null;
     } else {
       newWS.setHandler(handleMessage);
-      if (pendingEventId) {
-        newWS.send({ type: "requestEvent", eventNr: pendingEventId });
-      }
     }
 
     const requestEvent = (gameNr?: string, eventNr?: string) => {

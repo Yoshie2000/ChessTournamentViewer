@@ -72,6 +72,7 @@ export const useEventStore = create<EventContext>((set, get) => {
       const activeEvent = providerData[provider].selectedEvent;
       const activeEventList = providerData[provider].eventList;
 
+      writeStateToUrl(provider, activeEvent?.tournamentDetails.tNr);
       set({ activeProvider: provider, activeEvent, activeEventList });
 
       if (activeEvent) {
@@ -125,6 +126,14 @@ export const useEventStore = create<EventContext>((set, get) => {
         };
 
         const isActive = provider === state.activeProvider;
+
+        writeStateToUrl(
+          state.activeProvider,
+          isActive
+            ? event.tournamentDetails.tNr
+            : state.activeEvent?.tournamentDetails.tNr
+        );
+
         return {
           providerData: newProviderData,
           ...(isActive && { activeEvent: event }),
@@ -142,7 +151,14 @@ export const useEventStore = create<EventContext>((set, get) => {
         return;
       }
 
-      set({ activeGame: game, pendingEventId: null });
+      set((state) => {
+        writeStateToUrl(
+          state.activeProvider,
+          state.activeEvent?.tournamentDetails.tNr,
+          game.gameDetails.gameNr
+        );
+        return { activeGame: game, pendingEventId: null };
+      });
     },
 
     updateCCCEngines() {
@@ -163,6 +179,23 @@ export const useEventStore = create<EventContext>((set, get) => {
     },
   };
 });
+
+function writeStateToUrl(
+  provider: ProviderKey,
+  eventId?: string,
+  gameId?: string
+) {
+  const url = new URL(location.href);
+
+  url.searchParams.set("provider", provider);
+  if (eventId) url.searchParams.set("event", eventId);
+  else url.searchParams.delete("event");
+  if (gameId) url.searchParams.set("game", gameId);
+  else url.searchParams.delete("game");
+
+  const newHref = url.toString();
+  if (newHref !== location.href) window.history.replaceState(null, "", newHref);
+}
 
 function calculateNewEngineStandings(event: CCCEventUpdate): CCCEngine[] {
   return event.tournamentDetails.engines
