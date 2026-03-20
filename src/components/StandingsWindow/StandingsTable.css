@@ -7,7 +7,7 @@
   display: grid;
   align-items: center;
   justify-content: center;
-  grid-template-columns: 40px 40px 1fr 100px 60px 60px;
+  grid-template-columns: 40px auto 1fr 100px 60px 60px;
   height: 40px;
   border-bottom: 1px solid #232323;
   border-left: 1px solid #232323;
@@ -52,7 +52,7 @@
 
 @media ((min-width: 1401px) and (max-width: 1550px)) or (max-width: 450px) {
   .standingsEntry {
-    grid-template-columns: 40px 40px 1fr 100px 60px;
+    grid-template-columns: 40px auto 1fr 100px 60px;
   }
 
   .standings .rating {
@@ -62,7 +62,7 @@
 
 @media (max-width: 400px) {
   .standingsEntry {
-    grid-template-columns: 30px 40px 1fr 100px 50px;
+    grid-template-columns: 30px auto 1fr 100px 50px;
   }
 }
 

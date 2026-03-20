@@ -20,11 +20,6 @@
   margin-left: 1rem;
 }
 
-.engineMinimal .engineInfoHeader .engineLogo {
-  width: 32px !important;
-  height: 32px !important;
-}
-
 .engineMinimal {
   display: flex;
   flex-direction: column;

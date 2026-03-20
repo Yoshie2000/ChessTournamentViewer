@@ -36,7 +36,7 @@ export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
     <img
       src={src}
       style={{
-        width: `${size}px`,
+        width: `${size * (activeProvider === "tcec" ? 1.5 : 1)}px`,
         height: `${size}px`,
         margin: `${size / 6}px`,
       }}

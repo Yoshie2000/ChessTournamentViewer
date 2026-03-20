@@ -6,7 +6,7 @@
 .schedule .game {
   display: grid;
   align-items: center;
-  grid-template-columns: 50px 40px 1fr 7rem 1fr 40px;
+  grid-template-columns: 50px auto 1fr 7rem 1fr auto;
   height: 40px;
   border-bottom: 1px solid #232323;
   font-size: var(--font-sm);
@@ -85,7 +85,7 @@
 
 @media (max-width: 1920px) {
   .schedule .game {
-    grid-template-columns: 45px 40px 1fr 6rem 1fr 40px;
+    grid-template-columns: 45px auto 1fr 6rem 1fr auto;
   }
 
   .schedule .game .engineName {
@@ -100,7 +100,7 @@
 
 @media (max-width: 775px) {
   .schedule .game {
-    grid-template-columns: 35px 40px 1fr 5rem 1fr 40px;
+    grid-template-columns: 35px auto 1fr 5rem 1fr auto;
   }
 
   .schedule .game .engineName {

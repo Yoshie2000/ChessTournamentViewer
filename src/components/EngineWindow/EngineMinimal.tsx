@@ -32,9 +32,9 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
     >
       <div className="engineInfoHeader">
         {engine ? (
-          <EngineLogo engine={engine} />
+          <EngineLogo engine={engine} size={32} />
         ) : (
-          <SkeletonBlock width={36} height={36} style={{ margin: 6 }} />
+          <SkeletonBlock width={32} height={32} style={{ margin: 6 }} />
         )}
 
         <div className="engineName">{engine.name ? engine.name : color}</div>

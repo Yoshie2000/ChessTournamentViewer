@@ -3,6 +3,7 @@ import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import "./GameResultOverlay.css";
 import { useInterval } from "../../hooks/useInterval";
+import { useShallow } from "zustand/shallow";
 
 export function GameResultOverlay() {
   const [_, setCurrentFen] = useState<string>();
@@ -16,13 +17,19 @@ export function GameResultOverlay() {
   const activeGame = useEventStore((state) => state.activeGame);
   const game = useLiveInfo.getState().game;
 
-  const pgnHeaders = game.getHeaders();
-  const termination =
-    activeGame?.gameDetails?.termination ??
-    pgnHeaders["Termination"] ??
-    pgnHeaders["TerminationDetails"] ??
-    "";
-  const result = pgnHeaders["Result"];
+  const { termination, result } = useLiveInfo(
+    useShallow((state) => {
+      const pgnHeaders = state.game.getHeaders();
+      const termination =
+        activeGame?.gameDetails?.termination ??
+        pgnHeaders["Termination"] ??
+        pgnHeaders["TerminationDetails"] ??
+        "";
+      const result = pgnHeaders["Result"];
+
+      return { termination, result };
+    })
+  );
 
   function getTerminationString() {
     switch (termination.toLowerCase()) {
