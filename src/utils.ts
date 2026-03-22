@@ -1,54 +1,13 @@
 import { Chess960 } from "./chess.js/chess";
+import { movesToSan, movesToLan } from "labut";
 import type { CCCLiveInfo } from "./types";
 
 export function uciToSan(fen: string, moves: string[]): string[] {
-  const game = new Chess960(fen);
-
-  const sanMoves: string[] = [];
-  for (let i = 0; i < moves.length; i++) {
-    const uci = moves[i];
-    if (!uci || uci.length < 4) {
-      break;
-    }
-
-    const from = uci.slice(0, 2);
-    const to = uci.slice(2, 4);
-    const promotion = uci[4];
-
-    try {
-      const result = game.move({ from, to, promotion: promotion as any });
-      if (!result) break;
-
-      sanMoves.push(result.san);
-    } catch {
-      break;
-    }
-  }
-
-  return sanMoves;
+  return movesToSan(fen, moves).moves.map(m => m.san);
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
-  const game = new Chess960(fen);
-
-  const uciMoves: string[] = [];
-  for (let i = 0; i < moves.length; i++) {
-    const san = moves[i];
-    if (!san) {
-      break;
-    }
-
-    try {
-      const result = game.move(san, { strict: false });
-      if (!result) break;
-
-      uciMoves.push(result.lan);
-    } catch {
-      break;
-    }
-  }
-
-  return uciMoves;
+  return movesToLan(fen,moves).moves.map(m => m.lan);
 }
 
 export function buildPvGame(
