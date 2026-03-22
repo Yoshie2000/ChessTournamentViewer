@@ -2,7 +2,6 @@ import type { DrawShape } from "@lichess-org/chessground/draw";
 import { Chess960, type Color, type Square } from "./chess.js/chess";
 import type { CCCEngine, CCCLiveInfo } from "./types";
 import { sanToUci, uciToSan } from "./utils";
-import { movesToLan } from "labut";
 
 export type EngineColor = "white" | "black" | "red" | "blue" | "green";
 export type LiveInfoEntry = CCCLiveInfo | undefined;
@@ -56,8 +55,7 @@ export function parseTCECLiveInfo(
     .split(/ |\.\.\./)
     .filter((str: string) => !str.match(/^\d+\.?$/));
 
-  const result = movesToLan(fen, pvMoves);
-  const lanMoves = result.moves.map((mv) => mv.lan);
+  const lanMoves = sanToUci(fen, pvMoves);
 
   let score = String(json.eval);
   const scoreNumber = Number(score);
@@ -245,6 +243,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
 
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
+
   game.getComments().forEach((value, i, allValues) => {
     const data = value.comment?.split(", ") ?? [];
 
@@ -260,7 +259,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
     }
 
     const pvString = data[8].replace("pv=", "").replaceAll('"', "");
-    const sanPv = uciToSan(fenBeforeMove, pvString.split(" ")).join(" ");
+    const sanPv = sanToUci(fenBeforeMove, pvString.trim().split(" "));
 
     const array = color === "white" ? liveInfosWhite : liveInfosBlack;
     const time = data[0].split(" ")[1].split("s")[0].replace(".", "");
@@ -278,7 +277,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
         nodes: data[3].split("=")[1],
         ply: i,
         pv: pvString,
-        pvSan: sanPv,
+        pvSan: sanPv.join(" "),
         score,
         seldepth: data[4].split("=")[1],
         speed: data[5].split("=")[1],
