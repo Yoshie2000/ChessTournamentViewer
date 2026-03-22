@@ -3,11 +3,11 @@ import { movesToSan, movesToLan } from "labut";
 import type { CCCLiveInfo } from "./types";
 
 export function uciToSan(fen: string, moves: string[]): string[] {
-  return movesToSan(fen, moves).moves.map(m => m.san);
+  return movesToSan(fen, moves).moves.map((m) => m.san);
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
-  return movesToLan(fen,moves).moves.map(m => m.lan);
+  return movesToLan(fen, moves).moves.map((m) => m.lan);
 }
 
 export function buildPvGame(

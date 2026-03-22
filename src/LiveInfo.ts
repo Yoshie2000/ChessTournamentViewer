@@ -57,7 +57,7 @@ export function parseTCECLiveInfo(
     .filter((str: string) => !str.match(/^\d+\.?$/));
 
   const result = movesToLan(fen, pvMoves);
-  const lanMoves = result.moves.map(mv => mv.lan);
+  const lanMoves = result.moves.map((mv) => mv.lan);
 
   let score = String(json.eval);
   const scoreNumber = Number(score);
