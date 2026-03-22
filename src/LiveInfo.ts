@@ -245,6 +245,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
 
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
+
   game.getComments().forEach((value, i, allValues) => {
     const data = value.comment?.split(", ") ?? [];
 
@@ -260,7 +261,9 @@ export function extractLiveInfoFromGame(game: Chess960) {
     }
 
     const pvString = data[8].replace("pv=", "").replaceAll('"', "");
-    const sanPv = uciToSan(fenBeforeMove, pvString.split(" ")).join(" ");
+
+    const result = movesToLan(fenBeforeMove, pvString.trim().split(" "));
+    const sanPv = result.moves.map((mv) => mv.lan).join(" ");
 
     const array = color === "white" ? liveInfosWhite : liveInfosBlack;
     const time = data[0].split(" ")[1].split("s")[0].replace(".", "");
