@@ -30,11 +30,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       const gameNr: string | undefined = msg.gameNr;
       const eventNr: string | undefined = msg.eventNr;
 
-      console.log(eventNr, gameNr);
-
       if (eventNr) {
-        this.live = false;
-
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
           await Promise.all([
@@ -65,9 +61,15 @@ export class TCECWebSocket implements TournamentWebSocket {
         const isLive = crosstable.Event.replaceAll(" ", "_") === eventNr;
 
         if (isLive && !gameNr) {
-          this.send({ type: "requestEvent", gameNr: schedule.length, eventNr });
+          this.send({
+            type: "requestEvent",
+            gameNr: String(schedule.length + 1),
+            eventNr,
+          });
           return;
         }
+
+        this.live = false;
 
         const scheduleLink = isLive
           ? "https://ctv.yoshie2000.de/tcec/schedule.json"
@@ -110,6 +112,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           await sfResponse.json()
         );
       } else {
+        this.live = true;
         this.disconnect();
         this.connect(this.callback ?? function () {});
       }
@@ -268,7 +271,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     if (initialEventId || initialGameId) {
-      this.live = false;
       this.send({
         type: "requestEvent",
         eventNr: initialEventId,
