@@ -30,18 +30,25 @@ export class TCECWebSocket implements TournamentWebSocket {
       const gameNr: string | undefined = msg.gameNr;
       const eventNr: string | undefined = msg.eventNr;
 
+      console.log(eventNr, gameNr);
+
       if (eventNr) {
         this.live = false;
 
         // This code needs to distinguish a bunch of cases
-        const [pgnResponse, crosstableResponse] = await Promise.all([
-          fetch(
-            `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`
-          ),
-          fetch(`https://ctv.yoshie2000.de/tcec/crosstable.json`),
-        ]);
+        const [pgnResponse, crosstableResponse, scheduleResponse] =
+          await Promise.all([
+            fetch(
+              `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`
+            ),
+            fetch(`https://ctv.yoshie2000.de/tcec/crosstable.json`),
+            fetch(
+              `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`
+            ),
+          ]);
         const pgn = await pgnResponse.text();
         const crosstable = await crosstableResponse.json();
+        const schedule = await scheduleResponse.json();
 
         const game = new Chess960();
         try {
@@ -57,6 +64,11 @@ export class TCECWebSocket implements TournamentWebSocket {
         // The schedule link is different for the ongoing event
         const isLive = crosstable.Event.replaceAll(" ", "_") === eventNr;
 
+        if (isLive && !gameNr) {
+          this.send({ type: "requestEvent", gameNr: schedule.length, eventNr });
+          return;
+        }
+
         const scheduleLink = isLive
           ? "https://ctv.yoshie2000.de/tcec/schedule.json"
           : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`;
@@ -65,7 +77,8 @@ export class TCECWebSocket implements TournamentWebSocket {
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval_${round}.json`,
-          `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval1_${round}.json`
+          `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval1_${round}.json`,
+          gameNr
         );
       } else if (gameNr) {
         const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
@@ -77,7 +90,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           )
         ).text();
         this.live = false;
-        this.openGame(pgn);
+        this.openGame(gameNr, pgn);
 
         const game = new Chess960();
         game.loadPgn(pgn);
@@ -380,7 +393,8 @@ export class TCECWebSocket implements TournamentWebSocket {
     crosstableURL: string,
     pgnURL: string,
     lc0URL: string,
-    sfURL: string
+    sfURL: string,
+    gameNr?: string
   ) {
     Promise.all([
       fetch(scheduleURL),
@@ -462,7 +476,7 @@ export class TCECWebSocket implements TournamentWebSocket {
             matchNr: "",
             opening: game.Opening,
             openingType: game.Opening,
-            roundNr: "",
+            roundNr: game.Round,
             timeControl: "",
             variant: "",
             whiteId: white,
@@ -542,12 +556,12 @@ export class TCECWebSocket implements TournamentWebSocket {
         this.callback?.(event);
         this.event = event;
 
-        this.openGame(livePGN);
+        this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN);
         this.loadKibitzerData(lc0, sf);
       });
   }
 
-  private openGame(pgn: string) {
+  private openGame(gameNr: string, pgn: string) {
     if (!this.event || !this.callback) return;
 
     this.game.loadPgn(pgn);
@@ -561,22 +575,12 @@ export class TCECWebSocket implements TournamentWebSocket {
         : []),
     ];
 
-    const pgnStartTime = new Date(
-      this.game.getHeaders()["GameStartTime"].replace(" UTC", "Z")
-    ).getTime();
-    const current = gameList.find(
-      (game) =>
-        Math.abs(
-          new Date(game.timeStart?.replace(" UTC", "Z") ?? 0).getTime() -
-            pgnStartTime
-        ) <= 60000
-    );
-    const past = this.event.tournamentDetails.schedule.past;
+    const current = gameList.find((game) => game.gameNr === gameNr);
 
     const gameUpdate: CCCGameUpdate = {
       type: "gameUpdate",
       gameDetails: {
-        gameNr: String(current?.gameNr ?? past.at(-1)?.gameNr ?? ""),
+        gameNr: String(current?.gameNr ?? gameList[0]?.gameNr ?? ""),
         live: true,
         opening: current?.opening ?? "",
         pgn: this.game.pgn(),
