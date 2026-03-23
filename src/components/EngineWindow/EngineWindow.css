@@ -1,3 +1,13 @@
+.engineWindow {
+  grid-column: 3 / 4;
+  grid-row: 2 / 4;
+  height: 100%;
+}
+
+.engineWindowMobile {
+  padding: 0;
+}
+
 .engineTabs {
   background: #343434;
   display: flex;

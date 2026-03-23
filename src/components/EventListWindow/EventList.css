@@ -6,3 +6,8 @@
   outline: none;
   overflow: hidden;
 }
+
+.currentEvent {
+  font-size: var(--font-lg);
+  font-weight: bold;
+}

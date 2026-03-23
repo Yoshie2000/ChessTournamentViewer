@@ -1,3 +1,8 @@
+.graphWindow {
+  grid-column: 2 / 3;
+  grid-row: 3 / 4;
+}
+
 .gameGraph {
   height: 100%;
   display: grid;

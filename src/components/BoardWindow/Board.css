@@ -1,3 +1,14 @@
+.boardWrapper {
+  position: relative;
+}
+
+.boardWindow {
+  padding: 0;
+  overflow: unset;
+  display: flex;
+  max-height: 100%;
+}
+
 .boardWindow {
   display: flex;
   padding: 0;
@@ -25,8 +36,8 @@
   width: var(--board-size) !important;
 }
 
-.cg-wrap coords {
-  display: none;
+.boardWindow .movesWindow {
+  height: var(--board-size) !important;
 }
 
 @media (max-width: 1150px) {

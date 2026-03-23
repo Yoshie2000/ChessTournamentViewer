@@ -1,3 +1,18 @@
+.standingsWindow {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  grid-row: 3 / 4;
+  grid-column: 1 / 2;
+  gap: var(--gap);
+}
+
+.standingsWindow button {
+  position: absolute;
+  top: 0.75rem;
+  right: var(--gap);
+}
+
 .standings {
   height: 100%;
   overflow: auto;
