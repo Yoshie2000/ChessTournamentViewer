@@ -17,9 +17,13 @@ import { StandingsWindow } from "./components/StandingsWindow/StandingsWindow";
 import { BoardWindow } from "./components/BoardWindow/BoardWindow";
 import { ScheduleWindow } from "./components/ScheduleWindow/ScheduleWindow";
 import { Popup } from "./components/Popup/Popup";
-import { ResponsiveGridLayout } from "react-grid-layout";
+import {
+  ResponsiveGridLayout,
+  type Layout,
+  type LayoutItem,
+} from "react-grid-layout";
 import { useWindowSize } from "./hooks/useWindowSize";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 Chart.register(
   CategoryScale,
@@ -33,6 +37,7 @@ Chart.register(
 
 function App() {
   const COLUMNS = 48;
+  const MOVELIST_WIDTH = 4;
 
   const { width, height } = useWindowSize();
   const cellSize = Math.floor(width / COLUMNS);
@@ -52,7 +57,31 @@ function App() {
     );
   }, [boardWidth, boardHeight]);
 
-  console.log(cellSize, width, height, rows)
+  const [layout] = useState<Layout>([
+    { i: "1", w: 20, h: 16, x: 16, y: 0 },
+    { i: "2", w: 16, h: 16, x: 0, y: 0 },
+    { i: "3", w: 16, h: 10, x: 0, y: 24 },
+    { i: "4", w: 20, h: 10, x: 16, y: 16 },
+    { i: "5", w: 12, h: rows, x: 36, y: 0 },
+  ]);
+
+  const onResize = (
+    _: Layout,
+    _2: LayoutItem | null,
+    newItem: LayoutItem | null
+  ) => {
+    if (newItem?.i === "1") {
+      newItem.h = newItem.w - MOVELIST_WIDTH;
+      document.documentElement.style.setProperty(
+        "--boardWidth",
+        `${newItem.w * cellSize}px`
+      );
+      document.documentElement.style.setProperty(
+        "--boardHeight",
+        `${newItem.h * cellSize}px`
+      );
+    }
+  };
 
   return (
     <div className="app-container">
@@ -69,6 +98,8 @@ function App() {
           xs: COLUMNS,
           xxs: COLUMNS,
         }}
+        layouts={{ lg: layout }}
+        onResize={onResize}
         rowHeight={cellSize}
         autoSize={true}
         containerPadding={[0, 0]}
@@ -76,27 +107,27 @@ function App() {
         maxRows={rows}
         dragConfig={{ enabled: true, handle: ".react-grid-drag-handle" }}
       >
-        <div key={5} data-grid={{ w: 12, h: rows, x: 36, y: 0 }}>
+        <div key={"5"}>
           <EngineWindow />
           <div className="react-grid-drag-handle" />
         </div>
 
-        <div key={1} data-grid={{ w: 20, h: 16, x: 16, y: 0 }}>
+        <div key={"1"}>
           <BoardWindow />
           <div className="react-grid-drag-handle" />
         </div>
 
-        <div key={3} data-grid={{ w: 16, h: 10, x: 0, y: 24 }}>
+        <div key={"3"}>
           <StandingsWindow />
           <div className="react-grid-drag-handle" />
         </div>
 
-        <div key={4} data-grid={{ w: 20, h: 10, x: 16, y: 16 }}>
+        <div key={"4"}>
           <GraphWindow />
           <div className="react-grid-drag-handle" />
         </div>
 
-        <div key={2} data-grid={{ w: 16, h: 16, x: 0, y: 0 }}>
+        <div key={"2"}>
           <ScheduleWindow />
           <div className="react-grid-drag-handle" />
         </div>

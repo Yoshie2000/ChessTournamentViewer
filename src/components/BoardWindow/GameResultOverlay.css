@@ -11,8 +11,10 @@
   position: absolute;
   inset: 0;
 
-  width: 100%;
-  height: 100%;
+  width: var(--board-size);
+  height: var(--board-size);
+
+  border-radius: 8px 0 0 8px;
 }
 
 .gameResultOverlay .result {
