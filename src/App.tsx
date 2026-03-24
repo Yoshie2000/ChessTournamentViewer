@@ -24,6 +24,7 @@ import {
 } from "react-grid-layout";
 import { useWindowSize } from "./hooks/useWindowSize";
 import { useEffect, useState } from "react";
+import { useSettings } from "./context/SettingsContext";
 
 Chart.register(
   CategoryScale,
@@ -83,6 +84,14 @@ function App() {
     }
   };
 
+  function onResizeStart() {
+    useSettings.setState({ freezeUpdates: true });
+  }
+
+  function onResizeStop() {
+    useSettings.setState({ freezeUpdates: false });
+  }
+
   return (
     <div className="app-container">
       <Popup />
@@ -98,6 +107,8 @@ function App() {
           xs: COLUMNS,
           xxs: COLUMNS,
         }}
+        onResizeStart={onResizeStart}
+        onResizeStop={onResizeStop}
         layouts={{ lg: layout }}
         onResize={onResize}
         rowHeight={cellSize}

@@ -4,7 +4,7 @@ import "./Settings.css";
 import { memo, useState } from "react";
 import { loadSettings, saveSettings } from "../../LocalStorage";
 import { usePopup } from "../../context/PopupContext";
-import { useKibitzerSettings } from "../../context/KibitzerSettings";
+import { useSettings } from "../../context/SettingsContext";
 
 export function getDefaultKibitzerSettings(): EngineSettings {
   const settings = loadSettings();
@@ -19,10 +19,10 @@ export function getDefaultKibitzerSettings(): EngineSettings {
 }
 
 export const Settings = memo(() => {
-  const kibitzerSettings = useKibitzerSettings(
+  const kibitzerSettings = useSettings(
     (state) => state.kibitzerSettings
   );
-  const setKibitzerSettings = useKibitzerSettings(
+  const setKibitzerSettings = useSettings(
     (state) => state.setKibitzerSettings
   );
 
