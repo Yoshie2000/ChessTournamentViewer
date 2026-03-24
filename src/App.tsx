@@ -25,6 +25,7 @@ import {
 import { useWindowSize } from "./hooks/useWindowSize";
 import { useEffect, useState } from "react";
 import { useSettings } from "./context/SettingsContext";
+import type { LayoutConstraint } from "react-grid-layout/core";
 
 Chart.register(
   CategoryScale,
@@ -36,10 +37,22 @@ Chart.register(
   Legend
 );
 
-function App() {
-  const COLUMNS = 48;
-  const MOVELIST_WIDTH = 4;
+const COLUMNS = 48;
+const MOVELIST_WIDTH = 4;
 
+const boardConstraint: LayoutConstraint = {
+  name: "boardConstraint",
+  constrainSize(_, w, h, __, _context) {
+    const targetH = Math.round((w - MOVELIST_WIDTH + h) / 2);
+    const targetW = targetH + MOVELIST_WIDTH;
+    return {
+      w: Math.max(MOVELIST_WIDTH + 2, targetW),
+      h: Math.max(2, targetH),
+    };
+  },
+};
+
+function App() {
   const { width, height } = useWindowSize();
   const cellSize = Math.floor(width / COLUMNS);
   const rows = Math.floor((height - 56) / cellSize);
@@ -59,7 +72,7 @@ function App() {
   }, [boardWidth, boardHeight]);
 
   const [layout] = useState<Layout>([
-    { i: "1", w: 20, h: 16, x: 16, y: 0 },
+    { i: "1", w: 20, h: 16, x: 16, y: 0, constraints: [boardConstraint] },
     { i: "2", w: 16, h: 16, x: 0, y: 0 },
     { i: "3", w: 16, h: 10, x: 0, y: 24 },
     { i: "4", w: 20, h: 10, x: 16, y: 16 },
@@ -72,7 +85,6 @@ function App() {
     newItem: LayoutItem | null
   ) => {
     if (newItem?.i === "1") {
-      newItem.h = newItem.w - MOVELIST_WIDTH;
       document.documentElement.style.setProperty(
         "--boardWidth",
         `${newItem.w * cellSize}px`
