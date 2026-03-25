@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type ElementType } from "react";
 import {
   CategoryScale,
   Chart,
@@ -8,24 +9,20 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
+import { GridStack } from "gridstack";
+import "gridstack/dist/gridstack.min.css";
 import "./App.css";
+
 import { EngineWindow } from "./components/EngineWindow/EngineWindow";
 import { EventListWindow } from "./components/EventListWindow/EventListWindow";
 import { GraphWindow } from "./components/GraphWindow/GraphWindow";
 import { StandingsWindow } from "./components/StandingsWindow/StandingsWindow";
-
 import { BoardWindow } from "./components/BoardWindow/BoardWindow";
 import { ScheduleWindow } from "./components/ScheduleWindow/ScheduleWindow";
 import { Popup } from "./components/Popup/Popup";
-import {
-  ResponsiveGridLayout,
-  type Layout,
-  type LayoutItem,
-} from "react-grid-layout";
+
 import { useWindowSize } from "./hooks/useWindowSize";
-import { useEffect, useState } from "react";
-import { useSettings } from "./context/SettingsContext";
-import type { LayoutConstraint } from "react-grid-layout/core";
+import { loadLayout, saveLayout } from "./LocalStorage";
 
 Chart.register(
   CategoryScale,
@@ -37,124 +34,180 @@ Chart.register(
   Legend
 );
 
+export type Widget = {
+  id: string;
+  w: number;
+  h: number;
+  x: number;
+  y: number;
+  component: ElementType;
+};
+
+const ENGINE_WINDOW_WIDGET: Widget = {
+  id: "engineWindowWidget",
+  w: 12,
+  h: -1,
+  x: 36,
+  y: 0,
+  component: EngineWindow,
+};
+
+const BOARD_WINDOW_WIDGET: Widget = {
+  id: "boardWindowWidget",
+  w: 20,
+  h: 16,
+  x: 16,
+  y: 0,
+  component: BoardWindow,
+};
+
+const STANDINGS_WINDOW_WIDGET: Widget = {
+  id: "standingsWindowWidget",
+  w: 16,
+  h: 10,
+  x: 0,
+  y: 16,
+  component: StandingsWindow,
+};
+
+const GRAPH_WINDOW_WIDGET: Widget = {
+  id: "graphWindowWidget",
+  w: 20,
+  h: 10,
+  x: 16,
+  y: 16,
+  component: GraphWindow,
+};
+
+const SCHEDULE_WINDOW_WIDGET: Widget = {
+  id: "scheduleWindowWidget",
+  w: 16,
+  h: 16,
+  x: 0,
+  y: 0,
+  component: ScheduleWindow,
+};
+
+export const DEFAULT_LAYOUT = [
+  ENGINE_WINDOW_WIDGET,
+  BOARD_WINDOW_WIDGET,
+  STANDINGS_WINDOW_WIDGET,
+  GRAPH_WINDOW_WIDGET,
+  SCHEDULE_WINDOW_WIDGET,
+];
+
 const COLUMNS = 48;
 const MOVELIST_WIDTH = 4;
 
-const boardConstraint: LayoutConstraint = {
-  name: "boardConstraint",
-  constrainSize(_, w, h, __, _context) {
-    const targetH = Math.round((w - MOVELIST_WIDTH + h) / 2);
-    const targetW = targetH + MOVELIST_WIDTH;
-    return {
-      w: Math.max(MOVELIST_WIDTH + 2, targetW),
-      h: Math.max(2, targetH),
-    };
-  },
-};
+function setBoardSize(width: number, height: number, cellSize: number) {
+  const targetH = Math.max(
+    2,
+    Math.round((width - MOVELIST_WIDTH + height) / 2)
+  );
+  const targetW = Math.max(MOVELIST_WIDTH + 2, targetH + MOVELIST_WIDTH);
+
+  document.documentElement.style.setProperty(
+    "--boardWidth",
+    `${targetW * cellSize}px`
+  );
+  document.documentElement.style.setProperty(
+    "--boardHeight",
+    `${targetH * cellSize}px`
+  );
+}
 
 function App() {
   const { width, height } = useWindowSize();
   const cellSize = Math.floor(width / COLUMNS);
   const rows = Math.floor((height - 56) / cellSize);
 
-  const boardWidth = 20 * cellSize;
-  const boardHeight = 16 * cellSize;
+  const gridRef = useRef<HTMLDivElement>(null);
+  const gridInstance = useRef<GridStack | null>(null);
+
+  const [widgets] = useState<Widget[]>(loadLayout() ?? DEFAULT_LAYOUT);
 
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--boardWidth",
-      `${boardWidth}px`
-    );
-    document.documentElement.style.setProperty(
-      "--boardHeight",
-      `${boardHeight}px`
-    );
-  }, [boardWidth, boardHeight]);
+    if (!gridRef.current) return;
 
-  const [layout] = useState<Layout>([
-    { i: "1", w: 20, h: 16, x: 16, y: 0, constraints: [boardConstraint] },
-    { i: "2", w: 16, h: 16, x: 0, y: 0 },
-    { i: "3", w: 16, h: 10, x: 0, y: 24 },
-    { i: "4", w: 20, h: 10, x: 16, y: 16 },
-    { i: "5", w: 12, h: rows, x: 36, y: 0 },
-  ]);
+    gridInstance.current = GridStack.init(
+      {
+        column: COLUMNS,
+        cellHeight: `${cellSize}px`,
+        margin: 0,
+        handle: ".react-grid-drag-handle",
+        float: true,
+      },
+      gridRef.current
+    );
 
-  const onResize = (
-    _: Layout,
-    _2: LayoutItem | null,
-    newItem: LayoutItem | null
-  ) => {
-    if (newItem?.i === "1") {
-      document.documentElement.style.setProperty(
-        "--boardWidth",
-        `${newItem.w * cellSize}px`
-      );
-      document.documentElement.style.setProperty(
-        "--boardHeight",
-        `${newItem.h * cellSize}px`
-      );
+    function onLayoutChange() {
+      const layout = gridInstance.current?.save(false);
+      if (layout && Array.isArray(layout)) {
+        saveLayout(layout);
+      }
     }
-  };
 
-  function onResizeStart() {
-    useSettings.setState({ freezeUpdates: true });
-  }
+    gridInstance.current.on("resizestop", onLayoutChange);
+    gridInstance.current.on("dragstop", onLayoutChange);
 
-  function onResizeStop() {
-    useSettings.setState({ freezeUpdates: false });
-  }
+    gridInstance.current.on("resize", (_, el) => {
+      const node = el.gridstackNode;
+
+      if (node?.id === BOARD_WINDOW_WIDGET.id) {
+        setBoardSize(node.w || 0, node.h || 0, cellSize);
+      }
+    });
+
+    return () => {
+      if (gridInstance.current) {
+        gridInstance.current.destroy(false);
+        gridInstance.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (gridInstance.current) {
+      gridInstance.current.cellHeight(cellSize);
+
+      gridInstance.current.opts.maxRow = rows;
+    }
+  }, [cellSize, rows]);
+
+  useEffect(() => {
+    const boardWindowWidget = widgets.find(
+      (widget) => widget.id === BOARD_WINDOW_WIDGET.id
+    )!;
+    setBoardSize(boardWindowWidget.w, boardWindowWidget.h, cellSize);
+  }, [cellSize]);
 
   return (
     <div className="app-container">
       <Popup />
       <EventListWindow />
 
-      <ResponsiveGridLayout
-        className="app-grid"
-        width={width - 8}
-        cols={{
-          lg: COLUMNS,
-          md: COLUMNS,
-          sm: COLUMNS,
-          xs: COLUMNS,
-          xxs: COLUMNS,
-        }}
-        onResizeStart={onResizeStart}
-        onResizeStop={onResizeStop}
-        layouts={{ lg: layout }}
-        onResize={onResize}
-        rowHeight={cellSize}
-        autoSize={true}
-        containerPadding={[0, 0]}
-        margin={[0, 0]}
-        maxRows={rows}
-        dragConfig={{ enabled: true, handle: ".react-grid-drag-handle" }}
+      <div
+        className="grid-stack app-grid"
+        ref={gridRef}
+        style={{ width: `${width - 8}px` }}
       >
-        <div key={"5"}>
-          <EngineWindow />
-          <div className="react-grid-drag-handle" />
-        </div>
-
-        <div key={"1"}>
-          <BoardWindow />
-          <div className="react-grid-drag-handle" />
-        </div>
-
-        <div key={"3"}>
-          <StandingsWindow />
-          <div className="react-grid-drag-handle" />
-        </div>
-
-        <div key={"4"}>
-          <GraphWindow />
-          <div className="react-grid-drag-handle" />
-        </div>
-
-        <div key={"2"}>
-          <ScheduleWindow />
-          <div className="react-grid-drag-handle" />
-        </div>
-      </ResponsiveGridLayout>
+        {widgets.map((widget) => (
+          <div
+            key={widget.id}
+            className="grid-stack-item"
+            gs-id={widget.id}
+            gs-w={widget.w}
+            gs-h={widget.h === -1 ? rows : widget.h}
+            gs-x={widget.x}
+            gs-y={widget.y}
+          >
+            <div className="grid-stack-item-content">
+              <widget.component />
+              <div className="react-grid-drag-handle" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

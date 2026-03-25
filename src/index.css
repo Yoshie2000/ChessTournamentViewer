@@ -6,6 +6,7 @@ body {
   box-sizing: border-box;
   background: #212121;
   font-size: var(--font-lg);
+  overflow-x: hidden;
 }
 
 *,

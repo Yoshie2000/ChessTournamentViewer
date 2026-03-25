@@ -7,14 +7,11 @@ import {
 } from "../components/BoardWindow/Board";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { getLiveInfosForMove } from "../LiveInfo";
-import { useSettings } from "../context/SettingsContext";
 
 export function useLiveBoard({ animated, id }: BoardProps) {
   const boardHandle = useRef<BoardHandle>(null);
 
   const updateBoard = useCallback((bypassRateLimit: boolean = false) => {
-    if (useSettings.getState().freezeUpdates) return;
-
     const { game, currentMoveNumber, liveEngineData } = useLiveInfo.getState();
 
     boardHandle.current?.updateBoard(

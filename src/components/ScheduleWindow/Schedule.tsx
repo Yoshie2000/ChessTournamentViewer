@@ -3,7 +3,6 @@ import { EngineLogo } from "../EngineWindow/EngineLogo";
 import "./Schedule.css";
 import { MdOutlineClose } from "react-icons/md";
 import { useEventStore } from "../../context/EventContext";
-import { useSettings } from "../../context/SettingsContext";
 
 function formatDuration(value: number) {
   if (value === 1) return `ìn 1 minute`;
@@ -24,7 +23,6 @@ const Schedule = memo(() => {
   const [scrolledToCurrentGame, setScrolledToCurrentGame] = useState(false);
   const userClickedRef = useRef(false);
 
-  const freezeUpdates = useSettings((state) => state.freezeUpdates);
   const selectedGame = useEventStore((state) => state.activeGame);
   const event = useEventStore((state) => state.activeEvent);
   const engines = useEventStore((state) => state.engines);
@@ -77,7 +75,6 @@ const Schedule = memo(() => {
     event?.tournamentDetails.schedule.present?.gameNr,
     selectedGame?.gameDetails.gameNr,
     scrollToCurrentGame,
-    freezeUpdates,
   ]);
 
   if (!event || !selectedGame || !engines) {
@@ -91,7 +88,6 @@ const Schedule = memo(() => {
       : []),
     ...event.tournamentDetails.schedule.future,
   ];
-  if (freezeUpdates) gamesList = gamesList.slice(0, 30);
 
   const durationPerGame = event.tournamentDetails.schedule.past
     .map((game) => {
