@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { Chess } from "../../chess.js/chess";
+import { Chess, Chess960 } from "../../chess.js/chess";
 import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { MoveList } from "../MoveList";
@@ -36,6 +36,24 @@ const LiveMoveList = memo(() => {
     pgnHeaders["TerminationDetails"];
   const result = pgnHeaders["Result"];
 
+  let disagreement = -1;
+  if (activeGame?.gameDetails.reversePgn) {
+    const reverse = new Chess960();
+    reverse.loadPgn(activeGame.gameDetails.reversePgn);
+    const reverseHistory = reverse.history();
+    const history = game.history();
+
+    const minLength = Math.min(history.length, reverseHistory.length);
+
+    disagreement = minLength;
+    for (let i = 0; i < minLength; i++) {
+      if (history[i] !== reverseHistory[i]) {
+        disagreement = i;
+        break;
+      }
+    }
+  }
+
   return (
     <MoveList
       startFen={game.getHeaders()["FEN"] ?? new Chess().fen()}
@@ -43,6 +61,7 @@ const LiveMoveList = memo(() => {
       currentMoveNumber={currentMoveNumber}
       setCurrentMoveNumber={useLiveInfo.getState().setCurrentMoveNumber}
       bookMoves={bookMoves}
+      disagreementMoveIndex={disagreement}
       downloadURL={
         termination && result && result !== "*"
           ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${activeGame?.gameDetails.gameNr}.log`

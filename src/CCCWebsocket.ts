@@ -1,4 +1,9 @@
-import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
+import type {
+  CCCLiveInfo,
+  CCCEventsListUpdate,
+  CCCMessage,
+  CCCGameUpdate,
+} from "./types";
 
 export interface TournamentWebSocket {
   connect: (
@@ -24,6 +29,8 @@ export class CCCWebSocket implements TournamentWebSocket {
   private callback: (message: CCCMessage) => void = () => {};
 
   private timeoutId: number | undefined = undefined;
+
+  private eventNr: string | undefined = undefined;
 
   connect(
     onMessage: (message: CCCMessage) => void,
@@ -51,7 +58,7 @@ export class CCCWebSocket implements TournamentWebSocket {
       this.connect(this.callback, initialEventId, initialGameId);
     }, TIMEOUT_RECONNECT_MS);
 
-    this.socket.onmessage = (e) => {
+    this.socket.onmessage = async (e) => {
       const messages = JSON.parse(e.data) as CCCMessage[];
 
       const hasGameUpdate = messages.some(
@@ -86,6 +93,25 @@ export class CCCWebSocket implements TournamentWebSocket {
           (message) =>
             isLiveGame || newMoveIdx === -1 || message.type !== "liveInfo"
         );
+
+      const eventUpdate = messages.find(
+        (message) => message.type === "eventUpdate"
+      );
+      if (eventUpdate) {
+        this.eventNr = eventUpdate.tournamentDetails.tNr;
+      }
+
+      const gameUpdate = messages.find(
+        (message) => message.type === "gameUpdate"
+      );
+      if (gameUpdate) {
+        const gameNr = Number(gameUpdate.gameDetails.gameNr);
+        const isReverse = gameNr % 2 == 1;
+        if (isReverse) {
+          const pgn = await this.fetchPgn(this.eventNr ?? "", String(gameNr - 1));
+          gameUpdate.gameDetails.reversePgn = pgn;
+        }
+      }
 
       for (const msg of filteredMessages) {
         if (msg.type === "eventUpdate") {
@@ -122,6 +148,35 @@ export class CCCWebSocket implements TournamentWebSocket {
     };
 
     tempSocket.onerror = () => tempSocket.close();
+  }
+
+  fetchPgn(eventNr: string, gameNr: string) {
+    return new Promise<string>((resolve, reject) => {
+      const tempSocket = new WebSocket(this.url);
+
+      tempSocket.onopen = () => {
+        tempSocket.send(
+          JSON.stringify({ type: "requestEvent", eventNr, gameNr })
+        );
+      };
+
+      tempSocket.onmessage = (e) => {
+        const messages = JSON.parse(e.data) as CCCMessage[];
+        const found = messages.find((m) => m.type === "gameUpdate") as
+          | CCCGameUpdate
+          | undefined;
+
+        if (found) {
+          tempSocket.close();
+          resolve(found.gameDetails.pgn);
+        }
+      };
+
+      tempSocket.onerror = () => {
+        tempSocket.close();
+        reject();
+      };
+    });
   }
 
   isConnected() {

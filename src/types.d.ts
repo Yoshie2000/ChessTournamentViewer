@@ -62,6 +62,7 @@ type CCCGameUpdate = {
     live: boolean;
     opening: string;
     pgn: string;
+    reversePgn?: string;
     termination?: string;
   };
 };
