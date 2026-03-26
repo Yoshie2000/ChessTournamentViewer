@@ -19,6 +19,7 @@ import { GameResultOverlay } from "./GameResultOverlay";
 import { useKibitzer } from "../../hooks/useKibitzer";
 import { LiveMoveList } from "./LiveMoveList";
 import { useMediaQuery } from "react-responsive";
+import { useGameHistory } from "@/context/GameHistoryContext";
 
 const wsByProvider = {
   ccc: new CCCWebSocket(),
@@ -49,6 +50,15 @@ export const BoardWindow = memo(() => {
   const initialEvent = useRef<string | null>(_initialEvent);
   const initialGame = useRef<string | null>(_initialGame);
 
+  const history = useGameHistory((state) => state.history);
+  const setOverlappingMovesIndxList = useGameHistory(
+    (state) => state.setOverlappingMovesIndxList
+  );
+  // game number as index from schedule + 1
+  const currentSelectedGameNumber = useEventStore(
+    (state) => state.selectedGameNumber
+  );
+
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
       if (activeWSRef.current instanceof CCCWebSocket) {
@@ -69,6 +79,45 @@ export const BoardWindow = memo(() => {
     },
     [game]
   );
+
+  useEffect(() => {
+    if (!currentSelectedGameNumber) {
+      return;
+    }
+
+    useGameHistory
+      .getState()
+      .setFenListForGame(currentSelectedGameNumber, game.boardFenHistory());
+  }, [currentSelectedGameNumber, game]);
+
+  useEffect(() => {
+    if (!currentSelectedGameNumber) {
+      return;
+    }
+
+    const reverseGameNumber =
+      currentSelectedGameNumber % 2 === 0
+        ? currentSelectedGameNumber - 1
+        : currentSelectedGameNumber + 1;
+
+    const currentFenList = history[currentSelectedGameNumber];
+    const reversedFenList = history[reverseGameNumber];
+
+    if (!currentFenList || !reversedFenList) {
+      return;
+    }
+
+    const reversedFenListSet = new Set(reversedFenList);
+    const samePositionsList: number[] = [];
+
+    currentFenList.forEach((fen, i) => {
+      if (reversedFenListSet.has(fen)) {
+        samePositionsList.push(i);
+      }
+    });
+
+    setOverlappingMovesIndxList(samePositionsList);
+  }, [currentSelectedGameNumber, history, setOverlappingMovesIndxList]);
 
   const handleMessage = useCallback(
     function (msg: CCCMessage) {
@@ -130,7 +179,6 @@ export const BoardWindow = memo(() => {
           eventState.setGame(msg);
           liveInfoState.setCurrentFen(game.fen());
           liveInfoState.setMoves(game.history());
-
           break;
         }
 
@@ -170,14 +218,24 @@ export const BoardWindow = memo(() => {
           updateBoard(true);
           break;
 
-        case "result":
+        case "result": {
+          if (currentSelectedGameNumber) {
+            useGameHistory
+              .getState()
+              .setFenListForGame(
+                currentSelectedGameNumber,
+                game.boardFenHistory()
+              );
+          }
+
           game.setHeader("Termination", msg.reason);
           game.setHeader("Result", msg.score);
           updateBoard(true);
           break;
+        }
       }
     },
-    [game, handleLiveInfo, updateBoard]
+    [game, handleLiveInfo, updateBoard, currentSelectedGameNumber]
   );
 
   useEffect(() => {

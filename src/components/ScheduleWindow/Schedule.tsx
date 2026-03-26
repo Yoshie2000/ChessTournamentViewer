@@ -29,6 +29,9 @@ const Schedule = memo(() => {
   const event = useEventStore((state) => state.activeEvent);
   const engines = useEventStore((state) => state.engines);
   const requestEvent = useEventStore((state) => state.requestEvent);
+  const setSelectedGameNumber = useEventStore(
+    (state) => state.setSelectedGameNumber
+  );
 
   const scrollToCurrentGame = useCallback(() => {
     if (
@@ -150,6 +153,9 @@ const Schedule = memo(() => {
             game.gameNr === String(selectedGame.gameDetails.gameNr);
           const ref = isSelectedGame ? currentGameRef : null;
 
+          if (isSelectedGame) {
+            setSelectedGameNumber(i + 1);
+          }
           let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
           gameClass += !game.outcome && !isCurrentGame ? " future" : "";
 

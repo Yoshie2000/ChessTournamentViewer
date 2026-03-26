@@ -5,6 +5,7 @@ import { useLiveInfo } from "../../context/LiveInfoContext";
 import { MoveList } from "../MoveList";
 import { shallow } from "zustand/shallow";
 import { useInterval } from "../../hooks/useInterval";
+import { useGameHistory } from "@/context/GameHistoryContext";
 
 const LiveMoveList = memo(() => {
   const activeGame = useEventStore((state) => state.activeGame);
@@ -13,6 +14,7 @@ const LiveMoveList = memo(() => {
   const [moves, setMoves] = useState<string[]>([]);
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
   const [bookMoves, setBookMoves] = useState(-1);
+  const transpositions = useGameHistory((state) => state.samePositionsList);
 
   useInterval((state) => {
     setCurrentMoveNumber(state.currentMoveNumber);
@@ -43,6 +45,7 @@ const LiveMoveList = memo(() => {
       currentMoveNumber={currentMoveNumber}
       setCurrentMoveNumber={useLiveInfo.getState().setCurrentMoveNumber}
       bookMoves={bookMoves}
+      transpositions={transpositions}
       downloadURL={
         termination && result && result !== "*"
           ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${activeGame?.gameDetails.gameNr}.log`

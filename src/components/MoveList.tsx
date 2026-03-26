@@ -24,6 +24,7 @@ type MoveListProps = {
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   controllers: boolean;
   disagreementMoveIndex?: number;
+  transpositions?: number[];
 };
 
 export function getGameAtMoveNumber(
@@ -72,6 +73,7 @@ const MoveList = memo(
     disagreementMoveIndex,
     moveNumberOffset = 0,
     bookMoves = -1,
+    transpositions,
   }: MoveListProps) => {
     const moveListRef = useRef<HTMLDivElement>(null);
 
@@ -197,6 +199,8 @@ const MoveList = memo(
           bookMoveWhite={i < bookMoves}
           bookMoveBlack={i + 1 < bookMoves}
           setCurrentMoveNumber={setCurrentMoveNumber}
+          whiteAgree={transpositions?.includes(i + 1) ?? false}
+          blackAgree={transpositions?.includes(i + 2) ?? false}
         />
       );
     }
@@ -326,6 +330,8 @@ type MoveRowProps = {
   bookMoveWhite: boolean;
   bookMoveBlack: boolean;
   setCurrentMoveNumber: (callback: (n: number) => number) => void;
+  whiteAgree?: boolean;
+  blackAgree?: boolean;
 };
 
 const MoveRow = memo(
@@ -340,6 +346,8 @@ const MoveRow = memo(
     disagreementBlack,
     bookMoveWhite,
     bookMoveBlack,
+    whiteAgree = false,
+    blackAgree = false,
     setCurrentMoveNumber,
   }: MoveRowProps) => {
     return (
@@ -354,7 +362,10 @@ const MoveRow = memo(
           {moveNumber}.
         </th>
         <td
-          className={moveClass(whiteActive, disagreementWhite, bookMoveWhite)}
+          className={
+            moveClass(whiteActive, disagreementWhite, bookMoveWhite) +
+            ` ${whiteAgree ? "agree" : ""}`
+          }
           onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
         >
           {whiteMove}
@@ -362,11 +373,10 @@ const MoveRow = memo(
         <td>
           {blackMove && (
             <span
-              className={moveClass(
-                blackActive,
-                disagreementBlack,
-                bookMoveBlack
-              )}
+              className={
+                moveClass(blackActive, disagreementBlack, bookMoveBlack) +
+                ` ${blackAgree ? "agree" : ""}`
+              }
               onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
             >
               {blackMove}

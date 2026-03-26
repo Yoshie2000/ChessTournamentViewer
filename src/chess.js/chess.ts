@@ -2699,6 +2699,16 @@ export class Chess {
     return moveHistory
   }
 
+  boardFenHistory(): string[] {
+    return this._history.map((el) => (
+      this._trimFen(el.fen)
+    ))
+  }
+
+  private _trimFen(fen: string): string {
+    return fen.split(" ").slice(0, 4).join(" ");
+  }
+
   /*
    * Keeps track of position occurrence counts for the purpose of repetition
    * checking. Old positions are removed from the map if their counts are reduced to 0.

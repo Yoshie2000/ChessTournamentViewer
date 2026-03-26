@@ -33,6 +33,9 @@ type EventContext = {
   activeGame: CCCGameUpdate | null;
   engines: CCCEngine[];
 
+  selectedGameNumber: number | null;
+  setSelectedGameNumber: (gameNumber: number) => void;
+
   pendingEventId: string | null;
   setPendingEventId: (id: string | null) => void;
 
@@ -66,6 +69,11 @@ export const useEventStore = create<EventContext>((set, get) => {
     engines: [],
 
     pendingEventId: null,
+    selectedGameNumber: null,
+    setSelectedGameNumber(gameNumber) {
+      set({ selectedGameNumber: gameNumber });
+    },
+
     setPendingEventId: (id) => set({ pendingEventId: id }),
     setActiveProvider(provider) {
       const { providerData } = get();

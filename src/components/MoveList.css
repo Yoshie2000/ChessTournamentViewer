@@ -152,6 +152,10 @@
   }
 }
 
+.agree {
+  text-decoration: underline;
+}
+
 @media (max-width: 775px) {
   .boardWindow > .movesWindow {
     grid-column: 1 / 2;
