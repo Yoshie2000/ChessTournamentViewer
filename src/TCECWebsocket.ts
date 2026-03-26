@@ -92,6 +92,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           )
         ).text();
         this.live = false;
+        console.log(gameNr, "sdfsdf");
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
@@ -330,24 +331,26 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   private loadKibitzerData(lc0: any, sf: any) {
-    this.callback?.({
-      type: "kibitzer",
-      color: "blue",
-      engine: {
-        ...EmptyEngineDefinition,
-        name: lc0.desc.split(" ").slice(0, 2).join(" "),
-        imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Lc0.png",
-      },
-    });
-    this.callback?.({
-      type: "kibitzer",
-      color: "red",
-      engine: {
-        ...EmptyEngineDefinition,
-        name: sf.desc.split(" ")[0],
-        imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Stockfish.png",
-      },
-    });
+    if (lc0)
+      this.callback?.({
+        type: "kibitzer",
+        color: "blue",
+        engine: {
+          ...EmptyEngineDefinition,
+          name: lc0.desc.split(" ").slice(0, 2).join(" "),
+          imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Lc0.png",
+        },
+      });
+    if (sf)
+      this.callback?.({
+        type: "kibitzer",
+        color: "red",
+        engine: {
+          ...EmptyEngineDefinition,
+          name: sf.desc.split(" ")[0],
+          imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Stockfish.png",
+        },
+      });
 
     function plyFromPv(pv: string) {
       const isBlackMove = pv.includes("...");
@@ -356,38 +359,40 @@ export class TCECWebSocket implements TournamentWebSocket {
       return moveNumber * 2 - 1;
     }
 
-    (lc0.moves as any[]).forEach((lc0Move) => {
-      if (lc0Move.pv.includes("...")) {
-        if (typeof lc0Move.eval === "string") {
-          if (lc0Move.eval.startsWith("-"))
-            lc0Move.eval = lc0Move.eval.replace("-", "+");
-          else lc0Move.eval = lc0Move.eval.replace("+", "-");
-        } else {
-          lc0Move.eval *= -1;
+    if (lc0)
+      (lc0.moves as any[]).forEach((lc0Move) => {
+        if (lc0Move.pv.includes("...")) {
+          if (typeof lc0Move.eval === "string") {
+            if (lc0Move.eval.startsWith("-"))
+              lc0Move.eval = lc0Move.eval.replace("-", "+");
+            else lc0Move.eval = lc0Move.eval.replace("+", "-");
+          } else {
+            lc0Move.eval *= -1;
+          }
         }
-      }
 
-      const ply = plyFromPv(lc0Move.pv);
-      this.callback?.(
-        parseTCECLiveInfo(lc0Move, this.game.fenAt(ply - 1), "blue")
-      );
-    });
-    (sf.moves as any[]).forEach((sfMove) => {
-      if (sfMove.pv.includes("...")) {
-        if (typeof sfMove.eval === "string") {
-          if (sfMove.eval.startsWith("-"))
-            sfMove.eval = sfMove.eval.replace("-", "+");
-          else sfMove.eval = sfMove.eval.replace("+", "-");
-        } else {
-          sfMove.eval *= -1;
+        const ply = plyFromPv(lc0Move.pv);
+        this.callback?.(
+          parseTCECLiveInfo(lc0Move, this.game.fenAt(ply - 1), "blue")
+        );
+      });
+    if (sf)
+      (sf.moves as any[]).forEach((sfMove) => {
+        if (sfMove.pv.includes("...")) {
+          if (typeof sfMove.eval === "string") {
+            if (sfMove.eval.startsWith("-"))
+              sfMove.eval = sfMove.eval.replace("-", "+");
+            else sfMove.eval = sfMove.eval.replace("+", "-");
+          } else {
+            sfMove.eval *= -1;
+          }
         }
-      }
 
-      const ply = plyFromPv(sfMove.pv);
-      this.callback?.(
-        parseTCECLiveInfo(sfMove, this.game.fenAt(ply - 1), "red")
-      );
-    });
+        const ply = plyFromPv(sfMove.pv);
+        this.callback?.(
+          parseTCECLiveInfo(sfMove, this.game.fenAt(ply - 1), "red")
+        );
+      });
   }
 
   private openEvent(
@@ -406,7 +411,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       fetch(sfURL),
     ])
       .then((responses) =>
-        Promise.all([
+        Promise.allSettled([
           responses[0].json(),
           responses[1].json(),
           responses[2].text(),
@@ -417,9 +422,16 @@ export class TCECWebSocket implements TournamentWebSocket {
       .then((jsons) => {
         const [schedule, crosstable, livePGN, lc0, sf] = jsons;
 
-        const engines: CCCEngine[] = Object.keys(crosstable.Table).map(
+        if (
+          schedule.status !== "fulfilled" ||
+          crosstable.status !== "fulfilled" ||
+          livePGN.status !== "fulfilled"
+        )
+          return;
+
+        const engines: CCCEngine[] = Object.keys(crosstable.value.Table).map(
           (engineName) => {
-            const engineData = crosstable.Table[engineName];
+            const engineData = crosstable.value.Table[engineName];
             const correctName = engineName.split(" ")[0];
             const engineVersion = engineName.split(" ").slice(1).join(" ");
 
@@ -491,7 +503,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           };
         }
 
-        const cccGameSchedule = (schedule as any[]).map(toCccGame);
+        const cccGameSchedule = (schedule.value as any[]).map(toCccGame);
 
         const past = cccGameSchedule.filter((game) => !!game.timeEnd);
         const present = cccGameSchedule.find(
@@ -546,8 +558,8 @@ export class TCECWebSocket implements TournamentWebSocket {
         const event: CCCEventUpdate = {
           type: "eventUpdate",
           tournamentDetails: {
-            name: crosstable.Event,
-            tNr: crosstable.Event.replaceAll(" ", "_"),
+            name: crosstable.value.Event,
+            tNr: crosstable.value.Event.replaceAll(" ", "_"),
             tc: { incr: 0, init: 0 },
             engines,
             schedule: { past, future, present },
@@ -558,8 +570,13 @@ export class TCECWebSocket implements TournamentWebSocket {
         this.callback?.(event);
         this.event = event;
 
-        this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN);
-        this.loadKibitzerData(lc0, sf);
+        console.log(gameNr, present, past[0]);
+        this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN.value);
+
+        this.loadKibitzerData(
+          lc0.status === "fulfilled" ? lc0.value : undefined,
+          sf.status === "fulfilled" ? sf.value : undefined
+        );
       });
   }
 
@@ -578,6 +595,8 @@ export class TCECWebSocket implements TournamentWebSocket {
     ];
 
     const current = gameList.find((game) => game.gameNr === gameNr);
+
+    console.log(current, gameNr);
 
     const gameUpdate: CCCGameUpdate = {
       type: "gameUpdate",
