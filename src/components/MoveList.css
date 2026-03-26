@@ -156,6 +156,10 @@
   text-decoration: underline;
 }
 
+.diverge {
+  color: #e53935;
+}
+
 @media (max-width: 775px) {
   .boardWindow > .movesWindow {
     grid-column: 1 / 2;
