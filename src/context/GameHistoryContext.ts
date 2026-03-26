@@ -1,28 +1,30 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-type History = { moveList: string[]; fenList: string[] };
-export type AgreementMove = { moveNumber: number; diverge?: string };
+type GameHistoryEntry = { moveList: string[]; fenList: string[] };
+export type TranspositionDataEntry = { moveNumber: number; diverge?: string };
 
-type GameHistory = {
-  history: Record<number, History>;
-  samePositionsList: AgreementMove[];
-  // list with indexes of all overlapping positions
-  // that is used to underline moves list entries
-  setOverlappingMovesIndxList: (list: AgreementMove[]) => void;
-  setFenListForGame: (gameNumber: number, history: History) => void;
+type GameHistoryState = {
+  history: Record<number, GameHistoryEntry>;
+  transpositionHistory: Record<number, TranspositionDataEntry[]>;
+  setTranspositions: (
+    gameNumber: number,
+    list: TranspositionDataEntry[]
+  ) => void;
+  setDataForGame: (gameNumber: number, history: GameHistoryEntry) => void;
 };
 
-export const useGameHistory = create<GameHistory>()(
+export const useGameHistory = create<GameHistoryState>()(
   immer((set) => ({
     history: {},
+    transpositionHistory: {},
     samePositionsList: [],
-    setOverlappingMovesIndxList(list) {
+    setTranspositions(gameNumber, list) {
       set((state) => {
-        state.samePositionsList = list;
+        state.transpositionHistory[gameNumber] = list;
       });
     },
-    setFenListForGame(gameNumber, history) {
+    setDataForGame(gameNumber, history) {
       set((state) => {
         state.history[gameNumber] = history;
       });

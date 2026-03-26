@@ -14,7 +14,11 @@ const LiveMoveList = memo(() => {
   const [moves, setMoves] = useState<string[]>([]);
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
   const [bookMoves, setBookMoves] = useState(-1);
-  const transpositions = useGameHistory((state) => state.samePositionsList);
+  const selectedGameNumber = useEventStore((state) => state.selectedGameNumber);
+
+  const transpositionsList = useGameHistory(
+    (state) => state.transpositionHistory[selectedGameNumber || 0]
+  );
 
   useInterval((state) => {
     setCurrentMoveNumber(state.currentMoveNumber);
@@ -45,7 +49,7 @@ const LiveMoveList = memo(() => {
       currentMoveNumber={currentMoveNumber}
       setCurrentMoveNumber={useLiveInfo.getState().setCurrentMoveNumber}
       bookMoves={bookMoves}
-      transpositions={transpositions}
+      transpositions={transpositionsList}
       downloadURL={
         termination && result && result !== "*"
           ? `https://storage.googleapis.com/chess-1-prod-ccc/gamelogs/game-${activeGame?.gameDetails.gameNr}.log`

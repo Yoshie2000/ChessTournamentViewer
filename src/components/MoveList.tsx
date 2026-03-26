@@ -13,7 +13,7 @@ import {
   LuDatabase,
   LuDownload,
 } from "react-icons/lu";
-import type { AgreementMove } from "@/context/GameHistoryContext";
+import type { TranspositionDataEntry } from "@/context/GameHistoryContext";
 
 type MoveListProps = {
   startFen: string;
@@ -25,7 +25,7 @@ type MoveListProps = {
   setCurrentMoveNumber: (callback: (previous: number) => number) => void;
   controllers: boolean;
   disagreementMoveIndex?: number;
-  transpositions?: AgreementMove[];
+  transpositions?: TranspositionDataEntry[];
 };
 
 export function getGameAtMoveNumber(
@@ -173,8 +173,6 @@ const MoveList = memo(
       window.open(downloadURL, "_blank");
     }
 
-    console.log(transpositions);
-
     const rows = [];
     for (let i = pairStart; i < moves.length; i += 2) {
       const whiteMove = moves[i];
@@ -188,8 +186,8 @@ const MoveList = memo(
       const blackActive =
         currentMoveNumber === i + 2 || (isLatest && i + 1 === moves.length - 1);
 
-      let whiteAgree: AgreementMove | null = null;
-      let blackAgree: AgreementMove | null = null;
+      let whiteAgree: TranspositionDataEntry | null = null;
+      let blackAgree: TranspositionDataEntry | null = null;
 
       transpositions?.forEach((el) => {
         if (el.moveNumber === i + 1) {
@@ -344,8 +342,8 @@ type MoveRowProps = {
   bookMoveWhite: boolean;
   bookMoveBlack: boolean;
   setCurrentMoveNumber: (callback: (n: number) => number) => void;
-  whiteAgree?: AgreementMove | null;
-  blackAgree?: AgreementMove | null;
+  whiteAgree?: TranspositionDataEntry | null;
+  blackAgree?: TranspositionDataEntry | null;
 };
 
 const MoveRow = memo(
@@ -378,39 +376,35 @@ const MoveRow = memo(
         <td
           title={`${whiteAgree?.diverge ? `Deviated at: ${whiteAgree.diverge}` : ""}`}
         >
-          <>
-            <span
-              onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
-              className={
-                moveClass(whiteActive, disagreementWhite, bookMoveWhite) +
-                ` ${whiteAgree?.moveNumber && !whiteAgree.diverge ? "agree" : ""}`
-              }
-            >
-              {whiteMove}
-              {whiteAgree?.diverge && (
-                <div className="diverge">{whiteAgree.diverge}</div>
-              )}
-            </span>
-          </>
+          <span
+            onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
+            className={
+              moveClass(whiteActive, disagreementWhite, bookMoveWhite) +
+              ` ${whiteAgree?.moveNumber && !whiteAgree.diverge ? "agree" : ""}`
+            }
+          >
+            {whiteMove}
+            {whiteAgree?.diverge && (
+              <div className="diverge">{whiteAgree.diverge}</div>
+            )}
+          </span>
         </td>
         <td
           title={`${blackAgree?.diverge ? `Deviated at: ${blackAgree.diverge}` : ""}`}
         >
           {blackMove && (
-            <>
-              <span
-                onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
-                className={
-                  moveClass(blackActive, disagreementBlack, bookMoveBlack) +
-                  ` ${blackAgree?.moveNumber && !blackAgree.diverge ? "agree" : ""}`
-                }
-              >
-                {blackMove}
-                {blackAgree?.diverge && (
-                  <div className="diverge">{blackAgree.diverge}</div>
-                )}
-              </span>
-            </>
+            <span
+              onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
+              className={
+                moveClass(blackActive, disagreementBlack, bookMoveBlack) +
+                ` ${blackAgree?.moveNumber && !blackAgree.diverge ? "agree" : ""}`
+              }
+            >
+              {blackMove}
+              {blackAgree?.diverge && (
+                <div className="diverge">{blackAgree.diverge}</div>
+              )}
+            </span>
           )}
         </td>
       </tr>

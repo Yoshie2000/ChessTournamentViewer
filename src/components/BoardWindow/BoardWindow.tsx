@@ -21,7 +21,7 @@ import { LiveMoveList } from "./LiveMoveList";
 import { useMediaQuery } from "react-responsive";
 import {
   useGameHistory,
-  type AgreementMove,
+  type TranspositionDataEntry,
 } from "@/context/GameHistoryContext";
 
 const wsByProvider = {
@@ -55,7 +55,7 @@ export const BoardWindow = memo(() => {
 
   const history = useGameHistory((state) => state.history);
   const setOverlappingMovesIndxList = useGameHistory(
-    (state) => state.setOverlappingMovesIndxList
+    (state) => state.setTranspositions
   );
   // game number as index from schedule + 1
   const currentSelectedGameNumber = useEventStore(
@@ -90,7 +90,7 @@ export const BoardWindow = memo(() => {
 
     useGameHistory
       .getState()
-      .setFenListForGame(currentSelectedGameNumber, game.boardFenHistory());
+      .setDataForGame(currentSelectedGameNumber, game.boardFenHistory());
   }, [currentSelectedGameNumber, game]);
 
   useEffect(() => {
@@ -111,16 +111,12 @@ export const BoardWindow = memo(() => {
       return;
     }
 
-    const _dev_map = new Map<string, number>();
-    const samePositionsList: AgreementMove[] = [];
-
-    reverseGameFenList.forEach((fen, i) => {
-      _dev_map.set(fen, i);
-    });
+    const fenSet = new Set<string>(reverseGameFenList);
+    const samePositionsList: TranspositionDataEntry[] = [];
 
     let wasSamePosition = false;
     currentFenList.forEach((fen, i, array) => {
-      if (_dev_map.has(fen)) {
+      if (fenSet.has(fen)) {
         samePositionsList.push({ moveNumber: i });
 
         wasSamePosition = true;
@@ -137,7 +133,7 @@ export const BoardWindow = memo(() => {
       }
     });
 
-    setOverlappingMovesIndxList(samePositionsList);
+    setOverlappingMovesIndxList(currentSelectedGameNumber, samePositionsList);
   }, [currentSelectedGameNumber, history, setOverlappingMovesIndxList]);
 
   const handleMessage = useCallback(
@@ -232,7 +228,7 @@ export const BoardWindow = memo(() => {
           if (currentSelectedGameNumber) {
             useGameHistory
               .getState()
-              .setFenListForGame(
+              .setDataForGame(
                 currentSelectedGameNumber,
                 game.boardFenHistory()
               );
@@ -252,7 +248,7 @@ export const BoardWindow = memo(() => {
           if (currentSelectedGameNumber) {
             useGameHistory
               .getState()
-              .setFenListForGame(
+              .setDataForGame(
                 currentSelectedGameNumber,
                 game.boardFenHistory()
               );
