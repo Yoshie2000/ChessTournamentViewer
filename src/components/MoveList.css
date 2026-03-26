@@ -158,6 +158,11 @@
 
 .diverge {
   color: #e53935;
+  cursor: pointer;
+}
+
+td:hover .diverge {
+  color: #f07270;
 }
 
 @media (max-width: 775px) {

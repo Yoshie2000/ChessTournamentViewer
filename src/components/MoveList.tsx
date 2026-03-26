@@ -380,17 +380,17 @@ const MoveRow = memo(
         >
           <>
             <span
+              onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
               className={
                 moveClass(whiteActive, disagreementWhite, bookMoveWhite) +
                 ` ${whiteAgree?.moveNumber && !whiteAgree.diverge ? "agree" : ""}`
               }
-              onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
             >
               {whiteMove}
+              {whiteAgree?.diverge && (
+                <div className="diverge">{whiteAgree.diverge}</div>
+              )}
             </span>
-            {whiteAgree?.diverge && (
-              <div className="diverge">{whiteAgree.diverge}</div>
-            )}
           </>
         </td>
         <td
@@ -399,17 +399,17 @@ const MoveRow = memo(
           {blackMove && (
             <>
               <span
+                onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
                 className={
                   moveClass(blackActive, disagreementBlack, bookMoveBlack) +
                   ` ${blackAgree?.moveNumber && !blackAgree.diverge ? "agree" : ""}`
                 }
-                onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
               >
                 {blackMove}
+                {blackAgree?.diverge && (
+                  <div className="diverge">{blackAgree.diverge}</div>
+                )}
               </span>
-              {blackAgree?.diverge && (
-                <div className="diverge">{blackAgree.diverge}</div>
-              )}
             </>
           )}
         </td>
