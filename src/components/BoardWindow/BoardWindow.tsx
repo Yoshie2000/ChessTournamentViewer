@@ -133,7 +133,7 @@ export const BoardWindow = memo(() => {
 
         wasSamePosition = false;
 
-        samePositionsList[samePositionsList.length - 1].diverge = move;
+        samePositionsList.push({ moveNumber: i, diverge: move });
       }
     });
 
