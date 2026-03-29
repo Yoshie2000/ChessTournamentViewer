@@ -54,6 +54,11 @@ input {
   background: #b71c1c;
 }
 
+iframe {
+  outline: none !important;
+  border: 1px solid #232323 !important;
+}
+
 label {
   margin-bottom: 0.125rem;
   display: block;
