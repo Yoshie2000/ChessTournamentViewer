@@ -117,7 +117,8 @@
   overflow: hidden;
   display: grid;
   grid-template-rows: auto 2fr;
-  gap: var(--gap);
+  padding-top: calc(0.5 * var(--gap));
+  gap: calc(0.5 * var(--gap));
   grid-column: 1 / 2;
   grid-row: 2 / 3;
 }

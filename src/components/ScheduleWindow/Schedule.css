@@ -1,6 +1,18 @@
-.schedule {
+.scheduleWindow .scheduleWindowTabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.scheduleWindow .tab {
   overflow: auto;
   border: 1px solid #232323;
+}
+
+.scheduleWindow .tab:has(iframe) {
+  overflow: hidden;
 }
 
 .schedule .game {
