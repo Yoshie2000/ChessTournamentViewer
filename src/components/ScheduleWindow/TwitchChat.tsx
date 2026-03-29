@@ -7,6 +7,11 @@ export function TwitchChat() {
   const twitchChannel =
     activeProvider === "ccc" ? "computerchess" : "TCEC_Chess_TV";
 
+  console.log(
+    "https://www.twitch.tv/embed/TCEC_Chess_TV/chat?parent=staging.ctv.yoshie2000.de&darkpopout",
+    `https://www.twitch.tv/embed/${twitchChannel}/chat?parent=${domain}&darkpopout`
+  );
+
   return (
     <iframe
       src={`https://www.twitch.tv/embed/${twitchChannel}/chat?parent=${domain}&darkpopout`}
