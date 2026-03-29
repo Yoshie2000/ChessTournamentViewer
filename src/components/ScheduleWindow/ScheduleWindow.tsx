@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Schedule } from "./Schedule";
+import { TwitchChat } from "./TwitchChat";
 
 const TABS = ["Schedule", "Chat"] as const;
 type Tab = (typeof TABS)[number];
@@ -25,11 +26,7 @@ export const ScheduleWindow = () => {
         className="tab"
         style={activeTab === "Schedule" ? { display: "none" } : undefined}
       >
-        <iframe
-          src="https://www.twitch.tv/embed/TCEC_Chess_TV/chat?parent=staging.ctv.yoshie2000.de&darkpopout"
-          style={{ width: "100%", height: "100%" }}
-          loading="lazy"
-        />
+        <TwitchChat />
       </div>
 
       <div
