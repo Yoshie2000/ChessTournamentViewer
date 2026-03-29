@@ -188,7 +188,7 @@
   .scheduleWindow {
     grid-column: 1 / 3;
     grid-row: 4 / 5;
-    height: 400px;
+    height: 600px;
   }
 }
 
