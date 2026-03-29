@@ -1,7 +1,7 @@
 import type { GridStackWidget } from "gridstack";
 import type { LiveInfoEntry } from "./LiveInfo";
 import type { CCCEventUpdate, CCCGameUpdate } from "./types";
-import { DEFAULT_LAYOUT, type Widget } from "./App";
+import { LAYOUTS, type Widget } from "./App";
 
 const LIVE_INFO_PREFIX = "LI|";
 const SETTINGS_PREFIX = "S|";
@@ -103,7 +103,7 @@ export function loadLayout() {
         h: widget.h ?? 1,
         x: widget.x ?? 0,
         y: widget.y ?? 0,
-        component: DEFAULT_LAYOUT.find((w) => w.id === widget.id)!.component,
+        component: LAYOUTS[Number(Object.keys(LAYOUTS)[0])].widgets.find((w) => w.id === widget.id)!.component,
       })) satisfies Widget[];
   }
   return undefined;

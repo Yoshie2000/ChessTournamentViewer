@@ -43,68 +43,116 @@ export type Widget = {
   component: ElementType;
 };
 
-const ENGINE_WINDOW_WIDGET: Widget = {
-  id: "engineWindowWidget",
-  w: 12,
-  h: -1,
-  x: 36,
-  y: 0,
-  component: EngineWindow,
+export type Layout = {
+  columns: number;
+  movelistWidth: number;
+  widgets: Widget[];
 };
 
-const BOARD_WINDOW_WIDGET: Widget = {
-  id: "boardWindowWidget",
-  w: 20,
-  h: 16,
-  x: 16,
-  y: 0,
-  component: BoardWindow,
+export const LAYOUTS: Record<number, Layout> = {
+  1400: {
+    columns: 47,
+    movelistWidth: 4,
+    widgets: [
+      {
+        id: "engineWindowWidget",
+        w: 13,
+        h: 21,
+        x: 34,
+        y: 0,
+        component: EngineWindow,
+      },
+      {
+        id: "boardWindowWidget",
+        w: 18,
+        h: 14,
+        x: 16,
+        y: 0,
+        component: BoardWindow,
+      },
+      {
+        id: "standingsWindowWidget",
+        w: 16,
+        h: 7,
+        x: 0,
+        y: 14,
+        component: StandingsWindow,
+      },
+      {
+        id: "graphWindowWidget",
+        w: 18,
+        h: 7,
+        x: 16,
+        y: 14,
+        component: GraphWindow,
+      },
+      {
+        id: "scheduleWindowWidget",
+        w: 16,
+        h: 14,
+        x: 0,
+        y: 0,
+        component: ScheduleWindow,
+      },
+    ],
+  },
+  // 775: {},
+  0: {
+    columns: 1,
+    movelistWidth: 0,
+    widgets: [
+      {
+        id: "engineWindowWidget",
+        w: 1,
+        h: 1,
+        x: 0,
+        y: 1,
+        component: EngineWindow,
+      },
+      {
+        id: "boardWindowWidget",
+        w: 1,
+        h: 1,
+        x: 0,
+        y: 0,
+        component: BoardWindow,
+      },
+      {
+        id: "standingsWindowWidget",
+        w: 1,
+        h: 1,
+        x: 0,
+        y: 4,
+        component: StandingsWindow,
+      },
+      {
+        id: "graphWindowWidget",
+        w: 1,
+        h: 1,
+        x: 0,
+        y: 2,
+        component: GraphWindow,
+      },
+      {
+        id: "scheduleWindowWidget",
+        w: 1,
+        h: 1,
+        x: 0,
+        y: 3,
+        component: ScheduleWindow,
+      },
+    ],
+  },
 };
 
-const STANDINGS_WINDOW_WIDGET: Widget = {
-  id: "standingsWindowWidget",
-  w: 16,
-  h: 10,
-  x: 0,
-  y: 16,
-  component: StandingsWindow,
-};
-
-const GRAPH_WINDOW_WIDGET: Widget = {
-  id: "graphWindowWidget",
-  w: 20,
-  h: 10,
-  x: 16,
-  y: 16,
-  component: GraphWindow,
-};
-
-const SCHEDULE_WINDOW_WIDGET: Widget = {
-  id: "scheduleWindowWidget",
-  w: 16,
-  h: 16,
-  x: 0,
-  y: 0,
-  component: ScheduleWindow,
-};
-
-export const DEFAULT_LAYOUT = [
-  ENGINE_WINDOW_WIDGET,
-  BOARD_WINDOW_WIDGET,
-  STANDINGS_WINDOW_WIDGET,
-  GRAPH_WINDOW_WIDGET,
-  SCHEDULE_WINDOW_WIDGET,
-];
-
-const COLUMNS = 48;
-const MOVELIST_WIDTH = 4;
-
-function setBoardSize(width: number, height: number, cellSize: number) {
-  const targetH = Math.max(
-    2,
-    Math.round((width - MOVELIST_WIDTH + height) / 2)
-  );
-  const targetW = Math.max(MOVELIST_WIDTH + 2, targetH + MOVELIST_WIDTH);
+function setBoardSize(
+  width: number,
+  height: number,
+  movelistWidth: number,
+  cellSize: number
+) {
+  const targetH = Math.max(2, Math.round((width - movelistWidth + height) / 2));
+  const targetW = Math.max(movelistWidth + 2, targetH + movelistWidth);
 
   document.documentElement.style.setProperty(
     "--boardWidth",
@@ -118,21 +166,27 @@ function setBoardSize(width: number, height: number, cellSize: number) {
 
 function App() {
   const { width, height } = useWindowSize();
-  const cellSize = Math.floor(width / COLUMNS);
-  const rows = Math.floor((height - 56) / cellSize);
+  const layoutIdx = Object.keys(LAYOUTS)
+    .toSorted((a, b) => Number(b) - Number(a))
+    .find((px) => width > Number(px))!;
+  const layout = LAYOUTS[Number(layoutIdx)];
+  console.log(layout);
+
+  const cellWidth = Math.floor(width / layout.columns);
+  const rows = Math.floor((height - 56) / cellWidth);
 
   const gridRef = useRef<HTMLDivElement>(null);
   const gridInstance = useRef<GridStack | null>(null);
 
-  const [widgets] = useState<Widget[]>(loadLayout() ?? DEFAULT_LAYOUT);
+  const [widgets] = useState<Widget[]>(loadLayout() ?? layout.widgets);
 
   useEffect(() => {
     if (!gridRef.current) return;
 
     gridInstance.current = GridStack.init(
       {
-        column: COLUMNS,
-        cellHeight: `${cellSize}px`,
+        column: layout.columns,
+        cellHeight: `${cellWidth}px`,
         margin: 0,
         handle: ".react-grid-drag-handle",
         float: true,
@@ -153,8 +207,8 @@ function App() {
     gridInstance.current.on("resize", (_, el) => {
       const node = el.gridstackNode;
 
-      if (node?.id === BOARD_WINDOW_WIDGET.id) {
-        setBoardSize(node.w || 0, node.h || 0, cellSize);
+      if (node?.id === "boardWindowWidget") {
+        setBoardSize(node.w || 0, node.h || 0, layout.movelistWidth, cellWidth);
       }
     });
 
@@ -167,19 +221,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (gridInstance.current) {
-      gridInstance.current.cellHeight(cellSize);
+    if (!gridInstance.current) return;
 
-      gridInstance.current.opts.maxRow = rows;
-    }
-  }, [cellSize, rows]);
+    gridInstance.current.cellHeight(cellWidth);
+    gridInstance.current.opts.maxRow = rows;
+  }, [cellWidth, rows]);
 
   useEffect(() => {
     const boardWindowWidget = widgets.find(
-      (widget) => widget.id === BOARD_WINDOW_WIDGET.id
+      (widget) => widget.id === "boardWindowWidget"
     )!;
-    setBoardSize(boardWindowWidget.w, boardWindowWidget.h, cellSize);
-  }, [cellSize]);
+    setBoardSize(boardWindowWidget.w, boardWindowWidget.h, layout.movelistWidth, cellWidth);
+  }, [cellWidth]);
 
   return (
     <div className="app-container">
@@ -197,7 +250,7 @@ function App() {
             className="grid-stack-item"
             gs-id={widget.id}
             gs-w={widget.w}
-            gs-h={widget.h === -1 ? rows : widget.h}
+            gs-h={widget.h}
             gs-x={widget.x}
             gs-y={widget.y}
           >
