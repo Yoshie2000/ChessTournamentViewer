@@ -348,7 +348,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         engine: {
           ...EmptyEngineDefinition,
           name: sf.desc.split(" ")[0],
-          imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Stockfish.png",
+          imageUrl: `https://ctv.yoshie2000.de/tcec/image/engine/${sf.desc.split(" ")[0]}.png`,
         },
       });
 
