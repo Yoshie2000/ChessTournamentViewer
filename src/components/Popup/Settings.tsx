@@ -84,6 +84,10 @@ export const Settings = memo(() => {
             onChange={(e) => setThreads(Number(e.target.value))}
           />
         </div>
+        <small>
+          The 'Threads' setting only applies to native kibitzers, not to
+          Stockfish WASM
+        </small>
       </div>
 
       <button className="applySettings" onClick={applySettings}>

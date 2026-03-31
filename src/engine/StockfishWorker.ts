@@ -5,7 +5,7 @@ export class StockfishWorker implements IEngineWorker {
   private callback: null | ((e: any) => void) = null;
 
   constructor(hash: number = 128, threads: number = 1) {
-    this.worker = new Worker("/stockfish-18.js");
+    this.worker = new Worker("/stockfish-18-single.js");
 
     this.worker.onmessage = this.callback;
 
