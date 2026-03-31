@@ -18,6 +18,7 @@
 .popup .settings .engineSettings {
   display: flex;
   gap: 1rem;
+  row-gap: 0;
   flex-wrap: wrap;
   margin: 0.5rem 0 1rem 0;
 }
@@ -29,6 +30,10 @@
 .popup .settings .checkbox {
   display: flex;
   gap: 0.25rem;
+}
+
+.popup .settings small {
+  width: 100%;
 }
 
 .topBar .settingsRow {
