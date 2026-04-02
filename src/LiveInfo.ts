@@ -259,7 +259,7 @@ export function extractLiveInfoFromGame(game: Chess960) {
     }
 
     const pvString = data[8].replace("pv=", "").replaceAll('"', "");
-    const sanPv = sanToUci(fenBeforeMove, pvString.trim().split(" "));
+    const sanPv = uciToSan(fenBeforeMove, pvString.trim().split(" "));
 
     const array = color === "white" ? liveInfosWhite : liveInfosBlack;
     const time = data[0].split(" ")[1].split("s")[0].replace(".", "");

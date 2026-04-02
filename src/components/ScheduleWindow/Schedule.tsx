@@ -3,6 +3,8 @@ import { EngineLogo } from "../EngineWindow/EngineLogo";
 import "./Schedule.css";
 import { MdOutlineClose } from "react-icons/md";
 import { useEventStore } from "../../context/EventContext";
+import { useLiveInfo } from "../../context/LiveInfoContext";
+import { getTimeControl } from "../../LiveInfo";
 
 function formatDuration(value: number) {
   if (value === 1) return `ìn 1 minute`;
@@ -89,6 +91,8 @@ const Schedule = memo(() => {
     ...event.tournamentDetails.schedule.future,
   ];
 
+  const timeControl = getTimeControl(useLiveInfo.getState().game);
+
   const durationPerGame = event.tournamentDetails.schedule.past
     .map((game) => {
       if (!game.timeEnd || !game.timeStart) return null;
@@ -98,8 +102,11 @@ const Schedule = memo(() => {
     })
     .filter((duration) => !!duration) as number[];
   const averageDuration =
-    durationPerGame.reduce((prev, cur) => prev! + cur!, 0) /
-    durationPerGame.length /
+    durationPerGame.reduce(
+      (prev, cur) => prev! + cur!,
+      2 * timeControl.tcBase + 100 * timeControl.tcIncrement
+    ) /
+    (durationPerGame.length + 1) /
     1000 /
     60;
   const currentGameIdx = event.tournamentDetails.schedule.past.length;
