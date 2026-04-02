@@ -23,6 +23,7 @@ import { Popup } from "./components/Popup/Popup";
 
 import { useWindowSize } from "./hooks/useWindowSize";
 import { loadLayout, saveLayout } from "./LocalStorage";
+import { RiDragMove2Fill } from "react-icons/ri";
 
 Chart.register(
   CategoryScale,
@@ -256,7 +257,7 @@ function App() {
           >
             <div className="grid-stack-item-content">
               <widget.component />
-              <div className="react-grid-drag-handle" />
+              <RiDragMove2Fill className="react-grid-drag-handle" color="AAA"/>
             </div>
           </div>
         ))}
