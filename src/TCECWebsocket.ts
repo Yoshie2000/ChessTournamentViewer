@@ -125,9 +125,10 @@ export class TCECWebSocket implements TournamentWebSocket {
   async fetchReverseFor(
     gameNumber: number
   ): Promise<{ pgn: string; reverseGameNumber: number } | null> {
-    if (this.event?.tournamentDetails.isRoundRobin) {
-      return null;
-    }
+    // TODO this check is bugged for finals for whatever reason so I'll leave it for now
+    // if (this.event?.tournamentDetails.isRoundRobin) {
+    //   return null;
+    // }
 
     const reverseGameNumber =
       gameNumber % 2 === 0 ? gameNumber - 1 : gameNumber + 1;
@@ -147,8 +148,12 @@ export class TCECWebSocket implements TournamentWebSocket {
       const game = new Chess960();
       game.loadPgn(pgn);
 
+      console.log(reverseGameNumber);
+      console.log(game.boardFenHistory());
+
       return { pgn, reverseGameNumber };
-    } catch {
+    } catch (err) {
+      console.log(err);
       return null;
     }
   }
