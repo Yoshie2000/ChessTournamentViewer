@@ -1,4 +1,9 @@
-import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
+import type {
+  CCCLiveInfo,
+  CCCEventsListUpdate,
+  CCCMessage,
+  CCCGameUpdate,
+} from "./types";
 
 export interface TournamentWebSocket {
   connect: (
@@ -13,6 +18,9 @@ export interface TournamentWebSocket {
   disconnect: () => void;
   send: (msg: unknown) => void;
   fetchEventList: (onEventList: (msg: CCCEventsListUpdate) => void) => void;
+  fetchReverseFor: (
+    gameNumber: number
+  ) => Promise<{ pgn: string; reverseGameNumber: number } | null>;
 }
 
 const TIMEOUT_RECONNECT_MS = 5000;
@@ -24,6 +32,18 @@ export class CCCWebSocket implements TournamentWebSocket {
   private callback: (message: CCCMessage) => void = () => {};
 
   private timeoutId: number | undefined = undefined;
+  private eventNr: string | undefined = undefined;
+  /**
+   * **The starting game number of the current CCC event**
+   *
+   * CCC's game numbers now persist across events, so the first game
+   * of a new event can start at an arbitrary number (e.g. `19010/19011`)
+   *
+   * This is needed to correctly calculate the reverse game number,
+   * as the parity `even/odd` of the starting number determines
+   * whether the reverse game is `gameNr + 1` or `gameNr - 1`
+   */
+  private firstGameNumber: number | undefined = undefined;
 
   connect(
     onMessage: (message: CCCMessage) => void,
@@ -51,7 +71,7 @@ export class CCCWebSocket implements TournamentWebSocket {
       this.connect(this.callback, initialEventId, initialGameId);
     }, TIMEOUT_RECONNECT_MS);
 
-    this.socket.onmessage = (e) => {
+    this.socket.onmessage = async (e) => {
       const messages = JSON.parse(e.data) as CCCMessage[];
 
       const hasGameUpdate = messages.some(
@@ -87,6 +107,18 @@ export class CCCWebSocket implements TournamentWebSocket {
             isLiveGame || newMoveIdx === -1 || message.type !== "liveInfo"
         );
 
+      const eventUpdate = messages.find(
+        (message) => message.type === "eventUpdate"
+      );
+      if (eventUpdate) {
+        this.eventNr = eventUpdate.tournamentDetails.tNr;
+        // TODO i should add a comment about why this bs needed later
+        this.firstGameNumber =
+          Number(eventUpdate.tournamentDetails?.schedule.past?.[0].gameNr) ||
+          Number(eventUpdate.tournamentDetails.schedule.present?.gameNr) ||
+          undefined;
+      }
+
       for (const msg of filteredMessages) {
         if (msg.type === "eventUpdate") {
           msg.tournamentDetails.hasGamePairs = true;
@@ -100,6 +132,64 @@ export class CCCWebSocket implements TournamentWebSocket {
     this.socket.onclose = () => {
       this.socket = null;
     };
+  }
+
+  async fetchReverseFor(gameNumber: number) {
+    if (this.firstGameNumber === undefined) {
+      return null;
+    }
+
+    const isFirstGameNumberEven = this.firstGameNumber % 2 === 0;
+    const isCurrentGameNumberEven = gameNumber % 2 === 0;
+
+    const direction = isFirstGameNumberEven ? 1 : -1;
+    const reverseGameNumber =
+      gameNumber + (isCurrentGameNumberEven ? direction : -direction);
+
+    try {
+      const pgn = await this.fetchPgn(
+        this.eventNr ?? "",
+        String(reverseGameNumber)
+      );
+
+      return { pgn, reverseGameNumber };
+    } catch {
+      return null;
+    }
+  }
+
+  fetchPgn(eventNr: string, gameNr: string) {
+    return new Promise<string>((resolve, reject) => {
+      const tempSocket = new WebSocket(this.url);
+
+      tempSocket.onopen = () => {
+        tempSocket.send(
+          JSON.stringify({ type: "requestEvent", eventNr, gameNr })
+        );
+      };
+
+      tempSocket.onmessage = (e) => {
+        const messages = JSON.parse(e.data) as CCCMessage[];
+        const found = messages.find(this.checkMsgIsGameUpdate);
+
+        if (found) {
+          tempSocket.close();
+          resolve(found.gameDetails.pgn);
+        }
+      };
+
+      tempSocket.onerror = () => {
+        tempSocket.close();
+        reject();
+      };
+    });
+  }
+
+  private checkMsgIsGameUpdate(msg: CCCMessage): msg is CCCGameUpdate {
+    if (msg.type === "gameUpdate") {
+      return true;
+    }
+    return false;
   }
 
   fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {

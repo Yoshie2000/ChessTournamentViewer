@@ -122,6 +122,37 @@ export class TCECWebSocket implements TournamentWebSocket {
     }
   }
 
+  async fetchReverseFor(
+    gameNumber: number
+  ): Promise<{ pgn: string; reverseGameNumber: number } | null> {
+    if (this.event?.tournamentDetails.isRoundRobin) {
+      return null;
+    }
+
+    const reverseGameNumber =
+      gameNumber % 2 === 0 ? gameNumber - 1 : gameNumber + 1;
+
+    try {
+      const safeEventNr = this.game
+        .getHeaders()
+        ["Event"].replaceAll(" ", "_")
+        .replaceAll("DivP", "Divp");
+
+      const pgn = await (
+        await fetch(
+          `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${reverseGameNumber}.pgn`
+        )
+      ).text();
+
+      const game = new Chess960();
+      game.loadPgn(pgn);
+
+      return { pgn, reverseGameNumber };
+    } catch {
+      return null;
+    }
+  }
+
   connect(
     onMessage: (message: CCCMessage) => void,
     initialEventId?: string,

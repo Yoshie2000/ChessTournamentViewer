@@ -12,7 +12,7 @@ import {
   type EngineColor,
 } from "../../LiveInfo";
 import { loadLiveInfos } from "../../LocalStorage";
-import { type Square } from "../../chess.js/chess";
+import { Chess960, type Square } from "@/chess.js/chess";
 import { uciToSan } from "../../utils";
 import { EngineMinimal } from "../EngineWindow/EngineMinimal";
 import { GameResultOverlay } from "./GameResultOverlay";
@@ -48,18 +48,18 @@ export const BoardWindow = memo(() => {
 
   const activeProvider = useEventStore((state) => state.activeProvider);
   const activeEvent = useEventStore((state) => state.activeEvent);
+  const activeGameNumber = useEventStore((state) =>
+    Number(state.activeGame?.gameDetails.gameNr)
+  );
+
   const game = useLiveInfo((state) => state.game);
 
   const initialEvent = useRef<string | null>(_initialEvent);
   const initialGame = useRef<string | null>(_initialGame);
 
-  const history = useGameHistory((state) => state.history);
+  const gameDataMap = useGameHistory((state) => state.gameDataMap);
   const setOverlappingMovesIndxList = useGameHistory(
     (state) => state.setTranspositions
-  );
-  // game number as index from schedule + 1
-  const currentSelectedGameNumber = useEventStore(
-    (state) => state.selectedGameNumber
   );
 
   const handleLiveInfo = useCallback(
@@ -84,28 +84,66 @@ export const BoardWindow = memo(() => {
   );
 
   useEffect(() => {
-    if (!currentSelectedGameNumber) {
+    if (!activeGameNumber) {
       return;
     }
 
     useGameHistory
       .getState()
-      .setDataForGame(currentSelectedGameNumber, game.boardFenHistory());
-  }, [currentSelectedGameNumber, game]);
+      .setDataForGame(Number(activeGameNumber), game.boardFenHistory());
+  }, [activeGameNumber, game]);
 
+  // TODO move out of this component
   useEffect(() => {
-    if (!currentSelectedGameNumber) {
+    const firstGameNumberOfTheEvent: number | null =
+      Number(activeEvent?.tournamentDetails.schedule.past[0].gameNr) ||
+      Number(activeEvent?.tournamentDetails.schedule.present?.gameNr) ||
+      null;
+
+    if (!activeGameNumber || !firstGameNumberOfTheEvent) {
       return;
     }
 
-    const reverseGameNumber =
-      currentSelectedGameNumber % 2 === 0
-        ? currentSelectedGameNumber - 1
-        : currentSelectedGameNumber + 1;
+    const isFirstGameNumberEven = firstGameNumberOfTheEvent % 2 === 0;
+    const isCurrentGameNumberEven = activeGameNumber % 2 === 0;
 
-    const currentFenList = history[currentSelectedGameNumber]?.fenList;
-    const reverseGameFenList = history[reverseGameNumber]?.fenList;
-    const reverseGameMoveList = history[reverseGameNumber]?.moveList;
+    const direction = isFirstGameNumberEven ? 1 : -1;
+    const reverseGameNumber =
+      activeGameNumber + (isCurrentGameNumberEven ? direction : -direction);
+
+    const currentFenList = gameDataMap[activeGameNumber]?.fenList;
+    const reverseGameFenList = gameDataMap[reverseGameNumber]?.fenList;
+    const reverseGameMoveList = gameDataMap[reverseGameNumber]?.moveList;
+
+    const fetchReverse = async (gameNumber: number) => {
+      try {
+        const reverseData =
+          await activeWSRef.current.fetchReverseFor(gameNumber);
+
+        if (!reverseData) {
+          return;
+        }
+        const { pgn, reverseGameNumber } = reverseData;
+
+        const chess = new Chess960();
+        chess.loadPgn(pgn);
+
+        const histories = chess.boardFenHistory();
+
+        useGameHistory.getState().setDataForGame(reverseGameNumber, histories);
+        console.log(`${gameNumber} ${reverseGameNumber}`);
+        console.log(useGameHistory.getState().gameDataMap[gameNumber]);
+        console.log(useGameHistory.getState().gameDataMap[reverseGameNumber]);
+      } catch (err) {
+        console.log(err);
+        return;
+      }
+    };
+
+    if (!reverseGameFenList || !reverseGameMoveList) {
+      fetchReverse(Number(activeGameNumber));
+      return;
+    }
 
     if (!currentFenList || !reverseGameFenList || !reverseGameMoveList) {
       return;
@@ -133,8 +171,16 @@ export const BoardWindow = memo(() => {
       }
     });
 
-    setOverlappingMovesIndxList(currentSelectedGameNumber, samePositionsList);
-  }, [currentSelectedGameNumber, history, setOverlappingMovesIndxList]);
+    console.log(samePositionsList);
+
+    setOverlappingMovesIndxList(activeGameNumber, samePositionsList);
+  }, [
+    activeEvent?.tournamentDetails.schedule.past,
+    activeEvent?.tournamentDetails.schedule.present?.gameNr,
+    activeGameNumber,
+    gameDataMap,
+    setOverlappingMovesIndxList,
+  ]);
 
   const handleMessage = useCallback(
     function (msg: CCCMessage) {
@@ -143,9 +189,10 @@ export const BoardWindow = memo(() => {
       const currentProvider = eventState.activeProvider;
 
       switch (msg.type) {
-        case "eventUpdate":
+        case "eventUpdate": {
           eventState.setEvent(currentProvider, msg);
           break;
+        }
 
         case "gameUpdate": {
           game.loadPgn(msg.gameDetails.pgn);
@@ -225,13 +272,10 @@ export const BoardWindow = memo(() => {
           liveInfoState.setMoves(game.history());
           updateBoard(true);
 
-          if (currentSelectedGameNumber) {
+          if (activeGameNumber) {
             useGameHistory
               .getState()
-              .setDataForGame(
-                currentSelectedGameNumber,
-                game.boardFenHistory()
-              );
+              .setDataForGame(Number(activeGameNumber), game.boardFenHistory());
           }
 
           break;
@@ -245,13 +289,10 @@ export const BoardWindow = memo(() => {
           break;
 
         case "result": {
-          if (currentSelectedGameNumber) {
+          if (activeGameNumber) {
             useGameHistory
               .getState()
-              .setDataForGame(
-                currentSelectedGameNumber,
-                game.boardFenHistory()
-              );
+              .setDataForGame(Number(activeGameNumber), game.boardFenHistory());
           }
 
           game.setHeader("Termination", msg.reason);
@@ -261,7 +302,7 @@ export const BoardWindow = memo(() => {
         }
       }
     },
-    [game, handleLiveInfo, updateBoard, currentSelectedGameNumber]
+    [activeGameNumber, game, handleLiveInfo, updateBoard]
   );
 
   useEffect(() => {
