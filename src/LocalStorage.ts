@@ -87,12 +87,15 @@ export function saveSettings(settings: Record<string, any>) {
   }
 }
 
-export function saveLayout(layout: GridStackWidget[]) {
-  localStorage.setItem(LAYOUT_PREFIX, JSON.stringify(layout));
+export function saveLayout(breakpoint: number, layout: GridStackWidget[]) {
+  localStorage.setItem(
+    LAYOUT_PREFIX + String(breakpoint),
+    JSON.stringify(layout)
+  );
 }
 
-export function loadLayout() {
-  const data = localStorage.getItem(LAYOUT_PREFIX);
+export function loadLayout(breakpoint: number) {
+  const data = localStorage.getItem(LAYOUT_PREFIX + String(breakpoint));
   if (data) {
     const widgets = JSON.parse(data) as GridStackWidget[];
     return widgets
@@ -103,10 +106,27 @@ export function loadLayout() {
         h: widget.h ?? 1,
         x: widget.x ?? 0,
         y: widget.y ?? 0,
-        component: LAYOUTS[Number(Object.keys(LAYOUTS)[0])].widgets.find((w) => w.id === widget.id)!.component,
+        component: LAYOUTS[Number(Object.keys(LAYOUTS)[0])].widgets.find(
+          (w) => w.id === widget.id
+        )!.component,
       })) satisfies Widget[];
   }
   return undefined;
+}
+
+export function resetLayouts() {
+  const keys: string[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(LAYOUT_PREFIX)) {
+      keys.push(key);
+    }
+  }
+
+  for (const key of keys) {
+    localStorage.removeItem(key);
+  }
 }
 
 function deleteAllButSettings() {

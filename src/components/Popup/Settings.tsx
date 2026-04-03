@@ -2,7 +2,7 @@ import { MdOutlineClose } from "react-icons/md";
 import type { EngineSettings } from "../../engine/EngineWorker";
 import "./Settings.css";
 import { memo, useState } from "react";
-import { loadSettings, saveSettings } from "../../LocalStorage";
+import { loadSettings, resetLayouts, saveSettings } from "../../LocalStorage";
 import { usePopup } from "../../context/PopupContext";
 import { useSettings } from "../../context/SettingsContext";
 
@@ -38,6 +38,11 @@ export const Settings = memo(() => {
     const settings = { hash, threads, enableKibitzer };
     saveSettings(settings);
     setKibitzerSettings(settings);
+  }
+
+  function resetLayout() {
+    resetLayouts();
+    location.reload();
   }
 
   return (
@@ -92,6 +97,12 @@ export const Settings = memo(() => {
 
       <button className="applySettings" onClick={applySettings}>
         Apply Settings
+      </button>
+
+      <hr/>
+
+      <button className="applySettings" onClick={resetLayout}>
+        Reset Layout
       </button>
     </div>
   );

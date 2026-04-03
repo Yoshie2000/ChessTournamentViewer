@@ -211,11 +211,12 @@ function LinearContainer({ width, height }: GridContainerProps) {
 }
 
 function GridContainer({ width, height }: GridContainerProps) {
-  const layoutIdx = Object.keys(LAYOUTS)
-    .toSorted((a, b) => Number(b) - Number(a))
-    .find((px) => width > Number(px))!;
-  const layout = LAYOUTS[Number(layoutIdx)];
-  console.log(layout);
+  const breakpoint = Number(
+    Object.keys(LAYOUTS)
+      .toSorted((a, b) => Number(b) - Number(a))
+      .find((px) => width > Number(px))!
+  );
+  const [layout, setLayout] = useState<Layout>(LAYOUTS[breakpoint]);
 
   const cellWidth = Math.floor(width / layout.columns);
   const rows = Math.floor((height - 56) / cellWidth);
@@ -223,7 +224,14 @@ function GridContainer({ width, height }: GridContainerProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const gridInstance = useRef<GridStack | null>(null);
 
-  const [widgets] = useState<Widget[]>(loadLayout() ?? layout.widgets);
+  useEffect(() => {
+    const saved = loadLayout(breakpoint);
+    if (saved) {
+      setLayout({ ...LAYOUTS[breakpoint], widgets: saved });
+    } else {
+      setLayout(LAYOUTS[breakpoint]);
+    }
+  }, [breakpoint]);
 
   useEffect(() => {
     if (!gridRef.current) return;
@@ -235,6 +243,7 @@ function GridContainer({ width, height }: GridContainerProps) {
         margin: 0,
         handle: ".react-grid-drag-handle",
         float: true,
+
       },
       gridRef.current
     );
@@ -242,7 +251,7 @@ function GridContainer({ width, height }: GridContainerProps) {
     function onLayoutChange() {
       const layout = gridInstance.current?.save(false);
       if (layout && Array.isArray(layout)) {
-        saveLayout(layout);
+        saveLayout(breakpoint, layout);
       }
     }
 
@@ -263,7 +272,7 @@ function GridContainer({ width, height }: GridContainerProps) {
         gridInstance.current = null;
       }
     };
-  }, []);
+  }, [layout.movelistWidth]);
 
   useEffect(() => {
     if (!gridInstance.current) return;
@@ -273,7 +282,7 @@ function GridContainer({ width, height }: GridContainerProps) {
   }, [cellWidth, rows]);
 
   useEffect(() => {
-    const boardWindowWidget = widgets.find(
+    const boardWindowWidget = layout.widgets.find(
       (widget) => widget.id === "boardWindowWidget"
     )!;
     setBoardSize(
@@ -282,7 +291,24 @@ function GridContainer({ width, height }: GridContainerProps) {
       layout.movelistWidth,
       cellWidth
     );
-  }, [cellWidth]);
+  }, [cellWidth, layout.movelistWidth]);
+
+  useEffect(() => {
+    if (!gridInstance.current) return;
+
+    gridInstance.current.batchUpdate();
+
+    layout.widgets.forEach((w) => {
+      const el = gridRef.current?.querySelector(
+        `[gs-id="${w.id}"]`
+      ) as HTMLElement;
+      if (el) {
+        gridInstance.current?.update(el, { x: w.x, y: w.y, w: w.w, h: w.h });
+      }
+    });
+
+    gridInstance.current.batchUpdate(false);
+  }, [layout]);
 
   return (
     <div
@@ -290,7 +316,7 @@ function GridContainer({ width, height }: GridContainerProps) {
       ref={gridRef}
       style={{ width: `${width - 8}px` }}
     >
-      {widgets.map((widget) => (
+      {layout.widgets.map((widget) => (
         <div
           key={widget.id}
           className="grid-stack-item"

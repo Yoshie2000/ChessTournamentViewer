@@ -11,6 +11,6 @@ body:has(.popup) {
   width: 100vw;
   height: 100dvh;
 
-  z-index: 100;
+  z-index: 1000;
   overflow: auto;
 }
