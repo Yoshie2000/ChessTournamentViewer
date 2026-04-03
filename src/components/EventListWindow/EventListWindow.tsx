@@ -4,6 +4,7 @@ import { useEventStore } from "../../context/EventContext";
 import { LuSettings } from "react-icons/lu";
 import { EventList } from "./EventList";
 import { usePopup } from "../../context/PopupContext";
+import { useMediaQuery } from "react-responsive";
 
 export const EventListWindow = memo(() => {
   const activeEvent = useEventStore((state) => state.activeEvent);
@@ -12,10 +13,12 @@ export const EventListWindow = memo(() => {
 
   const eventName = activeEvent?.tournamentDetails.name;
 
+  const lessText = useMediaQuery({ maxWidth: 1400 });
+
   return (
     <header className="topBar">
       <div className="currentEvent">
-        Chess Tournament Viewer
+        {!lessText ? "Chess Tournament Viewer" : "CTV"}
         {eventName ? " - " + eventName : ""}
       </div>
       <div className="settingsRow">

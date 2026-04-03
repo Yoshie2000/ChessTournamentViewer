@@ -10,4 +10,9 @@
 .currentEvent {
   font-size: var(--font-lg);
   font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 2px;
 }

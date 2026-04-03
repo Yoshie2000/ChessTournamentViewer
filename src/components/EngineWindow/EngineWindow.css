@@ -119,11 +119,9 @@
   }
 }
 
-@media (max-width: 775px) {
-  .engineWindow {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 1fr;
-    gap: 0.5rem;
-    height: auto;
-  }
+.linear-container .engineWindow {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+  gap: 0.5rem;
+  height: auto;
 }

@@ -24,6 +24,7 @@ import { Popup } from "./components/Popup/Popup";
 import { useWindowSize } from "./hooks/useWindowSize";
 import { loadLayout, saveLayout } from "./LocalStorage";
 import { RiDragMove2Fill } from "react-icons/ri";
+import { LiveMoveList } from "./components/BoardWindow/LiveMoveList";
 
 Chart.register(
   CategoryScale,
@@ -97,49 +98,48 @@ export const LAYOUTS: Record<number, Layout> = {
       },
     ],
   },
-  // 775: {},
   0: {
-    columns: 1,
-    movelistWidth: 0,
+    columns: 47,
+    movelistWidth: 4,
     widgets: [
       {
         id: "engineWindowWidget",
-        w: 1,
-        h: 1,
-        x: 0,
-        y: 1,
+        w: 13,
+        h: 21,
+        x: 34,
+        y: 0,
         component: EngineWindow,
       },
       {
         id: "boardWindowWidget",
-        w: 1,
-        h: 1,
-        x: 0,
+        w: 18,
+        h: 14,
+        x: 16,
         y: 0,
         component: BoardWindow,
       },
       {
         id: "standingsWindowWidget",
-        w: 1,
-        h: 1,
+        w: 16,
+        h: 7,
         x: 0,
-        y: 4,
+        y: 14,
         component: StandingsWindow,
       },
       {
         id: "graphWindowWidget",
-        w: 1,
-        h: 1,
-        x: 0,
-        y: 2,
+        w: 18,
+        h: 7,
+        x: 16,
+        y: 14,
         component: GraphWindow,
       },
       {
         id: "scheduleWindowWidget",
-        w: 1,
-        h: 1,
+        w: 16,
+        h: 14,
         x: 0,
-        y: 3,
+        y: 0,
         component: ScheduleWindow,
       },
     ],
@@ -163,10 +163,54 @@ function setBoardSize(
     "--boardHeight",
     `${targetH * cellSize}px`
   );
+  document.documentElement.style.setProperty(
+    "--movelist-width",
+    `${movelistWidth * cellSize}px`
+  );
 }
 
 function App() {
   const { width, height } = useWindowSize();
+
+  return (
+    <div className="app-container">
+      <Popup />
+      <EventListWindow />
+
+      {width <= 775 ? (
+        <LinearContainer width={width} height={height} />
+      ) : (
+        <GridContainer width={width} height={height} />
+      )}
+    </div>
+  );
+}
+
+type GridContainerProps = { width: number; height: number };
+
+function LinearContainer({ width, height }: GridContainerProps) {
+  useEffect(() => {
+    setBoardSize(width - 16, width - 16, 0, 1);
+  }, [width, height]);
+
+  return (
+    <div className="linear-container">
+      <EngineWindow />
+
+      <BoardWindow />
+
+      <LiveMoveList />
+
+      <StandingsWindow />
+
+      <GraphWindow />
+
+      <ScheduleWindow />
+    </div>
+  );
+}
+
+function GridContainer({ width, height }: GridContainerProps) {
   const layoutIdx = Object.keys(LAYOUTS)
     .toSorted((a, b) => Number(b) - Number(a))
     .find((px) => width > Number(px))!;
@@ -232,36 +276,36 @@ function App() {
     const boardWindowWidget = widgets.find(
       (widget) => widget.id === "boardWindowWidget"
     )!;
-    setBoardSize(boardWindowWidget.w, boardWindowWidget.h, layout.movelistWidth, cellWidth);
+    setBoardSize(
+      boardWindowWidget.w,
+      boardWindowWidget.h,
+      layout.movelistWidth,
+      cellWidth
+    );
   }, [cellWidth]);
 
   return (
-    <div className="app-container">
-      <Popup />
-      <EventListWindow />
-
-      <div
-        className="grid-stack app-grid"
-        ref={gridRef}
-        style={{ width: `${width - 8}px` }}
-      >
-        {widgets.map((widget) => (
-          <div
-            key={widget.id}
-            className="grid-stack-item"
-            gs-id={widget.id}
-            gs-w={widget.w}
-            gs-h={widget.h}
-            gs-x={widget.x}
-            gs-y={widget.y}
-          >
-            <div className="grid-stack-item-content">
-              <widget.component />
-              <RiDragMove2Fill className="react-grid-drag-handle" color="AAA"/>
-            </div>
+    <div
+      className="grid-stack grid-container"
+      ref={gridRef}
+      style={{ width: `${width - 8}px` }}
+    >
+      {widgets.map((widget) => (
+        <div
+          key={widget.id}
+          className="grid-stack-item"
+          gs-id={widget.id}
+          gs-w={widget.w}
+          gs-h={widget.h}
+          gs-x={widget.x}
+          gs-y={widget.y}
+        >
+          <div className="grid-stack-item-content">
+            <widget.component />
+            <RiDragMove2Fill className="react-grid-drag-handle" color="AAA" />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }

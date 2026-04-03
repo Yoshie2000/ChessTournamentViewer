@@ -40,7 +40,57 @@
   grid-template-rows: 56px 1fr;
 }
 
-.app-grid {
+.linear-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 320px 300px 600px auto;
+  margin-top: 8px;
+}
+
+.linear-container > div {
+  margin: 0 8px;
+  width: calc(100vw - 16px);
+}
+
+.linear-container .boardWindow {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  display: grid;
+  height: auto;
+  margin-bottom: 8px;
+}
+
+.linear-container .engineWindowMobile {
+  grid-column: 1 / 2;
+  grid-row: 3 / 4;
+}
+
+.linear-container .movesWindow {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  max-height: 200px;
+  height: min-content;
+}
+
+.linear-container .graphWindow {
+  grid-column: 1 / 2;
+  grid-row: 4 / 5;
+}
+
+.linear-container .scheduleWindow {
+  grid-column: 1 / 2;
+  grid-row: 5 / 6;
+}
+
+.linear-container .standingsWindow {
+  grid-column: 1 / 2;
+  grid-row: 6 / 7;
+  max-height: 400px;
+  height: min-content;
+  margin-bottom: 8px;
+}
+
+.app-container .grid-container {
   margin: 4px;
 }
 
@@ -78,4 +128,27 @@
   height: calc(100% - 8px);
   gap: var(--gap);
   font-weight: bold;
+}
+
+@media (max-width: 775px) {
+  .app-container {
+    grid-template-rows: 88px 1fr;
+  }
+
+  .topBar {
+    flex-wrap: wrap;
+    padding: calc(0.5 * var(--gap)) !important;
+    gap: calc(0.5 * var(--gap));
+  }
+
+  .topBar .settingsRow {
+    width: 100%;
+    flex-grow: 1;
+  }
+
+  .linear-container {
+    max-height: 100%;
+    width: 100vw;
+    overflow-y: auto;
+  }
 }

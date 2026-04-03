@@ -125,17 +125,15 @@
   }
 }
 
-@media (max-width: 775px) {
-  .schedule .game {
-    grid-template-columns: 35px auto 1fr 5rem 1fr auto;
-  }
+.linear-container .schedule .game {
+  grid-template-columns: 35px auto 1fr 5rem 1fr auto;
+}
 
-  .schedule .game .engineName {
-    font-size: 0.8rem;
-  }
+.linear-container .schedule .game .engineName {
+  font-size: 0.8rem;
+}
 
-  .schedule .game .round,
-  .schedule .game .vs {
-    font-size: 0.7rem;
-  }
+.linear-container .schedule .game .round,
+.linear-container .schedule .game .vs {
+  font-size: 0.7rem;
 }

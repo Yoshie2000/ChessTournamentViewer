@@ -25,3 +25,7 @@
 .gameResultOverlay .termination {
   font-size: 20px;
 }
+
+.linear-container .gameResultOverlay {
+  border-radius: 0 !important;
+}
