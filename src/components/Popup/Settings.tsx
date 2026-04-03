@@ -19,12 +19,8 @@ export function getDefaultKibitzerSettings(): EngineSettings {
 }
 
 export const Settings = memo(() => {
-  const kibitzerSettings = useSettings(
-    (state) => state.kibitzerSettings
-  );
-  const setKibitzerSettings = useSettings(
-    (state) => state.setKibitzerSettings
-  );
+  const kibitzerSettings = useSettings((state) => state.kibitzerSettings);
+  const setKibitzerSettings = useSettings((state) => state.setKibitzerSettings);
 
   const [hash, setHash] = useState(kibitzerSettings.hash);
   const [threads, setThreads] = useState(kibitzerSettings.threads);
@@ -99,7 +95,7 @@ export const Settings = memo(() => {
         Apply Settings
       </button>
 
-      <hr/>
+      <hr />
 
       <button className="applySettings" onClick={resetLayout}>
         Reset Layout

@@ -13,9 +13,7 @@ export const useKibitzer = ({
   updateBoard: (bypassRateLimit?: boolean) => void;
 }) => {
   const kibitzer = useRef<EngineWorker[]>(null);
-  const kibitzerSettings = useSettings(
-    (state) => state.kibitzerSettings
-  );
+  const kibitzerSettings = useSettings((state) => state.kibitzerSettings);
 
   const game = useLiveInfo((state) => state.game);
 

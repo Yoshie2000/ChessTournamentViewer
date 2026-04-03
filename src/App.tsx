@@ -243,7 +243,6 @@ function GridContainer({ width, height }: GridContainerProps) {
         margin: 0,
         handle: ".react-grid-drag-handle",
         float: true,
-
       },
       gridRef.current
     );
