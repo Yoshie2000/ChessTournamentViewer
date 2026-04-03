@@ -111,10 +111,15 @@
 .standingsWindow,
 .graphWindow,
 .engineWindow,
-.boardWindow {
+.boardWindow,
+.engineWindowMobile {
   margin: 4px;
   max-height: calc(100% - 8px);
   height: calc(100% - 8px);
+}
+
+.engineWindowMobile {
+  width: calc(100% - 8px) !important;
 }
 
 .topBar {

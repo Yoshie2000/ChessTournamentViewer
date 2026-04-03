@@ -54,7 +54,7 @@ export type Layout = {
 export const LAYOUTS: Record<number, Layout> = {
   1400: {
     columns: 47,
-    movelistWidth: 4,
+    movelistWidth: 4.2,
     widgets: [
       {
         id: "engineWindowWidget",
@@ -100,46 +100,46 @@ export const LAYOUTS: Record<number, Layout> = {
   },
   0: {
     columns: 47,
-    movelistWidth: 4,
+    movelistWidth: 10,
     widgets: [
       {
         id: "engineWindowWidget",
-        w: 13,
-        h: 21,
-        x: 34,
-        y: 0,
+        w: 23,
+        h: 18,
+        x: 24,
+        y: 20,
         component: EngineWindow,
       },
       {
         id: "boardWindowWidget",
-        w: 18,
-        h: 14,
-        x: 16,
+        w: 30,
+        h: 20,
+        x: 0,
         y: 0,
         component: BoardWindow,
       },
       {
         id: "standingsWindowWidget",
-        w: 16,
-        h: 7,
-        x: 0,
-        y: 14,
+        w: 17,
+        h: 20,
+        x: 30,
+        y: 0,
         component: StandingsWindow,
       },
       {
         id: "graphWindowWidget",
-        w: 18,
-        h: 7,
-        x: 16,
-        y: 14,
+        w: 47,
+        h: 15,
+        x: 0,
+        y: 35,
         component: GraphWindow,
       },
       {
         id: "scheduleWindowWidget",
-        w: 16,
-        h: 14,
+        w: 24,
+        h: 18,
         x: 0,
-        y: 0,
+        y: 20,
         component: ScheduleWindow,
       },
     ],
@@ -161,7 +161,7 @@ function setBoardSize(
   );
   document.documentElement.style.setProperty(
     "--boardHeight",
-    `${targetH * cellSize}px`
+    `${targetH * cellSize - 8}px`
   );
   document.documentElement.style.setProperty(
     "--movelist-width",
