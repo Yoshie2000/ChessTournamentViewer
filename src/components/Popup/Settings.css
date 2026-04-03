@@ -38,11 +38,39 @@
 
 .topBar .settingsRow {
   margin-left: auto;
-  display: grid;
-  grid-template-columns: calc(100% - 35px - var(--gap)) 35px;
+  display: flex;
   overflow: hidden;
   gap: var(--gap);
   justify-content: flex-end;
+
+  .providerTabs {
+    display: flex;
+
+    button {
+      border-radius: 0;
+
+      &:not(:last-child) {
+        border-right: none;
+      }
+
+      &:first-child {
+        border-radius: 4px 0 0 4px;
+      }
+
+      &:last-child {
+        border-radius: 0 4px 4px 0;
+      }
+
+      &:hover:not(:disabled) {
+        background: #434343;
+      }
+
+      &:disabled {
+        background: #4d4d4d;
+        cursor: default;
+      }
+    }
+  }
 }
 
 @media (max-width: 775px) {
