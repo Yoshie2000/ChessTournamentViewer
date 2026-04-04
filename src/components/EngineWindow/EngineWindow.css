@@ -1,3 +1,11 @@
+.engineWindow {
+  height: 100%;
+}
+
+.engineWindowMobile {
+  padding: 0;
+}
+
 .engineTabs {
   background: #343434;
   display: flex;
@@ -23,8 +31,8 @@
   max-height: calc(var(--engine-kibitzer-height));
   width: 100%;
   padding: 0 var(--padding);
-  padding-top: calc(0.5 * var(--gap));
-  padding-bottom: calc(0.25 * var(--gap));
+  padding-top: var(--gap-sm);
+  padding-bottom: calc(0.5 * var(--gap-sm));
 
   --kibitzer-board-size: min(
     160px,
@@ -54,7 +62,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: calc(0.5 * var(--gap));
+  margin-bottom: var(--gap-sm);
 }
 
 .kibitzerWindow .engineHeader .engineName {
@@ -109,11 +117,9 @@
   }
 }
 
-@media (max-width: 775px) {
-  .engineWindow {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 1fr;
-    gap: 0.5rem;
-    height: auto;
-  }
+.linear-container .engineWindow {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+  gap: 0.5rem;
+  height: auto;
 }

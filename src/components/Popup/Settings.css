@@ -45,6 +45,10 @@
   justify-content: flex-end;
 }
 
+.popup .settings hr {
+  width: 100%;
+}
+
 @media (max-width: 775px) {
   .topBar .settingsRow {
     margin-left: 0;

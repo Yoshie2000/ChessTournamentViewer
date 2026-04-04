@@ -1,6 +1,10 @@
 :root {
   --padding: 1.5vh;
   --gap: 1.5vh;
+  --gap-sm: calc(0.5 * var(--gap));
+  --grid-gap: 8px;
+  --grid-gap-sm: 4px;
+
   --topbar-height: 3rem;
   --engine-card-info-width: calc(
     var(--engine-card-width) - var(--engine-board-width) -
@@ -9,10 +13,14 @@
   --available-height: calc(
     100vh - 2 * var(--padding) - 2 * var(--gap) - var(--topbar-height)
   );
-  --board-size: min(56vh, 32vw);
-  --movelist-width: max(140px, calc(var(--board-size) / 3.5));
+
+  --movelist-width: 180px;
+  --board-size: min(
+    var(--boardWidth) - var(--movelist-width),
+    var(--boardHeight)
+  );
   --board-wrapper-width: calc(var(--board-size) + var(--movelist-width));
-  --graph-height: calc(var(--available-height) - var(--board-size));
+
   --engine-board-width: 15vw;
   --engine-kibitzer-height: 20rem;
   --engine-card-movelist-width: max(
@@ -29,73 +37,94 @@
   --font-xl: 1.15rem;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(150, 150, 150, 0.7) rgba(0, 0, 0, 0.1);
-}
-
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: rgba(150, 150, 150, 0.7);
-  border-radius: 3px;
-}
-*::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-}
-
-.app {
+.app-container {
   width: 100vw;
-  height: calc(100vh);
-  padding: var(--padding);
-  box-sizing: border-box;
-  overflow: hidden;
-  position: relative;
+  height: 100vh;
   display: grid;
-  grid-template-columns: auto var(--board-wrapper-width) var(
-      --engine-card-width
-    );
-  grid-template-rows: auto var(--board-size) var(--graph-height);
-  gap: var(--gap);
+  grid-template-rows: 56px 1fr;
 }
 
-.currentEvent {
-  font-size: var(--font-lg);
-  font-weight: bold;
+.linear-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 320px 300px 600px auto;
+  margin-top: var(--grid-gap);
 }
+
+.linear-container > div {
+  margin: 0 var(--grid-gap);
+  width: calc(100vw - 2 * var(--grid-gap));
+}
+
+.linear-container .boardWindow {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  display: grid;
+  height: auto;
+  margin-bottom: var(--grid-gap);
+}
+
+.linear-container .engineWindowMobile {
+  grid-column: 1 / 2;
+  grid-row: 3 / 4;
+}
+
+.linear-container .movesWindow {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  max-height: 200px;
+  height: min-content;
+}
+
+.linear-container .graphWindow {
+  grid-column: 1 / 2;
+  grid-row: 4 / 5;
+}
+
+.linear-container .scheduleWindow {
+  grid-column: 1 / 2;
+  grid-row: 5 / 6;
+}
+
+.linear-container .standingsWindow {
+  grid-column: 1 / 2;
+  grid-row: 6 / 7;
+  max-height: 400px;
+  height: min-content;
+  margin-bottom: var(--grid-gap);
+}
+
+.app-container .grid-container {
+  margin: var(--grid-gap-sm);
+}
+
 .topBar,
 .scheduleWindow,
 .standingsWindow,
 .graphWindow,
-.engineWindowMobile {
+.engineWindowMobile,
+.boardWindow {
   position: relative;
   border-radius: 8px;
   background: #343434;
-  border: 1px solid #232323;
+  border: 1px solid #1a1a1a;
   padding: var(--gap);
   overflow: hidden;
 }
 
-.boardWrapper {
-  position: relative;
-}
-
-.boardWindow {
-  padding: 0;
-  overflow: unset;
-  display: flex;
+.scheduleWindow,
+.standingsWindow,
+.graphWindow,
+.engineWindow,
+.boardWindow,
+.engineWindowMobile {
+  margin: var(--grid-gap-sm);
+  max-height: calc(100% - var(--grid-gap));
+  height: calc(100% - var(--grid-gap));
 }
 
 .engineWindowMobile {
-  padding: 0;
+  width: calc(100% - var(--grid-gap)) !important;
 }
 
 .topBar {
@@ -104,234 +133,32 @@
   display: flex;
   align-items: center;
   padding: 0 var(--gap);
+  margin: var(--grid-gap);
+  margin-bottom: 0 !important;
+  height: calc(100% - var(--grid-gap));
   gap: var(--gap);
   font-weight: bold;
 }
 
-.engineWindow {
-  grid-column: 3 / 4;
-  grid-row: 2 / 4;
-}
-
-.scheduleWindow {
-  overflow: hidden;
-  display: grid;
-  grid-template-rows: auto 2fr;
-  padding-top: calc(0.5 * var(--gap));
-  gap: calc(0.5 * var(--gap));
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-}
-
-.graphWindow {
-  grid-column: 2 / 3;
-  grid-row: 3 / 4;
-}
-
-.standingsWindow {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  grid-row: 3 / 4;
-  grid-column: 1 / 2;
-  gap: var(--gap);
-}
-
-.standingsWindow button {
-  position: absolute;
-  top: 0.75rem;
-  right: var(--gap);
-}
-
-@media (max-width: 1400px) {
-  :root {
-    --graph-height: 20rem;
-    --board-size: calc(100vw - 45rem);
-  }
-
-  .app {
-    grid-template-columns: var(--board-wrapper-width) 1fr;
-    grid-template-rows:
-      auto var(--board-size)
-      400px fit-content fit-content;
-    height: auto;
-    overflow-y: auto;
-  }
-
-  .topBar {
-    grid-column: 1 / 3;
-    grid-row: 1 / 2;
-  }
-
-  .boardWindow {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
-    height: var(--board-size);
-  }
-
-  .engineWindow {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
-  }
-
-  .standingsWindow {
-    grid-column: 1 / 3;
-    grid-row: 5 / 6;
-    max-height: 400px;
-  }
-
-  .graphWindow {
-    grid-column: 1 / 3;
-    grid-row: 3 / 4;
-  }
-
-  .scheduleWindow {
-    grid-column: 1 / 3;
-    grid-row: 4 / 5;
-    height: 600px;
-  }
-}
-
-@media (max-width: 1150px) {
-  :root {
-    --engine-card-width: calc(
-      (100vw - 2 * var(--padding) - 2 * var(--gap)) / 3
-    );
-    --board-size: 44vw;
-    --movelist-width: max(140px, 14vw);
-  }
-
-  .app {
-    grid-template-columns: calc(var(--board-size) + var(--movelist-width)) 1fr;
-    grid-template-rows:
-      auto var(--board-size) calc(var(--graph-height) - 6rem)
-      fit-content fit-content;
-    height: auto;
-    overflow-y: auto;
-  }
-
-  .topBar {
-    grid-column: 1 / 3;
-    flex-direction: column;
-    align-items: flex-start;
-    display: grid;
-    grid-template-rows: auto auto;
-    gap: 0.5rem;
-    padding: 0.75rem var(--gap);
-  }
-
-  .boardWindow {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
-  }
-
-  .engineVsEngine {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
-  }
-
-  .graphWindow {
-    grid-column: 1 / 3;
-    grid-row: 3 / 4;
-  }
-
-  .standingsWindow {
-    grid-column: 1 / 3;
-    grid-row: 5 / 6;
-  }
-
-  .scheduleWindow {
-    grid-column: 1 / 3;
-    grid-row: 4 / 5;
-  }
-
-  .engineWindow {
-    grid-column: 1 / 3;
-    grid-row: 3 / 4;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 1fr;
-    gap: var(--gap);
-    height: auto;
-  }
-}
-
 @media (max-width: 775px) {
-  :root {
-    --board-size: calc(100vw - 2 * var(--padding));
-    --graph-height: 18rem;
-    --movelist-width: 20vw;
-    --engine-card-width: calc(100vw - 2 * var(--padding) - 10vw);
-    --padding: 0.5rem;
-    --gap: 0.75rem;
-  }
-
-  .app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 347px auto auto auto;
-    height: auto;
-    overflow-y: auto;
-
-    width: 100vw;
-    gap: 0.5rem;
-  }
-
-  .engineWindow {
-    grid-column: 3 / 4;
-    grid-row: 2 / 4;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: 1fr;
-    gap: 0.5rem;
-    height: auto;
-  }
-
-  .boardWindow {
-    grid-column: 1 / 2;
-    display: grid !important;
-    grid-template-columns: minmax(var(--board-size), var(--board-size));
-    grid-template-rows: auto var(--board-size) auto var(--padding) auto auto;
-    height: auto;
-  }
-
-  .boardWindow > .engineMinimal:first-child {
-    grid-column: 1 / 2;
-    grid-row: 1;
-  }
-
-  .boardWindow > .board {
-    grid-column: 1 / 2;
-    grid-row: 2;
-  }
-
-  .boardWindow > .engineMinimal:last-child {
-    grid-column: 1 / 2;
-    grid-row: 3;
-  }
-
-  .boardWindow > .movesWindow {
-    grid-column: 1 / 2;
-    width: var(--board-size);
-    grid-row: 5;
+  .app-container {
+    grid-template-rows: 88px 1fr;
   }
 
   .topBar {
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
+    flex-wrap: wrap;
+    padding: var(--gap-sm) !important;
+    gap: var(--gap-sm);
+  }
+
+  .topBar .settingsRow {
     width: 100%;
+    flex-grow: 1;
   }
 
-  .standingsWindow {
-    grid-row: 6 / 7;
-    grid-column: 1 / 2;
-  }
-
-  .scheduleWindow {
-    grid-column: 1 / 2;
-    grid-row: 5 / 6;
-  }
-
-  .graphWindow {
-    grid-column: 1 / 2;
-    grid-row: 4 / 5;
-    height: 300px;
+  .linear-container {
+    max-height: 100%;
+    width: 100vw;
+    overflow-y: auto;
   }
 }
