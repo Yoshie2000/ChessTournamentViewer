@@ -47,9 +47,6 @@
 
 .popup .settings hr {
   width: 100%;
-  background: #434343;
-  border: none;
-  height: 1px;
 }
 
 @media (max-width: 775px) {

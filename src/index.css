@@ -32,7 +32,13 @@ body {
   border-radius: 3px;
 }
 
-.react-grid-drag-handle {
+hr {
+  background: #434343;
+  border: none;
+  height: 1px;
+}
+
+.grid-drag-handle {
   position: absolute;
   display: block;
   bottom: 0;
@@ -44,7 +50,7 @@ body {
   height: 18px;
 }
 
-.grid-stack-item.ui-resizable-autohide .react-grid-drag-handle {
+.grid-stack-item.ui-resizable-autohide .grid-drag-handle {
   display: none;
 }
 

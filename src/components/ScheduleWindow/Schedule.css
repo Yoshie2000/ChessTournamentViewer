@@ -2,10 +2,8 @@
   overflow: hidden;
   display: grid;
   grid-template-rows: auto 2fr;
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-  padding-top: calc(0.5 * var(--gap));
-  gap: calc(0.5 * var(--gap));
+  padding-top: var(--gap-sm);
+  gap: var(--gap-sm);
 }
 
 .scheduleWindow .scheduleWindowTabs {

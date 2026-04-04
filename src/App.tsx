@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ElementType } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CategoryScale,
   Chart,
@@ -13,6 +13,7 @@ import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack.min.css";
 import "./App.css";
 
+import { LAYOUTS, type Layout } from "./Layout";
 import { EngineWindow } from "./components/EngineWindow/EngineWindow";
 import { EventListWindow } from "./components/EventListWindow/EventListWindow";
 import { GraphWindow } from "./components/GraphWindow/GraphWindow";
@@ -35,116 +36,6 @@ Chart.register(
   Tooltip,
   Legend
 );
-
-export type Widget = {
-  id: string;
-  w: number;
-  h: number;
-  x: number;
-  y: number;
-  component: ElementType;
-};
-
-export type Layout = {
-  columns: number;
-  movelistWidth: number;
-  widgets: Widget[];
-};
-
-export const LAYOUTS: Record<number, Layout> = {
-  1400: {
-    columns: 47,
-    movelistWidth: 4.2,
-    widgets: [
-      {
-        id: "engineWindowWidget",
-        w: 13,
-        h: 21,
-        x: 34,
-        y: 0,
-        component: EngineWindow,
-      },
-      {
-        id: "boardWindowWidget",
-        w: 18,
-        h: 14,
-        x: 16,
-        y: 0,
-        component: BoardWindow,
-      },
-      {
-        id: "standingsWindowWidget",
-        w: 16,
-        h: 7,
-        x: 0,
-        y: 14,
-        component: StandingsWindow,
-      },
-      {
-        id: "graphWindowWidget",
-        w: 18,
-        h: 7,
-        x: 16,
-        y: 14,
-        component: GraphWindow,
-      },
-      {
-        id: "scheduleWindowWidget",
-        w: 16,
-        h: 14,
-        x: 0,
-        y: 0,
-        component: ScheduleWindow,
-      },
-    ],
-  },
-  0: {
-    columns: 47,
-    movelistWidth: 10,
-    widgets: [
-      {
-        id: "engineWindowWidget",
-        w: 23,
-        h: 18,
-        x: 24,
-        y: 20,
-        component: EngineWindow,
-      },
-      {
-        id: "boardWindowWidget",
-        w: 30,
-        h: 20,
-        x: 0,
-        y: 0,
-        component: BoardWindow,
-      },
-      {
-        id: "standingsWindowWidget",
-        w: 17,
-        h: 20,
-        x: 30,
-        y: 0,
-        component: StandingsWindow,
-      },
-      {
-        id: "graphWindowWidget",
-        w: 47,
-        h: 15,
-        x: 0,
-        y: 35,
-        component: GraphWindow,
-      },
-      {
-        id: "scheduleWindowWidget",
-        w: 24,
-        h: 18,
-        x: 0,
-        y: 20,
-        component: ScheduleWindow,
-      },
-    ],
-  },
-};
 
 function setBoardSize(
   width: number,
@@ -186,9 +77,9 @@ function App() {
   );
 }
 
-type GridContainerProps = { width: number; height: number };
+type LayoutContainerProps = { width: number; height: number };
 
-function LinearContainer({ width, height }: GridContainerProps) {
+function LinearContainer({ width, height }: LayoutContainerProps) {
   useEffect(() => {
     setBoardSize(width - 16, width - 16, 0, 1);
   }, [width, height]);
@@ -210,7 +101,7 @@ function LinearContainer({ width, height }: GridContainerProps) {
   );
 }
 
-function GridContainer({ width, height }: GridContainerProps) {
+function GridContainer({ width, height }: LayoutContainerProps) {
   const breakpoint = Number(
     Object.keys(LAYOUTS)
       .toSorted((a, b) => Number(b) - Number(a))
@@ -241,7 +132,7 @@ function GridContainer({ width, height }: GridContainerProps) {
         column: layout.columns,
         cellHeight: `${cellWidth}px`,
         margin: 0,
-        handle: ".react-grid-drag-handle",
+        handle: ".grid-drag-handle",
         float: true,
       },
       gridRef.current
@@ -327,7 +218,7 @@ function GridContainer({ width, height }: GridContainerProps) {
         >
           <div className="grid-stack-item-content">
             <widget.component />
-            <RiDragMove2Fill className="react-grid-drag-handle" color="AAA" />
+            <RiDragMove2Fill className="grid-drag-handle" color="AAA" />
           </div>
         </div>
       ))}

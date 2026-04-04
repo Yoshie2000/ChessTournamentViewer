@@ -1,7 +1,7 @@
 import type { GridStackWidget } from "gridstack";
 import type { LiveInfoEntry } from "./LiveInfo";
 import type { CCCEventUpdate, CCCGameUpdate } from "./types";
-import { LAYOUTS, type Widget } from "./App";
+import { LAYOUTS, type Widget } from "./Layout";
 
 const LIVE_INFO_PREFIX = "LI|";
 const SETTINGS_PREFIX = "S|";

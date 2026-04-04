@@ -116,7 +116,7 @@
 }
 
 .linear-container .movesWindow {
-  margin-bottom: 8px;
+  margin-bottom: var(--grid-gap);
   border-radius: 8px !important;
 }
 

@@ -1,6 +1,10 @@
 :root {
   --padding: 1.5vh;
   --gap: 1.5vh;
+  --gap-sm: calc(0.5 * var(--gap));
+  --grid-gap: 8px;
+  --grid-gap-sm: 4px;
+
   --topbar-height: 3rem;
   --engine-card-info-width: calc(
     var(--engine-card-width) - var(--engine-board-width) -
@@ -44,12 +48,12 @@
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: auto auto 320px 300px 600px auto;
-  margin-top: 8px;
+  margin-top: var(--grid-gap);
 }
 
 .linear-container > div {
-  margin: 0 8px;
-  width: calc(100vw - 16px);
+  margin: 0 var(--grid-gap);
+  width: calc(100vw - 2 * var(--grid-gap));
 }
 
 .linear-container .boardWindow {
@@ -57,7 +61,7 @@
   grid-row: 1 / 2;
   display: grid;
   height: auto;
-  margin-bottom: 8px;
+  margin-bottom: var(--grid-gap);
 }
 
 .linear-container .engineWindowMobile {
@@ -87,22 +91,23 @@
   grid-row: 6 / 7;
   max-height: 400px;
   height: min-content;
-  margin-bottom: 8px;
+  margin-bottom: var(--grid-gap);
 }
 
 .app-container .grid-container {
-  margin: 4px;
+  margin: var(--grid-gap-sm);
 }
 
 .topBar,
 .scheduleWindow,
 .standingsWindow,
 .graphWindow,
-.engineWindowMobile {
+.engineWindowMobile,
+.boardWindow {
   position: relative;
   border-radius: 8px;
   background: #343434;
-  border: 1px solid #232323;
+  border: 1px solid #1a1a1a;
   padding: var(--gap);
   overflow: hidden;
 }
@@ -113,13 +118,13 @@
 .engineWindow,
 .boardWindow,
 .engineWindowMobile {
-  margin: 4px;
-  max-height: calc(100% - 8px);
-  height: calc(100% - 8px);
+  margin: var(--grid-gap-sm);
+  max-height: calc(100% - var(--grid-gap));
+  height: calc(100% - var(--grid-gap));
 }
 
 .engineWindowMobile {
-  width: calc(100% - 8px) !important;
+  width: calc(100% - var(--grid-gap)) !important;
 }
 
 .topBar {
@@ -128,9 +133,9 @@
   display: flex;
   align-items: center;
   padding: 0 var(--gap);
-  margin: 8px;
+  margin: var(--grid-gap);
   margin-bottom: 0 !important;
-  height: calc(100% - 8px);
+  height: calc(100% - var(--grid-gap));
   gap: var(--gap);
   font-weight: bold;
 }
@@ -142,8 +147,8 @@
 
   .topBar {
     flex-wrap: wrap;
-    padding: calc(0.5 * var(--gap)) !important;
-    gap: calc(0.5 * var(--gap));
+    padding: var(--gap-sm) !important;
+    gap: var(--gap-sm);
   }
 
   .topBar .settingsRow {
