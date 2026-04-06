@@ -168,7 +168,6 @@ function GridContainer({ width, height }: LayoutContainerProps) {
     if (!gridInstance.current) return;
 
     gridInstance.current.cellHeight(cellWidth);
-    gridInstance.current.opts.maxRow = rows;
   }, [cellWidth, rows]);
 
   useEffect(() => {
