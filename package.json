@@ -13,6 +13,7 @@
     "@lichess-org/chessground": "^10.0.2",
     "antd": "^6.3.3",
     "chart.js": "^4.5.1",
+    "gridstack": "^12.4.2",
     "immer": "^11.1.4",
     "labut": "github:anematode/labut#v0.2.0",
     "react": "^19.2.0",

@@ -6,6 +6,56 @@ body {
   box-sizing: border-box;
   background: #212121;
   font-size: var(--font-lg);
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 150, 150, 0.7) rgba(0, 0, 0, 0.1);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.7);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+hr {
+  background: #434343;
+  border: none;
+  height: 1px;
+}
+
+.grid-drag-handle {
+  position: absolute;
+  display: block;
+  bottom: 0;
+  right: 16px;
+  cursor: grab;
+  stroke: #666;
+  fill: #666;
+  width: 18px;
+  height: 18px;
+}
+
+.grid-stack-item.ui-resizable-autohide .grid-drag-handle {
+  display: none;
+}
+
+.cg-wrap coords {
+  display: none;
 }
 
 * {

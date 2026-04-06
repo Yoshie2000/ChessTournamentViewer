@@ -1,8 +1,11 @@
+import type { GridStackWidget } from "gridstack";
 import type { LiveInfoEntry } from "./LiveInfo";
 import type { CCCEventUpdate, CCCGameUpdate } from "./types";
+import { LAYOUTS, type Widget } from "./Layout";
 
 const LIVE_INFO_PREFIX = "LI|";
 const SETTINGS_PREFIX = "S|";
+const LAYOUT_PREFIX = "G|";
 
 export function saveLiveInfos(
   event: CCCEventUpdate,
@@ -84,12 +87,58 @@ export function saveSettings(settings: Record<string, any>) {
   }
 }
 
+export function saveLayout(breakpoint: number, layout: GridStackWidget[]) {
+  localStorage.setItem(
+    LAYOUT_PREFIX + String(breakpoint),
+    JSON.stringify(layout)
+  );
+}
+
+export function loadLayout(breakpoint: number) {
+  const data = localStorage.getItem(LAYOUT_PREFIX + String(breakpoint));
+  if (data) {
+    const widgets = JSON.parse(data) as GridStackWidget[];
+    return widgets
+      .filter((widget) => !!widget.id)
+      .map((widget) => ({
+        id: widget.id!,
+        w: widget.w ?? 1,
+        h: widget.h ?? 1,
+        x: widget.x ?? 0,
+        y: widget.y ?? 0,
+        component: LAYOUTS[Number(Object.keys(LAYOUTS)[0])].widgets.find(
+          (w) => w.id === widget.id
+        )!.component,
+      })) satisfies Widget[];
+  }
+  return undefined;
+}
+
+export function resetLayouts() {
+  const keys: string[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(LAYOUT_PREFIX)) {
+      keys.push(key);
+    }
+  }
+
+  for (const key of keys) {
+    localStorage.removeItem(key);
+  }
+}
+
 function deleteAllButSettings() {
   const keys: string[] = [];
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && !key.startsWith(SETTINGS_PREFIX)) {
+    if (
+      key &&
+      !key.startsWith(SETTINGS_PREFIX) &&
+      !key.startsWith(LAYOUT_PREFIX)
+    ) {
       keys.push(key);
     }
   }

@@ -7,7 +7,7 @@
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: var(--grid-gap);
 }
 
 .engineComponent .engineLeftSection {
@@ -17,9 +17,6 @@
 }
 
 .engineComponent hr {
-  background: #434343;
-  border: none;
-  height: 1px;
   margin: 0;
   flex-shrink: 0;
 }
@@ -96,7 +93,7 @@
 
 .engineComponent .movesWindow {
   overflow-y: auto;
-  width: var(--engine-card-movelist-width);
+  width: max(100%, var(--engine-card-movelist-width));
   min-width: var(--engine-card-movelist-width);
 }
 
