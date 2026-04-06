@@ -176,7 +176,12 @@ const Schedule = memo(() => {
                 game.outcome || ongoingAndNotSelectedGame
                   ? () => {
                       userClickedRef.current = true;
-                      requestEvent(game.gameNr);
+
+                      if (ongoingAndNotSelectedGame) {
+                        requestEvent();
+                      } else {
+                        requestEvent(game.gameNr);
+                      }
                     }
                   : undefined
               }
