@@ -30,8 +30,6 @@ const Schedule = memo(() => {
   const engines = useEventStore((state) => state.engines);
   const requestEvent = useEventStore((state) => state.requestEvent);
 
-  const isTCEC = window.location.search.includes("tcec");
-
   const scrollToCurrentGame = useCallback(() => {
     if (
       !scheduleRef.current ||
@@ -179,7 +177,7 @@ const Schedule = memo(() => {
                   ? () => {
                       userClickedRef.current = true;
 
-                      if (isTCEC && ongoingAndNotSelectedGame) {
+                      if (ongoingAndNotSelectedGame) {
                         requestEvent();
                       } else {
                         requestEvent(game.gameNr);
