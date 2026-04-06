@@ -8,48 +8,37 @@ type GameData = { moveList: string[]; fenList: string[] };
 export type TranspositionDataEntry = { moveNumber: number; diverge?: string };
 
 type GameHistoryState = {
-  gameDataMap: Record<number, GameData>;
-  transpositionHistory: Record<number, TranspositionDataEntry[]>;
+  transpositionsList: TranspositionDataEntry[];
 
-  /**
-   * set of pending reverse-game requests
-   * to avoid duplicate requests
-   */
-  waitingSet: Set<number>;
-  setWaiting: (gameNr: number) => void;
+  currentGameData: GameData | null;
+  reverseGameData: GameData | null;
 
-  setTranspositions: (
-    gameNumber: number,
-    list: TranspositionDataEntry[]
-  ) => void;
-  setDataForGame: (gameNumber: number, history: GameData) => void;
+  setTranspositions: (list: TranspositionDataEntry[]) => void;
+
+  setDataForReverse: (history: GameData | null) => void;
+  setDataForCurrent: (history: GameData | null) => void;
 };
 
 export const useGameHistory = create<GameHistoryState>()(
   immer((set) => ({
-    gameDataMap: {},
-    transpositionHistory: {},
+    transpositionsList: [],
 
-    samePositionsList: [],
+    currentGameData: null,
+    reverseGameData: null,
 
-    waitingSet: new Set<number>(),
-
-    setTranspositions(gameNumber, list) {
+    setTranspositions(list) {
       set((state) => {
-        state.transpositionHistory[gameNumber] = list;
+        state.transpositionsList = list;
       });
     },
-    setDataForGame(gameNumber, history) {
+    setDataForReverse(history) {
       set((state) => {
-        state.gameDataMap[gameNumber] = history;
-        if (state.waitingSet.has(gameNumber)) {
-          state.waitingSet.delete(gameNumber);
-        }
+        state.reverseGameData = history;
       });
     },
-    setWaiting(gameNr) {
+    setDataForCurrent(history) {
       set((state) => {
-        state.waitingSet.add(gameNr);
+        state.currentGameData = history;
       });
     },
   }))

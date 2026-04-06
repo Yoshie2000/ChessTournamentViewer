@@ -45,6 +45,8 @@ export class CCCWebSocket implements TournamentWebSocket {
    */
   private firstGameNumber: number | undefined = undefined;
 
+  private tempSocket: WebSocket | null = null;
+
   connect(
     onMessage: (message: CCCMessage) => void,
     initialEventId?: string,
@@ -160,26 +162,44 @@ export class CCCWebSocket implements TournamentWebSocket {
 
   fetchPgn(eventNr: string, gameNr: string) {
     return new Promise<string>((resolve, reject) => {
-      const tempSocket = new WebSocket(this.url);
+      if (this.tempSocket) {
+        this.tempSocket.close();
+        this.tempSocket = null;
+      }
 
-      tempSocket.onopen = () => {
-        tempSocket.send(
+      this.tempSocket = new WebSocket(this.url);
+
+      this.tempSocket.onopen = () => {
+        if (!this.tempSocket) {
+          reject();
+          return;
+        }
+
+        this.tempSocket.send(
           JSON.stringify({ type: "requestEvent", eventNr, gameNr })
         );
       };
 
-      tempSocket.onmessage = (e) => {
+      this.tempSocket.onmessage = (e) => {
+        if (!this.tempSocket) {
+          reject();
+          return;
+        }
+
         const messages = JSON.parse(e.data) as CCCMessage[];
         const found = messages.find(this.checkMsgIsGameUpdate);
 
         if (found) {
-          tempSocket.close();
+          this.tempSocket.close();
           resolve(found.gameDetails.pgn);
         }
       };
 
-      tempSocket.onerror = () => {
-        tempSocket.close();
+      this.tempSocket.onerror = () => {
+        if (this.tempSocket) {
+          this.tempSocket.close();
+        }
+
         reject();
       };
     });

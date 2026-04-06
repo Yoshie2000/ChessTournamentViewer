@@ -14,12 +14,9 @@ const LiveMoveList = memo(() => {
   const [moves, setMoves] = useState<string[]>([]);
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
   const [bookMoves, setBookMoves] = useState(-1);
-  const activeGameNumber = useEventStore((state) =>
-    Number(state.activeGame?.gameDetails.gameNr)
-  );
 
   const transpositionsList = useGameHistory(
-    (state) => state.transpositionHistory[activeGameNumber || 0]
+    (state) => state.transpositionsList
   );
 
   useInterval((state) => {

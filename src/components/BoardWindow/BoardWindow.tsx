@@ -182,9 +182,7 @@ export const BoardWindow = memo(() => {
           updateBoard(true);
 
           if (activeGameNumber) {
-            useGameHistory
-              .getState()
-              .setDataForGame(Number(activeGameNumber), game.boardFenHistory());
+            useGameHistory.getState().setDataForCurrent(game.boardFenHistory());
           }
 
           break;
@@ -199,9 +197,7 @@ export const BoardWindow = memo(() => {
 
         case "result": {
           if (activeGameNumber) {
-            useGameHistory
-              .getState()
-              .setDataForGame(Number(activeGameNumber), game.boardFenHistory());
+            useGameHistory.getState().setDataForCurrent(game.boardFenHistory());
           }
 
           game.setHeader("Termination", msg.reason);

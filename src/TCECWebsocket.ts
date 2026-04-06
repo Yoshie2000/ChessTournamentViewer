@@ -92,7 +92,6 @@ export class TCECWebSocket implements TournamentWebSocket {
           )
         ).text();
         this.live = false;
-        console.log(gameNr, "sdfsdf");
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
@@ -133,26 +132,21 @@ export class TCECWebSocket implements TournamentWebSocket {
     const reverseGameNumber =
       gameNumber % 2 === 0 ? gameNumber - 1 : gameNumber + 1;
 
-    try {
-      const safeEventNr = this.game
-        .getHeaders()
-        ["Event"].replaceAll(" ", "_")
-        .replaceAll("DivP", "Divp");
+    const safeEventNr = this.game
+      .getHeaders()
+      ["Event"].replaceAll(" ", "_")
+      .replaceAll("DivP", "Divp");
 
-      const pgn = await (
-        await fetch(
-          `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${reverseGameNumber}.pgn`
-        )
-      ).text();
+    const pgn = await (
+      await fetch(
+        `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${reverseGameNumber}.pgn`
+      )
+    ).text();
 
-      const game = new Chess960();
-      game.loadPgn(pgn);
+    const game = new Chess960();
+    game.loadPgn(pgn);
 
-      return { pgn, reverseGameNumber };
-    } catch (err) {
-      console.log(err);
-      return null;
-    }
+    return { pgn, reverseGameNumber };
   }
 
   connect(
