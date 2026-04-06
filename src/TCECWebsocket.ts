@@ -92,7 +92,6 @@ export class TCECWebSocket implements TournamentWebSocket {
           )
         ).text();
         this.live = false;
-        console.log(gameNr, "sdfsdf");
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
@@ -120,6 +119,34 @@ export class TCECWebSocket implements TournamentWebSocket {
     } else {
       console.log("NOT IMPLEMENTED FOR TCECWebsocket: ", msg);
     }
+  }
+
+  async fetchReverseFor(
+    gameNumber: number
+  ): Promise<{ pgn: string; reverseGameNumber: number } | null> {
+    // TODO this check is bugged for finals for whatever reason so I'll leave it for now
+    // if (this.event?.tournamentDetails.isRoundRobin) {
+    //   return null;
+    // }
+
+    const reverseGameNumber =
+      gameNumber % 2 === 0 ? gameNumber - 1 : gameNumber + 1;
+
+    const safeEventNr = this.game
+      .getHeaders()
+      ["Event"].replaceAll(" ", "_")
+      .replaceAll("DivP", "Divp");
+
+    const pgn = await (
+      await fetch(
+        `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${reverseGameNumber}.pgn`
+      )
+    ).text();
+
+    const game = new Chess960();
+    game.loadPgn(pgn);
+
+    return { pgn, reverseGameNumber };
   }
 
   connect(

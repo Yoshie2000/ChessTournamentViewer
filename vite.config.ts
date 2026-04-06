@@ -10,6 +10,7 @@ export default defineConfig({
       "Cross-Origin-Embedder-Policy": "require-corp",
       "Cross-Origin-Opener-Policy": "same-origin",
     },
+    host: "0.0.0.0",
   },
   resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
 });
