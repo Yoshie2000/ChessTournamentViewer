@@ -156,13 +156,47 @@ export class TCECWebSocket implements TournamentWebSocket {
       }
     });
 
-    // this.socket.on("livechart", (json: any) => {
-    //   console.log("livechart", json);
-    // });
+    this.socket.on("livechart", (json: any) => {
+      if (!this.live) return;
 
-    // this.socket.on("livechart1", (json: any) => {
-    //   console.log("livechart1", json);
-    // });
+      const moveData = json.moves.at(-1);
+      if (moveData.pv.includes("...")) {
+        let score = String(moveData.eval);
+        if (score.includes("-")) score = score.replace("-", "+");
+        else if (score.includes("+")) score = score.replace("+", "-");
+        else score = "-" + score;
+        moveData.eval = score;
+      }
+
+      this.callback?.(
+        parseTCECLiveInfo(
+          moveData,
+          this.game.fenAt(this.game.length() - 1),
+          "blue"
+        )
+      );
+    });
+
+    this.socket.on("livechart1", (json: any) => {
+      if (!this.live) return;
+
+      const moveData = json.moves.at(-1);
+      if (moveData.pv.includes("...")) {
+        let score = String(moveData.eval);
+        if (score.includes("-")) score = score.replace("-", "+");
+        else if (score.includes("+")) score = score.replace("+", "-");
+        else score = "-" + score;
+        moveData.eval = score;
+      }
+
+      this.callback?.(
+        parseTCECLiveInfo(
+          moveData,
+          this.game.fenAt(this.game.length() - 1),
+          "red"
+        )
+      );
+    });
 
     this.socket.on("liveeval", (json: any) => {
       if (!this.live) return;

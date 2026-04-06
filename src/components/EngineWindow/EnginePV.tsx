@@ -29,21 +29,28 @@ export function EnginePV({ color }: EnginePVProps) {
   useInterval((state) => {
     // Update the FEN
     setFen(state.currentFen);
+
+    // Update disagreement index
     const disagreementList = ["white", "black"].includes(color)
       ? state.engineAgreePly
       : state.kibitzerAgreePly;
-    setPvDisagreementPoint(disagreementList.at(state.currentMoveNumber));
+    const disagreementListIndex =
+      state.currentMoveNumber === -1 &&
+      !disagreementList.at(state.currentMoveNumber)
+        ? state.currentMoveNumber - 1
+        : state.currentMoveNumber;
+    setPvDisagreementPoint(disagreementList.at(disagreementListIndex));
 
     const data = state.liveInfos[color].liveInfo?.info;
     if (!data) return;
 
     // If the PV is different, re-build the game & re-render it
-    const moves = normalizePv(data.pvSan, data.color, fen);
+    const moves = normalizePv(data.pvSan, color, state.currentFen);
     setMoves((previous) => {
       if (shallow(moves, previous)) return previous;
 
       setCurrentMoveNumber(-1);
-      game.current = buildPvGame(fen, moves, -1);
+      game.current = buildPvGame(state.currentFen, moves, -1);
       setCurrentFen(game.current.fen());
       return moves;
     });

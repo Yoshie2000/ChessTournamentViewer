@@ -3,11 +3,29 @@ import { movesToSan, movesToLan } from "labut";
 import type { CCCLiveInfo } from "./types";
 
 export function uciToSan(fen: string, moves: string[]): string[] {
-  return movesToSan(fen, moves).moves.map((m) => m.san);
+  const result = movesToSan(fen, moves).moves.map((m) => m.san);
+  if (result.length !== moves.length) {
+    console.warn(
+      "uciToSan() produced mismatching pv lengths",
+      fen,
+      moves,
+      result
+    );
+  }
+  return result;
 }
 
 export function sanToUci(fen: string, moves: string[]): string[] {
-  return movesToLan(fen, moves).moves.map((m) => m.lan);
+  const result = movesToLan(fen, moves).moves.map((m) => m.lan);
+  if (result.length !== moves.length) {
+    console.warn(
+      "sanToUci() produced mismatching pv lengths",
+      fen,
+      moves,
+      result
+    );
+  }
+  return result;
 }
 
 export function buildPvGame(
