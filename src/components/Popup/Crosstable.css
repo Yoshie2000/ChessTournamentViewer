@@ -110,12 +110,25 @@
   background: #e5393533;
 }
 
+.crosstable .gamePair.doubleWin {
+  background: #43a0478c;
+}
+
+.crosstable .gamePair.doubleLoss {
+  background: #e539358c;
+}
+
 .crosstable .h2h span.win {
   color: #43a047;
 }
 
 .crosstable .h2h span.loss {
   color: #e53935;
+}
+
+.crosstable .gamePair.doubleWin span,
+.crosstable .gamePair.doubleLoss span {
+  color: #ffffffa8;
 }
 
 .crosstable .h2h span.draw,
