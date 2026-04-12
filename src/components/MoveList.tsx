@@ -190,24 +190,24 @@ const MoveList = memo(
             </div>
           )}
 
-          {moves.slice(pairStart).reduce((acc, _, i) => {
+          {moves.reduce((acc, _, i) => {
             if (i % 2 === 0) {
               const idx = i + pairStart;
               const moveNumber =
                 moveNumberOffset +
-                Math.round(blackMovesFirst ? (i + 1) / 2 + 1 : i / 2 + 1);
+                Math.round(blackMovesFirst ? (idx + 1) / 2 + 1 : idx / 2 + 1);
 
-              const whiteMove = moves[i];
-              const blackMove = moves[i + 1];
+              const whiteMove = moves[idx];
+              const blackMove = moves[idx + 1];
 
               const isLatest = currentMoveNumber === -1;
 
               const whiteActive =
-                currentMoveNumber === i + 1 ||
-                (isLatest && i === moves.length - 1);
+                currentMoveNumber === idx + 1 ||
+                (isLatest && idx === moves.length - 1);
               const blackActive =
-                currentMoveNumber === i + 2 ||
-                (isLatest && i + 1 === moves.length - 1);
+                currentMoveNumber === idx + 2 ||
+                (isLatest && idx + 1 === moves.length - 1);
 
               acc.push(
                 <MoveRow
@@ -218,10 +218,10 @@ const MoveList = memo(
                   blackMove={blackMove}
                   whiteActive={whiteActive}
                   blackActive={blackActive}
-                  disagreementWhite={disagreementMoveIndex === i}
-                  disagreementBlack={disagreementMoveIndex === i + 1}
-                  bookMoveWhite={i < bookMoves}
-                  bookMoveBlack={i + 1 < bookMoves}
+                  disagreementWhite={disagreementMoveIndex === idx}
+                  disagreementBlack={disagreementMoveIndex === idx + 1}
+                  bookMoveWhite={idx < bookMoves}
+                  bookMoveBlack={idx + 1 < bookMoves}
                   setCurrentMoveNumber={setCurrentMoveNumber}
                 />
               );
