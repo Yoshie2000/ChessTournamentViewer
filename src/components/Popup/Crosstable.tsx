@@ -52,22 +52,30 @@ function scoreFromResult(result: Exclude<GameResult, "tbd">): GameScore {
 function pairClassFromResults(
   result1: GameResult,
   result2: GameResult
-): "" | "win" | "loss" {
+): "" | "win" | "loss" | "doubleWin" | "doubleLoss" | "draw" {
   if (result1 === "tbd" || result2 === "tbd") {
     return "";
   }
 
   const pairScore = scoreFromResult(result1) + scoreFromResult(result2);
 
-  if (pairScore > 0) {
+  if (pairScore === 2) {
+    return "doubleWin";
+  }
+
+  if (pairScore === 1) {
     return "win";
   }
 
-  if (pairScore < 0) {
+  if (pairScore === -1) {
     return "loss";
   }
 
-  return "";
+  if (pairScore === -2) {
+    return "doubleLoss";
+  }
+
+  return "draw";
 }
 
 function textFromResult(result: GameResult): string {
@@ -314,6 +322,10 @@ export const Crosstable = memo(() => {
                       const result2 = getResultForGame(gamePair[1], engine.id);
 
                       const pairResult = pairClassFromResults(result1, result2);
+                      const class1 =
+                        pairResult === "draw" ? pairResult : result1;
+                      const class2 =
+                        pairResult === "draw" ? pairResult : result2;
 
                       return (
                         <span
@@ -323,7 +335,7 @@ export const Crosstable = memo(() => {
                             .join(" ")}
                         >
                           <span
-                            className={result1}
+                            className={class1}
                             style={{ cursor: "pointer" }}
                             onClick={() => {
                               requestEvent(gamePair[0].gameNr);
@@ -333,7 +345,7 @@ export const Crosstable = memo(() => {
                             {textFromResult(result1)}
                           </span>
                           <span
-                            className={result2}
+                            className={class2}
                             style={{ cursor: "pointer" }}
                             onClick={() => {
                               requestEvent(gamePair[1].gameNr);
