@@ -46,14 +46,57 @@
   margin: 0;
 }
 
+.engineMinimal .engineDetails {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: 100%;
+  margin-left: 4px;
+}
+
 .engineMinimal .engineName {
   font-weight: bold;
   text-transform: capitalize;
 }
 
+.engineMinimal .engineInfoIcon {
+  cursor: pointer;
+  fill: #a1a1a1;
+}
+
 .engineMinimal .engineInfoHeader {
+  display: grid;
+  grid-template-columns: auto 1fr 11rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.boardWindow > .engineMinimal .engineInfoHeader {
+  padding: 0.25rem 0.25rem 0.25rem 0.25rem;
+}
+
+.engineMinimal .engineDetailsRow {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.engineMinimal .engineVersion {
+  text-transform: lowercase;
+  color: #a1a1a1;
+  font-size: var(--font-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+  display: block;
+}
+
+.engineOptionsTooltip {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow: auto;
 }
 
 .engineMinimal .engineOutput {

@@ -6,11 +6,13 @@ import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "../Loading";
 import { useInterval } from "../../hooks/useInterval";
+import { MdInfoOutline } from "react-icons/md";
+import { Tooltip } from "antd";
 
 type EngineCardProps = { color: EngineColor; className?: string };
 
 const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
-  const engine = useLiveInfo((state) => state.liveInfos[color].engineInfo);
+  const engine = useLiveInfo((state) => state.liveEngineData[color].engineInfo);
 
   const [score, setScore] = useState<string>();
   const [time, setTime] = useState<number>(1);
@@ -26,6 +28,10 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
 
   const loading = !score || !engine || !time;
 
+  const name = engine.name ? engine.name : color;
+  const version = engine.version || engine.config.version;
+  const optionNames = Object.keys(engine.config.options);
+
   return (
     <div
       className={`engineMinimal ${loading ? "loading" : ""} ${className ?? ""}`}
@@ -37,7 +43,28 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
           <SkeletonBlock width={32} height={32} style={{ margin: 6 }} />
         )}
 
-        <div className="engineName">{engine.name ? engine.name : color}</div>
+        <div className="engineDetails">
+          <div className="engineDetailsRow">
+            <div className="engineName">{name}</div>
+            <Tooltip
+              color={"#212121"}
+              title={
+                <div className="engineOptionsTooltip">
+                  {optionNames.map((option) => (
+                    <div>
+                      {option}: {engine.config.options[option]}
+                    </div>
+                  ))}
+                </div>
+              }
+            >
+              <MdInfoOutline className="engineInfoIcon" />
+            </Tooltip>
+          </div>
+          <div className="engineDetailsRow engineVersion" title={version}>
+            {version}
+          </div>
+        </div>
 
         <div className="engineOutput">
           <div className="engineTime">

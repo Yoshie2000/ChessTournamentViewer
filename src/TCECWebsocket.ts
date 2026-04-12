@@ -618,8 +618,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     if (!this.event || !this.callback) return;
 
     this.game.loadPgn(pgn);
-    this.game.setHeader("White", this.game.getHeaders()["White"].split(" ")[0]);
-    this.game.setHeader("Black", this.game.getHeaders()["Black"].split(" ")[0]);
+
+    const white = this.game.getHeaders()["White"].split(" ")[0];
+    const black = this.game.getHeaders()["Black"].split(" ")[0];
+    this.game.setHeader("White", white);
+    this.game.setHeader("Black", black);
 
     const gameList = [
       ...this.event.tournamentDetails.schedule.past,
@@ -665,6 +668,48 @@ export class TCECWebSocket implements TournamentWebSocket {
       winc: "1",
       wtime: whiteToMove ? clock0 : clock1,
     });
+
+    const optionsComment = this.game.getComments()[0].comment;
+    const options = optionsComment?.split(", ");
+    if (options) {
+      function reduceOption(prev: Record<string, string>, cur: string) {
+        const [name, value] = cur.split("=");
+        return { ...prev, [name]: value.replace(";", "") };
+      }
+
+      const whiteOptions = options[0]
+        .replace("WhiteEngineOptions: ", "")
+        .split("; ")
+        .reduce(reduceOption, {});
+      const blackOptions = options[1]
+        .replace("BlackEngineOptions: ", "")
+        .split("; ")
+        .reduce(reduceOption, {});
+
+      const whiteEngine = this.event.tournamentDetails.engines.find(
+        (engine) => engine.id === white
+      )!;
+      const blackEngine = this.event.tournamentDetails.engines.find(
+        (engine) => engine.id === black
+      )!;
+
+      this.callback?.({
+        type: "kibitzer",
+        color: "white",
+        engine: {
+          ...whiteEngine,
+          config: { ...whiteEngine.config, options: whiteOptions },
+        },
+      });
+      this.callback?.({
+        type: "kibitzer",
+        color: "black",
+        engine: {
+          ...blackEngine,
+          config: { ...blackEngine.config, options: blackOptions },
+        },
+      });
+    }
   }
 
   disconnect(): void {

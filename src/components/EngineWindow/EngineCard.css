@@ -30,14 +30,13 @@
   font-weight: bold;
   text-wrap: break-spaces;
   white-space: nowrap;
-  max-width: calc(var(--engine-card-info-width));
 }
 
 .engineComponent .engineInfoHeader {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 1.4rem 0.125rem 0.5rem;
+  padding: 0.25rem 0.5rem 0.125rem 0.5rem;
   justify-content: space-between;
 }
 
