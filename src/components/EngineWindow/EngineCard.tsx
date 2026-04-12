@@ -10,6 +10,8 @@ import type { EngineColor } from "../../LiveInfo";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
 import { useInterval } from "../../hooks/useInterval";
+import { IoIosArrowDown } from "react-icons/io";
+import { loadSettings, saveSettings } from "@/LocalStorage";
 
 type EngineCardProps = { color: EngineColor };
 
@@ -66,7 +68,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const liveInfo = state.liveInfos[color].liveInfo;
 
   const data = liveInfo?.info;
-  const loading = !data || !engine || !time;
+  const loading = !data || !engine || !time || !fen;
 
   const {
     Board,
@@ -108,32 +110,52 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const safeFen = fen ?? new Chess().fen();
   const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
+  const expandedSettingsKey = "expanded-" + color;
+  const [isExpanded, setIsExpanded] = useState(
+    loadSettings()[expandedSettingsKey] === "true"
+  );
+  const expandedClass = isExpanded ? "" : "small";
+
+  useEffect(() => {
+    saveSettings({ [expandedSettingsKey]: String(isExpanded) });
+  }, [isExpanded]);
+
   return (
     <div className={`engineComponent ${loading ? "loading" : ""}`}>
       <EngineMinimal color={color} />
-      <hr></hr>
 
-      {loading && !isMobile ? (
-        <SkeletonBlock width="100%" className="board" />
-      ) : moves && !isMobile ? (
-        <div className="engineRightSection">
-          {Board}
+      <hr />
 
-          <MoveList
-            startFen={safeFen}
-            moves={moves}
-            currentMoveNumber={currentMoveNumber}
-            setCurrentMoveNumber={setCurrentMoveNumber}
-            controllers={false}
-            disagreementMoveIndex={
-              pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
-            }
-            moveNumberOffset={moveNumberOffset}
-          />
+      <IoIosArrowDown
+        className={"collapseToggle " + expandedClass}
+        onClick={() => setIsExpanded((expanded) => !expanded)}
+      />
+
+      {!isMobile && (
+        <div className={"engineRightSection " + expandedClass}>
+          {loading && <SkeletonBlock width="100%" />}
+
+          {!loading && moves && (
+            <>
+              {Board}
+
+              <MoveList
+                startFen={safeFen}
+                moves={moves}
+                currentMoveNumber={currentMoveNumber}
+                setCurrentMoveNumber={setCurrentMoveNumber}
+                controllers={false}
+                disagreementMoveIndex={
+                  pvDisagreementPoint !== -1 ? pvDisagreementPoint : undefined
+                }
+                moveNumberOffset={moveNumberOffset}
+              />
+            </>
+          )}
         </div>
-      ) : null}
+      )}
 
-      <hr></hr>
+      {!isMobile && !loading && moves && <hr />}
 
       <div className="engineInfoTable">
         {fields.map(([label, value]) => (

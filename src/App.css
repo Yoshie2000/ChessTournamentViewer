@@ -9,7 +9,9 @@
   --movelist-width: max(140px, calc(var(--board-size) / 3.5));
   --board-wrapper-width: calc(var(--board-size) + var(--movelist-width));
   --graph-height: calc(var(--available-height) - var(--board-size));
-  --engine-board-width: 15vw;
+
+  --base-board-width: 15vw;
+  --engine-board-width: var(--base-board-width);
   --engine-kibitzer-height: 20rem;
   --engine-card-movelist-width: max(
     165px,
