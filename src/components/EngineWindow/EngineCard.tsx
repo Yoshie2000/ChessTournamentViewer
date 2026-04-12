@@ -11,6 +11,7 @@ import { useLiveInfo } from "../../context/LiveInfoContext";
 import { EngineMinimal } from "./EngineMinimal";
 import { useInterval } from "../../hooks/useInterval";
 import { IoIosArrowDown } from "react-icons/io";
+import { loadSettings, saveSettings } from "@/LocalStorage";
 
 type EngineCardProps = { color: EngineColor };
 
@@ -109,8 +110,15 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const safeFen = fen ?? new Chess().fen();
   const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
-  const [isOpen, setIsOpen] = useState(true);
-  const collapseClass = isOpen ? "visible" : "hidden";
+  const expandedSettingsKey = "expanded-" + color;
+  const [isExpanded, setIsExpanded] = useState(
+    loadSettings()[expandedSettingsKey] === "true"
+  );
+  const expandedClass = isExpanded ? "" : "small";
+
+  useEffect(() => {
+    saveSettings({ [expandedSettingsKey]: String(isExpanded) });
+  }, [isExpanded]);
 
   return (
     <div className={`engineComponent ${loading ? "loading" : ""}`}>
@@ -119,12 +127,12 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
       <hr />
 
       <IoIosArrowDown
-        className={"collapseToggle " + collapseClass}
-        onClick={() => setIsOpen((open) => !open)}
+        className={"collapseToggle " + expandedClass}
+        onClick={() => setIsExpanded((expanded) => !expanded)}
       />
 
       {!isMobile && (
-        <div className={"engineRightSection " + collapseClass}>
+        <div className={"engineRightSection " + expandedClass}>
           {loading && <SkeletonBlock width="100%" />}
 
           {!loading && moves && (
@@ -142,12 +150,12 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
                 }
                 moveNumberOffset={moveNumberOffset}
               />
-
-              <hr />
             </>
           )}
         </div>
       )}
+
+      {!isMobile && !loading && moves && <hr />}
 
       <div className="engineInfoTable">
         {fields.map(([label, value]) => (

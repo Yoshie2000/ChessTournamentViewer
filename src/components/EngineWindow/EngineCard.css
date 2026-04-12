@@ -82,14 +82,19 @@
   left: 0px;
   z-index: 10;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: 0.2s;
   fill: #fff;
   filter: drop-shadow(0 0 5px rgba(0, 0, 0, 1));
   font-size: 1rem;
 }
 
-.engineComponent .collapseToggle.hidden {
+.engineComponent .collapseToggle.small {
   transform: rotateZ(180deg);
+}
+
+.engineComponent:not(:hover) .collapseToggle {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .engineComponent .engineRightSection {
@@ -99,7 +104,7 @@
   overflow: hidden;
 }
 
-.engineComponent:has(.engineRightSection.hidden) {
+.engineComponent:has(.engineRightSection.small) {
   --engine-board-width: calc(var(--base-board-width) / 2.2);
   --engine-card-movelist-width: calc(100% - var(--engine-board-width));
 }
