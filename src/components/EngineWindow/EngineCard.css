@@ -8,6 +8,7 @@
   max-width: 100%;
   overflow: hidden;
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .engineComponent .engineLeftSection {
@@ -75,9 +76,32 @@
   white-space: nowrap;
 }
 
+.engineComponent .collapseToggle {
+  position: absolute;
+  top: 48px;
+  left: 0px;
+  z-index: 10;
+  cursor: pointer;
+  transition: transform 0.2s;
+  fill: #fff;
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 1));
+  font-size: 1rem;
+}
+
+.engineComponent .collapseToggle.hidden {
+  transform: rotateZ(180deg);
+}
+
 .engineComponent .engineRightSection {
   display: flex;
   height: calc(var(--engine-board-width)) !important;
+  transition: height 0.2s;
+  overflow: hidden;
+}
+
+.engineComponent:has(.engineRightSection.hidden) {
+  --engine-board-width: calc(var(--base-board-width) / 2.2);
+  --engine-card-movelist-width: calc(100% - var(--engine-board-width));
 }
 
 .engineComponent .board {
