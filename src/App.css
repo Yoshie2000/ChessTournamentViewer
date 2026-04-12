@@ -2,10 +2,6 @@
   --padding: 1.5vh;
   --gap: 1.5vh;
   --topbar-height: 3rem;
-  --engine-card-info-width: calc(
-    var(--engine-card-width) - var(--engine-board-width) -
-      var(--engine-card-movelist-width)
-  );
   --available-height: calc(
     100vh - 2 * var(--padding) - 2 * var(--gap) - var(--topbar-height)
   );
@@ -23,6 +19,7 @@
     var(--engine-board-width) + var(--engine-card-movelist-width)
   );
 
+  --font-xs: 0.8rem;
   --font-sm: 0.9rem;
   --font-md: 0.95rem;
   --font-lg: 1rem;
