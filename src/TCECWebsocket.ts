@@ -28,9 +28,11 @@ export class TCECWebSocket implements TournamentWebSocket {
   async send(msg: any) {
     if (msg.type === "requestEvent") {
       const gameNr: string | undefined = msg.gameNr;
-      const eventNr: string | undefined = msg.eventNr;
+      let eventNr: string | undefined = msg.eventNr;
 
       if (eventNr) {
+        eventNr = eventNr.replace("AltSubfi", "Altsubfi");
+
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
           await Promise.all([
@@ -85,7 +87,8 @@ export class TCECWebSocket implements TournamentWebSocket {
       } else if (gameNr) {
         const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
           .replaceAll(" ", "_")
-          .replaceAll("DivP", "Divp");
+          .replaceAll("DivP", "Divp")
+          .replaceAll("AltSubfi", "Altsubfi");
         const pgn = await (
           await fetch(
             `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`

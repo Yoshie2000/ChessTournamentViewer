@@ -236,7 +236,7 @@ export const BoardWindow = memo(() => {
     if (!activeEvent || !eventList || eventState.pendingEventId) return;
 
     const eventExists = eventList.events.some(
-      (event) => String(event.id) === activeEvent.tournamentDetails.tNr
+      (event) => String(event.id).toLowerCase() === activeEvent.tournamentDetails.tNr.toLowerCase()
     );
     if (!eventExists) {
       eventState.requestEvent(undefined, eventList.events[0]?.id);
