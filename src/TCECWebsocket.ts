@@ -60,7 +60,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         // Round is needed for the kibitzer endpoints
         const round = game.getHeaders()["Round"];
         // The schedule link is different for the ongoing event
-        const isLive = crosstable.Event.replaceAll(" ", "_") === eventNr;
+        const isLive = crosstable.Event.replaceAll(" ", "_").toLowerCase() === eventNr.toLowerCase();
 
         if (isLive && !gameNr) {
           this.send({
