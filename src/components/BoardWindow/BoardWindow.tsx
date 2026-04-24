@@ -1,24 +1,33 @@
 import { memo, useCallback, useEffect, useRef } from "react";
-import { useLiveBoard } from "../../hooks/BoardHook";
-import { useEventStore } from "../../context/EventContext";
-import { useLiveInfo } from "../../context/LiveInfoContext";
-import { TCECWebSocket } from "../../TCECWebsocket";
-import { CCCWebSocket } from "../../CCCWebsocket";
-import type { CCCLiveInfo, CCCMessage } from "../../types";
+import { useMediaQuery } from "react-responsive";
+
+import { useEventStore } from "@/context/EventContext";
+import { useLiveInfo } from "@/context/LiveInfoContext";
+import { useGameHistory } from "@/context/GameHistoryContext";
+
+import { useLiveBoard } from "@/hooks/BoardHook";
+import { useKibitzer } from "@/hooks/useKibitzer";
+import { useRequestReverse } from "@/hooks/useRequestReverse";
+
+import { TCECWebSocket } from "@/TCECWebsocket";
+import { CCCWebSocket, type TournamentWebSocket } from "@/CCCWebsocket";
+
 import {
   EmptyEngineDefinition,
   extractLiveInfoFromGame,
   getTimeControl,
   type EngineColor,
-} from "../../LiveInfo";
-import { loadLiveInfos } from "../../LocalStorage";
-import { type Square } from "../../chess.js/chess";
-import { uciToSan } from "../../utils";
-import { EngineMinimal } from "../EngineWindow/EngineMinimal";
+} from "@/LiveInfo";
+
 import { GameResultOverlay } from "./GameResultOverlay";
-import { useKibitzer } from "../../hooks/useKibitzer";
 import { LiveMoveList } from "./LiveMoveList";
-import { useMediaQuery } from "react-responsive";
+import { EngineMinimal } from "../EngineWindow/EngineMinimal";
+
+import { loadLiveInfos } from "@/LocalStorage";
+import { type Square } from "@/chess.js/chess";
+import { uciToSan } from "@/utils";
+
+import type { CCCLiveInfo, CCCMessage } from "@/types";
 
 const wsByProvider = {
   ccc: new CCCWebSocket(),
@@ -44,6 +53,10 @@ export const BoardWindow = memo(() => {
 
   const activeProvider = useEventStore((state) => state.activeProvider);
   const activeEvent = useEventStore((state) => state.activeEvent);
+  const activeGameNumber = useEventStore((state) =>
+    Number(state.activeGame?.gameDetails.gameNr)
+  );
+
   const game = useLiveInfo((state) => state.game);
 
   const initialEvent = useRef<string | null>(_initialEvent);
@@ -70,6 +83,14 @@ export const BoardWindow = memo(() => {
     [game]
   );
 
+  const fetchReverse: TournamentWebSocket["fetchReverseFor"] = useCallback(
+    (gameNumber) => {
+      return activeWSRef.current.fetchReverseFor(gameNumber);
+    },
+    []
+  );
+  useRequestReverse(fetchReverse);
+
   const handleMessage = useCallback(
     function (msg: CCCMessage) {
       const liveInfoState = useLiveInfo.getState();
@@ -77,9 +98,10 @@ export const BoardWindow = memo(() => {
       const currentProvider = eventState.activeProvider;
 
       switch (msg.type) {
-        case "eventUpdate":
+        case "eventUpdate": {
           eventState.setEvent(currentProvider, msg);
           break;
+        }
 
         case "gameUpdate": {
           game.loadPgn(msg.gameDetails.pgn);
@@ -130,7 +152,6 @@ export const BoardWindow = memo(() => {
           eventState.setGame(msg);
           liveInfoState.setCurrentFen(game.fen());
           liveInfoState.setMoves(game.history());
-
           break;
         }
 
@@ -160,6 +181,10 @@ export const BoardWindow = memo(() => {
           liveInfoState.setMoves(game.history());
           updateBoard(true);
 
+          if (activeGameNumber) {
+            useGameHistory.getState().setDataForCurrent(game.boardFenHistory());
+          }
+
           break;
         }
 
@@ -170,14 +195,19 @@ export const BoardWindow = memo(() => {
           updateBoard(true);
           break;
 
-        case "result":
+        case "result": {
+          if (activeGameNumber) {
+            useGameHistory.getState().setDataForCurrent(game.boardFenHistory());
+          }
+
           game.setHeader("Termination", msg.reason);
           game.setHeader("Result", msg.score);
           updateBoard(true);
           break;
+        }
       }
     },
-    [game, handleLiveInfo, updateBoard]
+    [activeGameNumber, game, handleLiveInfo, updateBoard]
   );
 
   useEffect(() => {

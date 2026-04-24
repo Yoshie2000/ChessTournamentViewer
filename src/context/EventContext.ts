@@ -66,6 +66,7 @@ export const useEventStore = create<EventContext>((set, get) => {
     engines: [],
 
     pendingEventId: null,
+
     setPendingEventId: (id) => set({ pendingEventId: id }),
     setActiveProvider(provider) {
       const { providerData } = get();
