@@ -6,6 +6,7 @@ type CCCEngine = {
     command: string;
     timemargin: number;
     options: Record<string, string | number>;
+    version?: string;
   };
   country: string;
   elo: string;

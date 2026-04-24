@@ -28,9 +28,11 @@ export class TCECWebSocket implements TournamentWebSocket {
   async send(msg: any) {
     if (msg.type === "requestEvent") {
       const gameNr: string | undefined = msg.gameNr;
-      const eventNr: string | undefined = msg.eventNr;
+      let eventNr: string | undefined = msg.eventNr;
 
       if (eventNr) {
+        eventNr = eventNr.replace("AltSubfi", "Altsubfi");
+
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
           await Promise.all([
@@ -58,7 +60,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         // Round is needed for the kibitzer endpoints
         const round = game.getHeaders()["Round"];
         // The schedule link is different for the ongoing event
-        const isLive = crosstable.Event.replaceAll(" ", "_") === eventNr;
+        const isLive = crosstable.Event.replaceAll(" ", "_").toLowerCase() === eventNr.toLowerCase();
 
         if (isLive && !gameNr) {
           this.send({
@@ -85,7 +87,8 @@ export class TCECWebSocket implements TournamentWebSocket {
       } else if (gameNr) {
         const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
           .replaceAll(" ", "_")
-          .replaceAll("DivP", "Divp");
+          .replaceAll("DivP", "Divp")
+          .replaceAll("AltSubfi", "Altsubfi");
         const pgn = await (
           await fetch(
             `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
@@ -183,13 +186,47 @@ export class TCECWebSocket implements TournamentWebSocket {
       }
     });
 
-    // this.socket.on("livechart", (json: any) => {
-    //   console.log("livechart", json);
-    // });
+    this.socket.on("livechart", (json: any) => {
+      if (!this.live) return;
 
-    // this.socket.on("livechart1", (json: any) => {
-    //   console.log("livechart1", json);
-    // });
+      const moveData = json.moves.at(-1);
+      if (moveData.pv.includes("...")) {
+        let score = String(moveData.eval);
+        if (score.includes("-")) score = score.replace("-", "+");
+        else if (score.includes("+")) score = score.replace("+", "-");
+        else score = "-" + score;
+        moveData.eval = score;
+      }
+
+      this.callback?.(
+        parseTCECLiveInfo(
+          moveData,
+          this.game.fenAt(this.game.length() - 1),
+          "blue"
+        )
+      );
+    });
+
+    this.socket.on("livechart1", (json: any) => {
+      if (!this.live) return;
+
+      const moveData = json.moves.at(-1);
+      if (moveData.pv.includes("...")) {
+        let score = String(moveData.eval);
+        if (score.includes("-")) score = score.replace("-", "+");
+        else if (score.includes("+")) score = score.replace("+", "-");
+        else score = "-" + score;
+        moveData.eval = score;
+      }
+
+      this.callback?.(
+        parseTCECLiveInfo(
+          moveData,
+          this.game.fenAt(this.game.length() - 1),
+          "red"
+        )
+      );
+    });
 
     this.socket.on("liveeval", (json: any) => {
       if (!this.live) return;
@@ -611,8 +648,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     if (!this.event || !this.callback) return;
 
     this.game.loadPgn(pgn);
-    this.game.setHeader("White", this.game.getHeaders()["White"].split(" ")[0]);
-    this.game.setHeader("Black", this.game.getHeaders()["Black"].split(" ")[0]);
+
+    const white = this.game.getHeaders()["White"].split(" ")[0];
+    const black = this.game.getHeaders()["Black"].split(" ")[0];
+    this.game.setHeader("White", white);
+    this.game.setHeader("Black", black);
 
     const gameList = [
       ...this.event.tournamentDetails.schedule.past,
@@ -658,6 +698,48 @@ export class TCECWebSocket implements TournamentWebSocket {
       winc: "1",
       wtime: whiteToMove ? clock0 : clock1,
     });
+
+    const optionsComment = this.game.getComments()[0].comment;
+    const options = optionsComment?.split(", ");
+    if (options) {
+      function reduceOption(prev: Record<string, string>, cur: string) {
+        const [name, value] = cur.split("=");
+        return { ...prev, [name]: value.replace(";", "") };
+      }
+
+      const whiteOptions = options[0]
+        .replace("WhiteEngineOptions: ", "")
+        .split("; ")
+        .reduce(reduceOption, {});
+      const blackOptions = options[1]
+        .replace("BlackEngineOptions: ", "")
+        .split("; ")
+        .reduce(reduceOption, {});
+
+      const whiteEngine = this.event.tournamentDetails.engines.find(
+        (engine) => engine.id === white
+      )!;
+      const blackEngine = this.event.tournamentDetails.engines.find(
+        (engine) => engine.id === black
+      )!;
+
+      this.callback?.({
+        type: "kibitzer",
+        color: "white",
+        engine: {
+          ...whiteEngine,
+          config: { ...whiteEngine.config, options: whiteOptions },
+        },
+      });
+      this.callback?.({
+        type: "kibitzer",
+        color: "black",
+        engine: {
+          ...blackEngine,
+          config: { ...blackEngine.config, options: blackOptions },
+        },
+      });
+    }
   }
 
   disconnect(): void {

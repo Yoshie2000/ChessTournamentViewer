@@ -4,7 +4,7 @@ import type { Api } from "@lichess-org/chessground/api";
 import type { Config } from "@lichess-org/chessground/config";
 import type { DrawShape } from "@lichess-org/chessground/draw";
 import type { LiveEngineDataEntry } from "../../LiveInfo";
-import type { Chess960, Square } from "../../chess.js/chess";
+import { Chess960, type Square } from "../../chess.js/chess";
 import "./Board.css";
 
 const BOARD_THROTTLE_MS = 50;
@@ -82,10 +82,13 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           }
         }
 
+        const legalMoves = new Chess960(fen).moves();
         for (const color of ["green", "red", "blue"] as const) {
           if (liveInfos?.[color].liveInfo) {
-            const pv = liveInfos[color].liveInfo.info.pv.split(" ");
-            const nextMove = pv[0];
+            const liveInfo = liveInfos[color].liveInfo.info;
+            const pv = liveInfo.pv.split(" ");
+            const pvSan = liveInfo.pvSan.split(" ");
+            const nextMove = legalMoves.includes(pvSan[0]) ? pv[0] : pv[1];
             if (nextMove && nextMove.length >= 4) {
               arrows.push({
                 orig: (nextMove.slice(0, 2) as Square) || "a1",
