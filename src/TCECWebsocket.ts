@@ -1,5 +1,5 @@
 import io from "socket.io-client";
-import type { TournamentWebSocket } from "./CCCWebsocket";
+import type { SocketMessageUs, TournamentWebSocket } from "./CCCWebsocket";
 import type {
   CCCEngine,
   CCCEventsListUpdate,
@@ -15,6 +15,8 @@ import {
   extractLiveInfoFromTCECComment,
   parseTCECLiveInfo,
 } from "./LiveInfo";
+import z from "zod";
+import { htmlReadSchema } from "./schemas/schamaTCEC";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -25,7 +27,7 @@ export class TCECWebSocket implements TournamentWebSocket {
   private game: Chess960 = new Chess960();
   private event: CCCEventUpdate | null = null;
 
-  async send(msg: any) {
+  async send(msg: SocketMessageUs) {
     if (msg.type === "requestEvent") {
       const gameNr: string | undefined = msg.gameNr;
       let eventNr: string | undefined = msg.eventNr;
@@ -60,7 +62,9 @@ export class TCECWebSocket implements TournamentWebSocket {
         // Round is needed for the kibitzer endpoints
         const round = game.getHeaders()["Round"];
         // The schedule link is different for the ongoing event
-        const isLive = crosstable.Event.replaceAll(" ", "_").toLowerCase() === eventNr.toLowerCase();
+        const isLive =
+          crosstable.Event.replaceAll(" ", "_").toLowerCase() ===
+          eventNr.toLowerCase();
 
         if (isLive && !gameNr) {
           this.send({
@@ -142,10 +146,22 @@ export class TCECWebSocket implements TournamentWebSocket {
       reconnectionDelayMax: 5000,
     });
 
-    this.socket.on("htmlread", (json: any) => {
+    this.socket.on("htmlread", (json: unknown) => {
       if (!this.live) return;
 
-      const latestUsefulLine = (json.data.split("\n") as string[])
+      const validationResult = z.safeParse(htmlReadSchema, json);
+
+      if (!validationResult.success) {
+        console.warn("Error validating data, aborting...");
+        console.warn(validationResult.error);
+
+        return;
+      }
+
+      const { data } = validationResult.data;
+
+      const latestUsefulLine = data
+        .split("\n")
         .filter((line) => !line.includes("currmove"))
         .at(-1);
       const infoString = latestUsefulLine?.split(": ")[1] ?? "";
@@ -432,7 +448,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       });
   }
 
-  private openEvent(
+  private async openEvent(
     scheduleURL: string,
     crosstableURL: string,
     pgnURL: string,
@@ -440,181 +456,186 @@ export class TCECWebSocket implements TournamentWebSocket {
     sfURL: string,
     gameNr?: string
   ) {
-    Promise.all([
+    const responses = await Promise.all([
       fetch(scheduleURL),
       fetch(crosstableURL),
       fetch(pgnURL),
       fetch(lc0URL),
       fetch(sfURL),
-    ])
-      .then((responses) =>
-        Promise.allSettled([
-          responses[0].json(),
-          responses[1].json(),
-          responses[2].text(),
-          responses[3].json(),
-          responses[4].json(),
-        ])
-      )
-      .then((jsons) => {
-        const [schedule, crosstable, livePGN, lc0, sf] = jsons;
+    ]).catch(console.log);
 
+    if (!responses) {
+      return;
+    }
+
+    const jsons = await Promise.allSettled([
+      responses[0].json(),
+      responses[1].json(),
+      responses[2].text(),
+      responses[3].json(),
+      responses[4].json(),
+    ]);
+
+    console.log("JSONSSSSSSSS");
+    console.log(jsons);
+
+    const [schedule, crosstable, livePGN, lc0, sf] = jsons;
+
+    if (
+      schedule.status !== "fulfilled" ||
+      crosstable.status !== "fulfilled" ||
+      livePGN.status !== "fulfilled"
+    ) {
+      return;
+    }
+
+    const engines: CCCEngine[] = Object.keys(crosstable.value.Table).map(
+      (engineName) => {
+        const engineData = crosstable.value.Table[engineName];
+        const correctName = engineName.split(" ")[0];
+        const engineVersion = engineName.split(" ").slice(1).join(" ");
+
+        return {
+          authors: "",
+          config: { command: "", options: {}, timemargin: 0 },
+          country: "",
+          elo: String(engineData.Rating),
+          facts: "",
+          flag: "",
+          id: correctName,
+          imageUrl:
+            "https://ctv.yoshie2000.de/tcec/image/engine/" +
+            correctName +
+            ".png",
+          name: correctName,
+          perf: String(engineData.Performance),
+          playedGames: "",
+          points: String(engineData.Score),
+          rating: String(engineData.Rating),
+          updatedAt: "",
+          version: engineVersion,
+          website: "",
+          year: "",
+        };
+      }
+    );
+
+    function toCccGame(game: any, index: number): CCCGame {
+      if (!game) return undefined as unknown as CCCGame;
+
+      const [time, , date] = game.Start?.split(" ") ?? [
+        "00:00:00",
+        "on",
+        "1970.01.01",
+      ];
+      const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
+      const startDate = new Date(isoString);
+
+      const [hours, minutes, seconds] = game.Duration?.split(":").map(
+        Number
+      ) ?? [0, 0, 0];
+      const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
+
+      const gameStarted = !!game.Result;
+      const gameOver = !!game.Result && game.Result !== "*";
+
+      const black = game.Black.split(" ")[0];
+      const white = game.White.split(" ")[0];
+
+      return {
+        blackId: black,
+        blackName: black,
+        estimatedStartTime: "",
+        gameNr: String(index + 1),
+        matchNr: "",
+        opening: game.Opening,
+        openingType: game.Opening,
+        roundNr: game.Round,
+        timeControl: "",
+        variant: "",
+        whiteId: white,
+        whiteName: white,
+        outcome: gameOver ? game.Result : undefined,
+        timeEnd: gameOver
+          ? new Date(startDate.getTime() + duration).toString()
+          : undefined,
+        timeStart: gameStarted ? startDate.toString() : undefined,
+      };
+    }
+
+    const cccGameSchedule = (schedule.value as any[]).map(toCccGame);
+
+    const past = cccGameSchedule.filter((game) => !!game.timeEnd);
+    const present = cccGameSchedule.find(
+      (game) => !!game.timeStart && !game.timeEnd
+    );
+    const future = cccGameSchedule.filter(
+      (game) => !game.outcome && !game.timeStart
+    );
+
+    const allGames = [...past, ...(present ? [present] : []), ...future];
+
+    // Create an empty set of opponents per engine
+    const opponentsPerEngine = engines.reduce(
+      (prev, cur) => ({ ...prev, [cur.id]: new Set<string>() }),
+      {} as Record<string, Set<string>>
+    );
+
+    // Check that each pair of consecutive games has switched opponents
+    const hasGamePairs = allGames
+      .map((_, idx) => {
+        const pairStart = 2 * Math.floor(idx / 2);
+        const first = allGames[pairStart];
+        const second = allGames[pairStart + 1];
+
+        // Ignore games without valid engines
         if (
-          schedule.status !== "fulfilled" ||
-          crosstable.status !== "fulfilled" ||
-          livePGN.status !== "fulfilled"
-        )
-          return;
-
-        const engines: CCCEngine[] = Object.keys(crosstable.value.Table).map(
-          (engineName) => {
-            const engineData = crosstable.value.Table[engineName];
-            const correctName = engineName.split(" ")[0];
-            const engineVersion = engineName.split(" ").slice(1).join(" ");
-
-            return {
-              authors: "",
-              config: { command: "", options: {}, timemargin: 0 },
-              country: "",
-              elo: String(engineData.Rating),
-              facts: "",
-              flag: "",
-              id: correctName,
-              imageUrl:
-                "https://ctv.yoshie2000.de/tcec/image/engine/" +
-                correctName +
-                ".png",
-              name: correctName,
-              perf: String(engineData.Performance),
-              playedGames: "",
-              points: String(engineData.Score),
-              rating: String(engineData.Rating),
-              updatedAt: "",
-              version: engineVersion,
-              website: "",
-              year: "",
-            };
-          }
-        );
-
-        function toCccGame(game: any, index: number): CCCGame {
-          if (!game) return undefined as unknown as CCCGame;
-
-          const [time, , date] = game.Start?.split(" ") ?? [
-            "00:00:00",
-            "on",
-            "1970.01.01",
-          ];
-          const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
-          const startDate = new Date(isoString);
-
-          const [hours, minutes, seconds] = game.Duration?.split(":").map(
-            Number
-          ) ?? [0, 0, 0];
-          const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
-
-          const gameStarted = !!game.Result;
-          const gameOver = !!game.Result && game.Result !== "*";
-
-          const black = game.Black.split(" ")[0];
-          const white = game.White.split(" ")[0];
-
-          return {
-            blackId: black,
-            blackName: black,
-            estimatedStartTime: "",
-            gameNr: String(index + 1),
-            matchNr: "",
-            opening: game.Opening,
-            openingType: game.Opening,
-            roundNr: game.Round,
-            timeControl: "",
-            variant: "",
-            whiteId: white,
-            whiteName: white,
-            outcome: gameOver ? game.Result : undefined,
-            timeEnd: gameOver
-              ? new Date(startDate.getTime() + duration).toString()
-              : undefined,
-            timeStart: gameStarted ? startDate.toString() : undefined,
-          };
+          opponentsPerEngine[first.blackId] === undefined ||
+          opponentsPerEngine[first.whiteId] === undefined ||
+          opponentsPerEngine[second.blackId] === undefined ||
+          opponentsPerEngine[second.whiteId] === undefined
+        ) {
+          return true;
         }
 
-        const cccGameSchedule = (schedule.value as any[]).map(toCccGame);
+        opponentsPerEngine[first.blackId].add(first.whiteId);
+        opponentsPerEngine[first.whiteId].add(first.blackId);
+        opponentsPerEngine[second.blackId].add(second.whiteId);
+        opponentsPerEngine[second.whiteId].add(second.blackId);
 
-        const past = cccGameSchedule.filter((game) => !!game.timeEnd);
-        const present = cccGameSchedule.find(
-          (game) => !!game.timeStart && !game.timeEnd
+        return (
+          first.blackId === second.whiteId && first.whiteId === second.blackId
         );
-        const future = cccGameSchedule.filter(
-          (game) => !game.outcome && !game.timeStart
-        );
+      })
+      .every((value) => value);
 
-        const allGames = [...past, ...(present ? [present] : []), ...future];
+    // Check that all engines are playing each other
+    const isRoundRobin = engines.every(
+      (engine) => opponentsPerEngine[engine.id].size === engines.length - 1
+    );
 
-        // Create an empty set of opponents per engine
-        const opponentsPerEngine = engines.reduce(
-          (prev, cur) => ({ ...prev, [cur.id]: new Set<string>() }),
-          {} as Record<string, Set<string>>
-        );
+    const event: CCCEventUpdate = {
+      type: "eventUpdate",
+      tournamentDetails: {
+        name: crosstable.value.Event,
+        tNr: crosstable.value.Event.replaceAll(" ", "_"),
+        tc: { incr: 0, init: 0 },
+        engines,
+        schedule: { past, future, present },
+        hasGamePairs,
+        isRoundRobin,
+      },
+    };
+    this.callback?.(event);
+    this.event = event;
 
-        // Check that each pair of consecutive games has switched opponents
-        const hasGamePairs = allGames
-          .map((_, idx) => {
-            const pairStart = 2 * Math.floor(idx / 2);
-            const first = allGames[pairStart];
-            const second = allGames[pairStart + 1];
+    console.log(gameNr, present, past[0]);
+    this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN.value);
 
-            // Ignore games without valid engines
-            if (
-              opponentsPerEngine[first.blackId] === undefined ||
-              opponentsPerEngine[first.whiteId] === undefined ||
-              opponentsPerEngine[second.blackId] === undefined ||
-              opponentsPerEngine[second.whiteId] === undefined
-            ) {
-              return true;
-            }
-
-            opponentsPerEngine[first.blackId].add(first.whiteId);
-            opponentsPerEngine[first.whiteId].add(first.blackId);
-            opponentsPerEngine[second.blackId].add(second.whiteId);
-            opponentsPerEngine[second.whiteId].add(second.blackId);
-
-            return (
-              first.blackId === second.whiteId &&
-              first.whiteId === second.blackId
-            );
-          })
-          .every((value) => value);
-
-        // Check that all engines are playing each other
-        const isRoundRobin = engines.every(
-          (engine) => opponentsPerEngine[engine.id].size === engines.length - 1
-        );
-
-        const event: CCCEventUpdate = {
-          type: "eventUpdate",
-          tournamentDetails: {
-            name: crosstable.value.Event,
-            tNr: crosstable.value.Event.replaceAll(" ", "_"),
-            tc: { incr: 0, init: 0 },
-            engines,
-            schedule: { past, future, present },
-            hasGamePairs,
-            isRoundRobin,
-          },
-        };
-        this.callback?.(event);
-        this.event = event;
-
-        console.log(gameNr, present, past[0]);
-        this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN.value);
-
-        this.loadKibitzerData(
-          lc0.status === "fulfilled" ? lc0.value : undefined,
-          sf.status === "fulfilled" ? sf.value : undefined
-        );
-      });
+    this.loadKibitzerData(
+      lc0.status === "fulfilled" ? lc0.value : undefined,
+      sf.status === "fulfilled" ? sf.value : undefined
+    );
   }
 
   private openGame(gameNr: string, pgn: string) {

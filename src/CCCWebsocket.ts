@@ -1,5 +1,12 @@
 import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
 
+// TODO rename this later
+export type SocketMessageUs = {
+  type: "requestEvent";
+  gameNr?: string;
+  eventNr?: string;
+};
+
 export interface TournamentWebSocket {
   connect: (
     onMessage: (message: CCCMessage) => void,
@@ -11,7 +18,7 @@ export interface TournamentWebSocket {
   isConnected: () => boolean;
 
   disconnect: () => void;
-  send: (msg: unknown) => void;
+  send: (msg: SocketMessageUs) => void;
   fetchEventList: (onEventList: (msg: CCCEventsListUpdate) => void) => void;
 }
 

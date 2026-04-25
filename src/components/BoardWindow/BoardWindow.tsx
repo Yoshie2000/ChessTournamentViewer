@@ -3,7 +3,7 @@ import { useLiveBoard } from "../../hooks/BoardHook";
 import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { TCECWebSocket } from "../../TCECWebsocket";
-import { CCCWebSocket } from "../../CCCWebsocket";
+import { CCCWebSocket, type SocketMessageUs } from "../../CCCWebsocket";
 import type { CCCLiveInfo, CCCMessage } from "../../types";
 import {
   EmptyEngineDefinition,
@@ -202,7 +202,7 @@ export const BoardWindow = memo(() => {
     }
 
     const requestEvent = (gameNr?: string, eventNr?: string) => {
-      const message: Record<string, string> = { type: "requestEvent" };
+      const message: SocketMessageUs = { type: "requestEvent" };
       if (gameNr) message["gameNr"] = gameNr;
       if (eventNr) message["eventNr"] = eventNr;
       newWS.send(message);
@@ -236,7 +236,9 @@ export const BoardWindow = memo(() => {
     if (!activeEvent || !eventList || eventState.pendingEventId) return;
 
     const eventExists = eventList.events.some(
-      (event) => String(event.id).toLowerCase() === activeEvent.tournamentDetails.tNr.toLowerCase()
+      (event) =>
+        String(event.id).toLowerCase() ===
+        activeEvent.tournamentDetails.tNr.toLowerCase()
     );
     if (!eventExists) {
       eventState.requestEvent(undefined, eventList.events[0]?.id);
