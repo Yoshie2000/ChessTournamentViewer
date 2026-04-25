@@ -55,7 +55,9 @@ export class TCECWebSocket implements TournamentWebSocket {
         const game = new Chess960();
         try {
           game.loadPgn(pgn);
-        } catch (error) {
+        } catch (err) {
+          console.log("Error loading pgn: ");
+          console.log(err);
           // The backend threw a 404, which means this is a live game
           this.send({ type: "requestEvent" });
           return;
@@ -385,8 +387,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.callback = onMessage;
   }
 
-  private loadKibitzerData(lc0: any, sf: any) {
-    if (lc0)
+  private loadKibitzerData(
+    lc0: z.infer<typeof kibitzerSchema> | undefined,
+    sf: z.infer<typeof kibitzerSchema> | undefined
+  ) {
+    if (lc0 && "desc" in lc0 && lc0.desc) {
       this.callback?.({
         type: "kibitzer",
         color: "blue",
@@ -396,7 +401,8 @@ export class TCECWebSocket implements TournamentWebSocket {
           imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Lc0.png",
         },
       });
-    if (sf)
+    }
+    if (sf && "desc" in sf && sf.desc) {
       this.callback?.({
         type: "kibitzer",
         color: "red",
@@ -406,6 +412,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           imageUrl: `https://ctv.yoshie2000.de/tcec/image/engine/${sf.desc.split(" ")[0]}.png`,
         },
       });
+    }
 
     function plyFromPv(pv: string) {
       const isBlackMove = pv.includes("...");
@@ -414,8 +421,8 @@ export class TCECWebSocket implements TournamentWebSocket {
       return moveNumber * 2 - 1;
     }
 
-    if (lc0)
-      (lc0.moves as any[]).forEach((lc0Move) => {
+    if (lc0) {
+      lc0.moves?.forEach((lc0Move) => {
         if (lc0Move.pv.includes("...")) {
           if (typeof lc0Move.eval === "string") {
             if (lc0Move.eval.startsWith("-"))
@@ -431,8 +438,9 @@ export class TCECWebSocket implements TournamentWebSocket {
           parseTCECLiveInfo(lc0Move, this.game.fenAt(ply - 1), "blue")
         );
       });
-    if (sf)
-      (sf.moves as any[]).forEach((sfMove) => {
+    }
+    if (sf) {
+      sf.moves?.forEach((sfMove) => {
         if (sfMove.pv.includes("...")) {
           if (typeof sfMove.eval === "string") {
             if (sfMove.eval.startsWith("-"))
@@ -448,6 +456,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           parseTCECLiveInfo(sfMove, this.game.fenAt(ply - 1), "red")
         );
       });
+    }
   }
 
   private async openEvent(
@@ -560,7 +569,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           return null;
         }
 
-        if (!("Start" in game && "Duration" in game)) {
+        if (!("Start" in game)) {
           return null;
         }
 
@@ -572,9 +581,9 @@ export class TCECWebSocket implements TournamentWebSocket {
         const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
         const startDate = new Date(isoString);
 
-        const [hours, minutes, seconds] = game.Duration?.split(":").map(
-          Number
-        ) ?? [0, 0, 0];
+        const [hours, minutes, seconds] =
+          "Duration" in game ? game.Duration.split(":").map(Number) : [0, 0, 0];
+
         const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
 
         const gameStarted = !!game.Result;
@@ -583,14 +592,16 @@ export class TCECWebSocket implements TournamentWebSocket {
         const black = game.Black.split(" ")[0];
         const white = game.White.split(" ")[0];
 
+        const opening = "Opening" in game ? game.Opening : "unknown";
+
         return {
           blackId: black,
           blackName: black,
           estimatedStartTime: "",
           gameNr: String(index + 1),
           matchNr: "",
-          opening: game.Opening,
-          openingType: game.Opening,
+          opening: opening,
+          openingType: opening, // we have ECO sometimes, should replace ?
           roundNr: "unknown", // we do not have .Round in TCEC I think
           timeControl: "",
           variant: "",
