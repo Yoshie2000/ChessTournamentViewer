@@ -83,7 +83,7 @@ const Schedule = memo(() => {
     return null;
   }
 
-  const gamesList = [
+  let gamesList = [
     ...event.tournamentDetails.schedule.past,
     ...(event.tournamentDetails.schedule.present
       ? [event.tournamentDetails.schedule.present]

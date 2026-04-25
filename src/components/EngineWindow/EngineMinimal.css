@@ -40,9 +40,6 @@
 }
 
 .engineMinimal hr {
-  background: #434343;
-  border: none;
-  height: 1px;
   margin: 0;
 }
 
@@ -153,10 +150,4 @@
 .engineMinimal .enginePv .pvMove {
   font-size: var(--font-sm);
   color: #a1a1a1;
-}
-
-@media (max-width: 775px) {
-  .engineMinimal {
-    border: 1px solid #1a1a1a;
-  }
 }

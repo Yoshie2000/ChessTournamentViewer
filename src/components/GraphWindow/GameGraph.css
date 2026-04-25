@@ -9,7 +9,7 @@
 .modeSelectorList {
   display: flex;
   justify-content: space-between;
-  padding: calc(0.5 * var(--gap)) 0;
+  padding: var(--gap-sm) 0;
   flex-direction: row;
   overflow: auto;
   gap: 0.25rem;
@@ -27,9 +27,9 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
-  padding: 0 calc(0.5 * var(--gap)) var(--padding) calc(0.5 * var(--gap));
+  padding: 0 var(--gap-sm) var(--padding) var(--gap-sm);
 }
 
 .graphWindow {
-  padding: 0 calc(0.5 * var(--gap)) !important;
+  padding: 0 var(--gap-sm) !important;
 }

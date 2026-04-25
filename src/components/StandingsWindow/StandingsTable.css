@@ -1,3 +1,16 @@
+.standingsWindow {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.standingsWindow button {
+  position: absolute;
+  top: 0.75rem;
+  right: var(--gap);
+}
+
 .standings {
   height: 100%;
   overflow: auto;
@@ -14,6 +27,7 @@
   border-right: 1px solid #232323;
   font-size: var(--font-sm);
   background: #2a2a2a;
+  min-width: 400px;
 }
 
 .standingsEntry:first-child {
@@ -46,7 +60,7 @@
 
 .standingsWindow button {
   position: absolute;
-  top: calc(0.5 * var(--gap));
+  top: var(--gap-sm);
   right: var(--gap);
 }
 

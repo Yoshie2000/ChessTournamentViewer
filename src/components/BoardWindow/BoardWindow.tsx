@@ -254,7 +254,7 @@ export const BoardWindow = memo(() => {
         <GameResultOverlay />
       </div>
 
-      <LiveMoveList />
+      {!isMobile && <LiveMoveList />}
       {isMobile && (
         <EngineMinimal color="white" className="borderRadiusBottom" />
       )}

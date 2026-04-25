@@ -3,16 +3,16 @@ import type { EngineSettings } from "../engine/EngineWorker";
 import { getDefaultKibitzerSettings } from "../components/Popup/Settings";
 import { zustandHmrFix } from "./ZustandHMRFix";
 
-type KibitzerSettings = {
+type Settings = {
   kibitzerSettings: EngineSettings;
   setKibitzerSettings: (settings: EngineSettings) => void;
 };
 
-export const useKibitzerSettings = create<KibitzerSettings>()((set) => ({
+export const useSettings = create<Settings>()((set) => ({
   kibitzerSettings: getDefaultKibitzerSettings(),
   setKibitzerSettings(settings) {
     set({ kibitzerSettings: settings });
   },
 }));
 
-zustandHmrFix("kibitzerContext", useKibitzerSettings);
+zustandHmrFix("settingsContext", useSettings);

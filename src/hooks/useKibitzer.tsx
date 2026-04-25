@@ -4,7 +4,7 @@ import { NativeWorker } from "../engine/NativeWorker";
 import { StockfishWorker } from "../engine/StockfishWorker";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { useEventStore } from "../context/EventContext";
-import { useKibitzerSettings } from "../context/KibitzerSettings";
+import { useSettings } from "../context/SettingsContext";
 import { saveLiveInfos } from "../LocalStorage";
 
 export const useKibitzer = ({
@@ -13,9 +13,7 @@ export const useKibitzer = ({
   updateBoard: (bypassRateLimit?: boolean) => void;
 }) => {
   const kibitzer = useRef<EngineWorker[]>(null);
-  const kibitzerSettings = useKibitzerSettings(
-    (state) => state.kibitzerSettings
-  );
+  const kibitzerSettings = useSettings((state) => state.kibitzerSettings);
 
   const game = useLiveInfo((state) => state.game);
 

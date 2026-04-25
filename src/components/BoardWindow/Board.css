@@ -1,3 +1,14 @@
+.boardWrapper {
+  position: relative;
+}
+
+.boardWindow {
+  padding: 0;
+  overflow: unset;
+  display: flex;
+  max-height: 100%;
+}
+
 .boardWindow {
   display: flex;
   padding: 0;
@@ -25,8 +36,8 @@
   width: var(--board-size) !important;
 }
 
-.cg-wrap coords {
-  display: none;
+.boardWindow .movesWindow {
+  height: var(--board-size) !important;
 }
 
 @media (max-width: 1150px) {
@@ -40,20 +51,18 @@
   }
 }
 
-@media (max-width: 775px) {
-  .boardWindow .board {
-    grid-column: 1 / 2;
-    grid-row: 2;
-    border-radius: 0px;
-  }
+.linear-container .boardWindow .board {
+  grid-column: 1 / 2;
+  grid-row: 2;
+  border-radius: 0px;
+}
 
-  .boardWindow > .engineMinimal:first-child {
-    grid-column: 1 / 2;
-    grid-row: 1;
-  }
+.linear-container .boardWindow > .engineMinimal:first-child {
+  grid-column: 1 / 2;
+  grid-row: 1;
+}
 
-  .boardWindow > .engineMinimal:last-child {
-    grid-column: 1 / 2;
-    grid-row: 3;
-  }
+.linear-container .boardWindow > .engineMinimal:last-child {
+  grid-column: 1 / 2;
+  grid-row: 3;
 }
