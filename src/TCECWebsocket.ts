@@ -16,7 +16,9 @@ import {
   parseTCECLiveInfo,
 } from "./LiveInfo";
 import z from "zod";
-import { htmlReadSchema } from "./schemas/schamaTCEC";
+import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
+import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
+import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -476,9 +478,6 @@ export class TCECWebSocket implements TournamentWebSocket {
       responses[4].json(),
     ]);
 
-    console.log("JSONSSSSSSSS");
-    console.log(jsons);
-
     const [schedule, crosstable, livePGN, lc0, sf] = jsons;
 
     if (
@@ -489,81 +488,122 @@ export class TCECWebSocket implements TournamentWebSocket {
       return;
     }
 
-    const engines: CCCEngine[] = Object.keys(crosstable.value.Table).map(
-      (engineName) => {
-        const engineData = crosstable.value.Table[engineName];
-        const correctName = engineName.split(" ")[0];
-        const engineVersion = engineName.split(" ").slice(1).join(" ");
-
-        return {
-          authors: "",
-          config: { command: "", options: {}, timemargin: 0 },
-          country: "",
-          elo: String(engineData.Rating),
-          facts: "",
-          flag: "",
-          id: correctName,
-          imageUrl:
-            "https://ctv.yoshie2000.de/tcec/image/engine/" +
-            correctName +
-            ".png",
-          name: correctName,
-          perf: String(engineData.Performance),
-          playedGames: "",
-          points: String(engineData.Score),
-          rating: String(engineData.Rating),
-          updatedAt: "",
-          version: engineVersion,
-          website: "",
-          year: "",
-        };
-      }
+    const scheduleValidation = z.safeParse(scheduleSchema, schedule.value);
+    const crosstableValidation = z.safeParse(
+      crosstableSchema,
+      crosstable.value
     );
 
-    function toCccGame(game: any, index: number): CCCGame {
-      if (!game) return undefined as unknown as CCCGame;
-
-      const [time, , date] = game.Start?.split(" ") ?? [
-        "00:00:00",
-        "on",
-        "1970.01.01",
-      ];
-      const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
-      const startDate = new Date(isoString);
-
-      const [hours, minutes, seconds] = game.Duration?.split(":").map(
-        Number
-      ) ?? [0, 0, 0];
-      const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
-
-      const gameStarted = !!game.Result;
-      const gameOver = !!game.Result && game.Result !== "*";
-
-      const black = game.Black.split(" ")[0];
-      const white = game.White.split(" ")[0];
-
-      return {
-        blackId: black,
-        blackName: black,
-        estimatedStartTime: "",
-        gameNr: String(index + 1),
-        matchNr: "",
-        opening: game.Opening,
-        openingType: game.Opening,
-        roundNr: game.Round,
-        timeControl: "",
-        variant: "",
-        whiteId: white,
-        whiteName: white,
-        outcome: gameOver ? game.Result : undefined,
-        timeEnd: gameOver
-          ? new Date(startDate.getTime() + duration).toString()
-          : undefined,
-        timeStart: gameStarted ? startDate.toString() : undefined,
-      };
+    if (!scheduleValidation.success) {
+      console.log("Schedule validation failed\nIssues:");
+      console.log(scheduleValidation.error.issues);
+      console.log("Errored data:", schedule.value);
+      return;
     }
 
-    const cccGameSchedule = (schedule.value as any[]).map(toCccGame);
+    if (!crosstableValidation.success) {
+      console.log("Crosstable validation failed\nIssues:");
+      console.log(crosstableValidation.error.issues);
+      console.log("Errored data:", crosstable.value);
+      return;
+    }
+
+    if (lc0.status === "fulfilled") {
+      const lc0Validation = z.safeParse(kibitzerSchema, lc0.value);
+      if (!lc0Validation.success) {
+        console.log("kibitzer 1 validation failed");
+        console.log(lc0Validation.error.issues);
+        console.log("Errored data:", lc0.value);
+      }
+    }
+
+    if (sf.status === "fulfilled") {
+      const sfValidation = z.safeParse(kibitzerSchema, sf.value);
+      if (!sfValidation.success) {
+        console.log("kibitzer 1 validation failed");
+        console.log(sfValidation.error.issues);
+        console.log("Errored data:", sf.value);
+      }
+    }
+
+    const { data } = crosstableValidation;
+    const engines: CCCEngine[] = Object.keys(data.Table).map((engineName) => {
+      const engineData = crosstable.value.Table[engineName];
+      const correctName = engineName.split(" ")[0];
+      const engineVersion = engineName.split(" ").slice(1).join(" ");
+
+      return {
+        authors: "",
+        config: { command: "", options: {}, timemargin: 0 },
+        country: "",
+        elo: String(engineData.Rating),
+        facts: "",
+        flag: "",
+        id: correctName,
+        imageUrl:
+          "https://ctv.yoshie2000.de/tcec/image/engine/" + correctName + ".png",
+        name: correctName,
+        perf: String(engineData.Performance),
+        playedGames: "",
+        points: String(engineData.Score),
+        rating: String(engineData.Rating),
+        updatedAt: "",
+        version: engineVersion,
+        website: "",
+        year: "",
+      };
+    });
+
+    const cccGameSchedule: CCCGame[] = scheduleValidation.data
+      .map((game, index) => {
+        if (!game) {
+          return null;
+        }
+
+        if (!("Start" in game && "Duration" in game)) {
+          return null;
+        }
+
+        const [time, , date] = game.Start.split(" ") ?? [
+          "00:00:00",
+          "on",
+          "1970.01.01",
+        ];
+        const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
+        const startDate = new Date(isoString);
+
+        const [hours, minutes, seconds] = game.Duration?.split(":").map(
+          Number
+        ) ?? [0, 0, 0];
+        const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
+
+        const gameStarted = !!game.Result;
+        const gameOver = !!game.Result && game.Result !== "*";
+
+        const black = game.Black.split(" ")[0];
+        const white = game.White.split(" ")[0];
+
+        return {
+          blackId: black,
+          blackName: black,
+          estimatedStartTime: "",
+          gameNr: String(index + 1),
+          matchNr: "",
+          opening: game.Opening,
+          openingType: game.Opening,
+          roundNr: "unknown", // we do not have .Round in TCEC I think
+          timeControl: "",
+          variant: "",
+          whiteId: white,
+          whiteName: white,
+          outcome: gameOver ? game.Result : undefined,
+          timeEnd: gameOver
+            ? new Date(startDate.getTime() + duration).toString()
+            : undefined,
+          timeStart: gameStarted ? startDate.toString() : undefined,
+        };
+      })
+      .filter((el) => !!el);
 
     const past = cccGameSchedule.filter((game) => !!game.timeEnd);
     const present = cccGameSchedule.find(

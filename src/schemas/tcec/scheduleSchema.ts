@@ -1,12 +1,15 @@
 import z from "zod";
 
+const matchResult = z.enum(["1/2-1/2", "1-0", "0-1", "*"]);
 // TODO:
-const matchResult = z.enum(["1/2-1/2", "*"]);
-const termination = z.enum([
-  "3-Fold repetition",
-  "TCEC draw rule",
-  "in progress",
-]);
+// const termination = z.enum([
+//   "3-Fold repetition",
+//   "TCEC draw rule",
+//   "in progress",
+//   "White mates",
+//   "Black mates",
+//   "Fifty moves rule",
+// ]);
 const roomType = z.enum(["roomall"]); // can be other value??
 export const htmlReadSchema = z.strictObject({
   room: roomType,
@@ -23,10 +26,9 @@ const futureGameSchema = z.object({
 const currentGameSchema = z
   .object({
     Result: matchResult,
-    Termination: termination,
-    Start:
-      // "07:40:31 on 2026.04.25"
-      z.string(),
+    // Termination: termination,
+    Termination: z.string(),
+    Start: z.string(),
   })
   .and(futureGameSchema);
 
@@ -36,16 +38,21 @@ const pastGameSchema = z
     BlackEv: z.string(),
 
     Duration: z.string(),
-    FinalFen: z.string(),
+    FinalFen: z.string().optional(),
 
     Moves: z.number(),
+    Opening: z.string(),
+
+    ECO: z.string().optional(),
+    RMobilityResult: z.string().optional(),
+    worked: z.number().optional(),
   })
   .and(currentGameSchema);
 
 const gameUnion = z.union([
-  futureGameSchema,
-  currentGameSchema,
   pastGameSchema,
+  currentGameSchema,
+  futureGameSchema,
 ]);
 
-export const responseSchedule = z.array(gameUnion);
+export const scheduleSchema = z.array(gameUnion);

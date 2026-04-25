@@ -1,19 +1,19 @@
 import z from "zod";
 
-const evalSchema = z.object({
+const evalSchema = z.strictObject({
   depth: z.string(),
-  eval: z.number(),
+  eval: z.union([z.number(), z.string()]),
   nodes: z.number(),
   pv: z.string(),
   speed: z.string(),
   tbhits: z.number(),
-  wdl: z.string(),
+  wdl: z.string().optional(),
 });
 
-export const kibitzerSchema = z.object({
-  desc: z.string(),
-  engine: z.string(),
-  gameno: z.number(),
-  rount: z.number(),
-  moves: z.array(evalSchema),
+export const kibitzerSchema = z.strictObject({
+  desc: z.string().nullish(),
+  engine: z.string().nullish(),
+  gameno: z.number().nullish(),
+  round: z.number().nullish(),
+  moves: z.array(evalSchema).optional(),
 });
