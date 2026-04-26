@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Chess960 } from "../../chess.js/chess";
 import type { LiveEngineDataEntry } from "../../LiveInfo";
 import { normalizePv, buildPvGame } from "../../utils";
-import { SkeletonBlock } from "../Loading";
+import { SkeletonBlock, SkeletonText } from "../Loading";
 import { MoveList } from "../MoveList";
 import "./EnginePV.css";
 import { useKibitzerBoard } from "../../hooks/BoardHook";
@@ -60,11 +60,18 @@ export function EnginePV({ color }: EnginePVProps) {
 
   if (!moves) {
     return (
-      <SkeletonBlock
-        width="100%"
-        height="calc(100% - 2 * var(--padding))"
-        style={{ margin: "var(--padding) var(--padding) var(--padding) 0" }}
-      />
+      <div className="enginePV">
+        <SkeletonBlock
+          width="var(--kibitzer-board-size)"
+          height="var(--kibitzer-board-size)"
+        />
+
+        <div className="movesWindow">
+          <SkeletonText height={16} width="100%" />
+          <SkeletonText height={16} width="100%" />
+          <SkeletonText height={16} width="100%" />
+        </div>
+      </div>
     );
   }
 
