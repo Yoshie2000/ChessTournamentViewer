@@ -18,7 +18,7 @@ export function uciToSan(fen: string, moves: string[]): string[] {
 export function sanToUci(fen: string, moves: string[]): string[] {
   const result = movesToLan(fen, moves).moves.map((m) => m.lan);
   if (result.length !== moves.length) {
-    // TODO uncomment this later
+    // TODO uncomment this on drafting/pushing PR with zod
     // console.warn(
     //   "sanToUci() produced mismatching pv lengths",
     //   fen,
