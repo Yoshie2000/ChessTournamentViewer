@@ -106,9 +106,12 @@ export class TCECWebSocket implements TournamentWebSocket {
         const scheduleLink = isLive
           ? "https://ctv.yoshie2000.de/tcec/schedule.json"
           : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`;
+        const crosstableLink = isLive
+          ? "https://ctv.yoshie2000.de/tcec/crosstable.json"
+          : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`;
         this.openEvent(
           scheduleLink,
-          `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`,
+          crosstableLink,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval_${round}.json`,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval1_${round}.json`,
