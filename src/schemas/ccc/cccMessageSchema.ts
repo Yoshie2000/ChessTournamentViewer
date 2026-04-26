@@ -18,7 +18,7 @@ const CCCEngineSchema = z.object({
   imageUrl: z.string(),
   name: z.string(),
   perf: z.string(),
-  playedGames: z.string(),
+  playedGames: z.string().optional(),
   points: z.string(),
   rating: z.string(),
   updatedAt: z.string(),
@@ -29,7 +29,7 @@ const CCCEngineSchema = z.object({
 
 const CCCGameSchema = z.object({
   blackId: z.string(),
-  blackName: z.string(),
+  blackName: z.string().optional(),
   estimatedStartTime: z.unknown(),
   gameNr: z.string(),
   matchNr: z.string(),
@@ -42,7 +42,7 @@ const CCCGameSchema = z.object({
   timeEnd: z.string().optional(),
   variant: z.string(),
   whiteId: z.string(),
-  whiteName: z.string(),
+  whiteName: z.string().optional(),
 });
 
 const CCCEventUpdateSchema = z.object({
@@ -57,16 +57,17 @@ const CCCEventUpdateSchema = z.object({
       future: z.array(CCCGameSchema),
     }),
     engines: z.array(CCCEngineSchema),
-    hasGamePairs: z.boolean(),
-    isRoundRobin: z.boolean(),
+    // we add these ourself ?
+    hasGamePairs: z.union([z.boolean(), z.undefined()]).optional(),
+    isRoundRobin: z.union([z.boolean(), z.undefined()]).optional(),
   }),
 });
 
 const CCCGameUpdateSchema = z.object({
   type: z.literal("gameUpdate"),
   gameDetails: z.object({
-    gameNr: z.string(),
-    live: z.boolean(),
+    gameNr: z.union([z.string(), z.number()]),
+    live: z.boolean().nullish(),
     opening: z.string(),
     pgn: z.string(),
     termination: z.string().optional(),
@@ -109,7 +110,7 @@ const CCCNewMoveSchema = z.object({
 });
 
 const CCCEventSchema = z.object({
-  id: z.string(),
+  id: z.union([z.string(), z.number()]),
   name: z.string(),
   tc: timeControlSchema.optional(),
 });
@@ -124,11 +125,6 @@ const CCCResultSchema = z.object({
   reason: z.string(),
   score: z.string(),
   whiteName: z.string(),
-  /**
-   * TODO: type this later
-   *
-   * blackName is `any` inside the types.d.ts file
-   */
   blackName: z.string(),
 });
 
