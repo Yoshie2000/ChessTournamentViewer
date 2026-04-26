@@ -241,7 +241,7 @@ export const BoardWindow = memo(() => {
         activeEvent.tournamentDetails.tNr.toLowerCase()
     );
     if (!eventExists) {
-      eventState.requestEvent(undefined, eventList.events[0]?.id);
+      eventState.requestEvent(undefined, `${eventList.events[0]?.id}`);
     }
   }, [activeEvent, activeProvider]);
 
