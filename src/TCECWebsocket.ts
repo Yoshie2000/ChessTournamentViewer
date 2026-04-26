@@ -19,6 +19,7 @@ import z from "zod";
 import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
 import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
 import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
+import { socketPgnSchema } from "./schemas/tcec/socketPgnSchema";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -103,11 +104,18 @@ export class TCECWebSocket implements TournamentWebSocket {
           )
         ).text();
         this.live = false;
-        console.log(gameNr, "sdfsdf");
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
-        game.loadPgn(pgn);
+
+        try {
+          game.loadPgn(pgn);
+        } catch (err) {
+          console.log("error loading pgn: ");
+          console.log(err);
+          console.log("PGN: ", pgn);
+        }
+
         const round = game.getHeaders()["Round"];
 
         const [lc0Response, sfResponse] = await Promise.all([
@@ -180,6 +188,9 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     this.socket.on("livechart", (json: any) => {
+      console.log("livechart");
+      console.log(json);
+
       if (!this.live) return;
 
       const moveData = json.moves.at(-1);
@@ -201,6 +212,8 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     this.socket.on("livechart1", (json: any) => {
+      console.log("livechart1");
+      console.log(json);
       if (!this.live) return;
 
       const moveData = json.moves.at(-1);
@@ -222,19 +235,35 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     this.socket.on("liveeval", (json: any) => {
+      console.log("liveeval");
+      console.log(json);
       if (!this.live) return;
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "blue"));
     });
 
     this.socket.on("liveeval1", (json: any) => {
+      console.log("liveeval1");
+      console.log(json);
       if (!this.live) return;
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "red"));
     });
 
-    this.socket.on("pgn", (json: any) => {
+    this.socket.on("pgn", (json: unknown) => {
+      const pgnValidation = z.safeParse(socketPgnSchema, json);
+
+      if (!pgnValidation.success) {
+        console.log("Error validation pgn from socket.\nIssues:");
+        console.log(pgnValidation.error.issues);
+
+        console.log("Errored data: ", json);
+        return;
+      }
+
       if (!this.live) return;
+
+      const pgnData = pgnValidation.data;
 
       if (this.live && this.game.getHeaders()["Result"] !== "*") {
         this.disconnect();
@@ -247,16 +276,25 @@ export class TCECWebSocket implements TournamentWebSocket {
         .fen({ forceEnpassantSquare: false })
         .split(" ");
       const fen = fenParts.slice(0, -2).join(" ") + " " + fenParts.at(-1);
-      const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
+      // const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
+      //   const moveFenParts = moveData.fen.split(" ");
+      //   const moveFen =
+      //     moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
+      //   return fen === moveFen;
+      // });
+      const ignoreIndex = pgnData.Moves.findIndex((moveData) => {
         const moveFenParts = moveData.fen.split(" ");
         const moveFen =
           moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
         return fen === moveFen;
       });
 
+      console.log("INGNORE INDEX", ignoreIndex);
+
       let wtime: string | undefined = undefined,
         btime: string | undefined = undefined;
-      for (const moveData of json.Moves.slice(ignoreIndex + 1)) {
+
+      for (const moveData of pgnData.Moves.slice(ignoreIndex + 1)) {
         const fenBeforeMove = this.game.fen();
 
         // Make the move
@@ -279,13 +317,10 @@ export class TCECWebSocket implements TournamentWebSocket {
         });
 
         // Extract the live info
-        const relevantKeys = Object.keys(moveData).filter(
-          (key) =>
-            (typeof moveData[key] === "string" &&
-              !moveData[key].includes(" ")) ||
-            key === "pv"
-        );
-        moveData.pv = moveData.pv.San;
+        const relevantKeys = Object.keys(moveData).filter((key) => {
+          return !moveData[key].includes(" ") || key === "pv";
+        });
+        moveData.pv = moveData.pv.San; // ?
         const commentString = relevantKeys
           .map((key) => `${key}=${moveData[key]}`)
           .join(", ");
@@ -293,23 +328,23 @@ export class TCECWebSocket implements TournamentWebSocket {
           commentString,
           fenBeforeMove
         );
-        if (liveInfo) {
-          this.callback?.(liveInfo);
+        if (liveInfo && this.callback) {
+          this.callback(liveInfo);
         }
       }
 
       onMessage({ type: "clocks", binc: "1", winc: "1", btime, wtime });
 
-      if (json.Headers.Result !== "*") {
+      if (pgnData.Headers.Result !== "*") {
         this.callback?.({
           type: "result",
-          blackName: json.Headers.Black,
-          whiteName: json.Headers.White,
-          reason: json.Headers.TerminationDetails,
-          score: json.Headers.Result,
+          blackName: pgnData.Headers.Black,
+          whiteName: pgnData.Headers.White,
+          reason: pgnData.Headers.TerminationDetails,
+          score: pgnData.Headers.Result,
         });
 
-        this.game.setHeader("Result", json.Headers.Result);
+        this.game.setHeader("Result", pgnData.Headers.Result);
       }
     });
 
@@ -347,7 +382,7 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.fetchEventList((msg) => this.callback?.(msg));
   }
 
-  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
+  async fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
     fetch("https://ctv.yoshie2000.de/tcec/archive/gamelist.json")
       .then((response) => response.json())
       .then((seasons) => {
@@ -601,8 +636,8 @@ export class TCECWebSocket implements TournamentWebSocket {
           gameNr: String(index + 1),
           matchNr: "",
           opening: opening,
-          openingType: opening, // we have ECO sometimes, should replace ?
-          roundNr: "unknown", // we do not have .Round in TCEC I think
+          openingType: opening, // we have `game.ECO` sometimes
+          roundNr: "unknown", // we do not have `game.Round` in TCEC I think
           timeControl: "",
           variant: "",
           whiteId: white,
@@ -680,7 +715,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.callback?.(event);
     this.event = event;
 
-    console.log(gameNr, present, past[0]);
     this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN.value);
 
     this.loadKibitzerData(
@@ -707,8 +741,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     ];
 
     const current = gameList.find((game) => game.gameNr === gameNr);
-
-    console.log(current, gameNr);
 
     const gameUpdate: CCCGameUpdate = {
       type: "gameUpdate",
