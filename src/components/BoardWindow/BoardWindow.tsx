@@ -3,7 +3,7 @@ import { useLiveBoard } from "../../hooks/BoardHook";
 import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { TCECWebSocket } from "../../TCECWebsocket";
-import { CCCWebSocket, type SocketMessageUs } from "../../CCCWebsocket";
+import { CCCWebSocket, type SocketMessageFromClient } from "../../CCCWebsocket";
 import type { CCCLiveInfo, CCCMessage } from "../../types";
 import {
   EmptyEngineDefinition,
@@ -202,7 +202,7 @@ export const BoardWindow = memo(() => {
     }
 
     const requestEvent = (gameNr?: string, eventNr?: string) => {
-      const message: SocketMessageUs = { type: "requestEvent" };
+      const message: SocketMessageFromClient = { type: "requestEvent" };
       if (gameNr) message["gameNr"] = gameNr;
       if (eventNr) message["eventNr"] = eventNr;
       newWS.send(message);

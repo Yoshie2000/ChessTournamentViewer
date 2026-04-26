@@ -1,5 +1,8 @@
 import io from "socket.io-client";
-import type { SocketMessageUs, TournamentWebSocket } from "./CCCWebsocket";
+import type {
+  SocketMessageFromClient,
+  TournamentWebSocket,
+} from "./CCCWebsocket";
 import type {
   CCCEngine,
   CCCEventsListUpdate,
@@ -30,7 +33,7 @@ export class TCECWebSocket implements TournamentWebSocket {
   private game: Chess960 = new Chess960();
   private event: CCCEventUpdate | null = null;
 
-  async send(msg: SocketMessageUs) {
+  async send(msg: SocketMessageFromClient) {
     if (msg.type === "requestEvent") {
       const gameNr: string | undefined = msg.gameNr;
       let eventNr: string | undefined = msg.eventNr;
@@ -383,35 +386,49 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   async fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
-    fetch("https://ctv.yoshie2000.de/tcec/archive/gamelist.json")
-      .then((response) => response.json())
-      .then((seasons) => {
-        const eventList: CCCEventsListUpdate = {
-          type: "eventsListUpdate",
-          events: [],
-        };
-        for (const seasonKey of Object.keys(seasons.Seasons).reverse()) {
-          // I don't want to deal with this monstrosity yet
-          if (seasonKey.includes("Cup") || seasonKey.includes("Bonus"))
-            continue;
+    // TODO add zod schema for the response
+    const response = await fetch(
+      "https://ctv.yoshie2000.de/tcec/archive/gamelist.json"
+    ).catch(console.log);
+    if (!response) {
+      // retry logic and loggin here?
+      console.log(
+        "Unable to fetch gamelist from archive, UNIMPLEMENTED:retry..."
+      );
 
-          const season = seasons.Seasons[seasonKey];
-          const title = "Season " + seasonKey;
-          const subs = season.sub.sort((a: any, b: any) =>
-            (b.dno + "").localeCompare(a.dno + "")
-          );
+      return;
+    }
 
-          for (const sub of subs) {
-            if (sub.menu.includes("-=")) continue;
+    const seasons = await response.json().catch(console.log);
 
-            eventList.events.push({
-              id: sub.abb,
-              name: title + " - " + sub.menu,
-            });
-          }
-        }
-        onEventList(eventList);
-      });
+    if (!seasons) {
+      // TODO do something?
+      // ? we cannot gracefully recover from this error I believe
+      return;
+    }
+
+    const eventList: CCCEventsListUpdate = {
+      type: "eventsListUpdate",
+      events: [],
+    };
+
+    for (const seasonKey of Object.keys(seasons.Seasons).reverse()) {
+      // I don't want to deal with this monstrosity yet
+      if (seasonKey.includes("Cup") || seasonKey.includes("Bonus")) continue;
+
+      const season = seasons.Seasons[seasonKey];
+      const title = "Season " + seasonKey;
+      const subs = season.sub.sort((a: any, b: any) =>
+        (b.dno + "").localeCompare(a.dno + "")
+      );
+
+      for (const sub of subs) {
+        if (sub.menu.includes("-=")) continue;
+
+        eventList.events.push({ id: sub.abb, name: title + " - " + sub.menu });
+      }
+    }
+    onEventList(eventList);
   }
 
   isConnected() {
