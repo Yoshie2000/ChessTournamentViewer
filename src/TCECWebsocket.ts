@@ -66,7 +66,10 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const schedule =
           scheduleResponse.status === "fulfilled"
-            ? await scheduleResponse.value.json()
+            ? await scheduleResponse.value.json().catch((err) => {
+                console.log(err);
+                return null;
+              })
             : null;
 
         const game = new Chess960();
