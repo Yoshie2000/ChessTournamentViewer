@@ -11,10 +11,7 @@ const matchResult = z.enum(["1/2-1/2", "1-0", "0-1", "*"]);
 //   "Fifty moves rule",
 // ]);
 const roomType = z.enum(["roomall"]); // can be other value??
-export const htmlReadSchema = z.strictObject({
-  room: roomType,
-  data: z.string(),
-});
+export const htmlReadSchema = z.object({ room: roomType, data: z.string() });
 
 /// schema 1
 const futureGameSchema = z.object({

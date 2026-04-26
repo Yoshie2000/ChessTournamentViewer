@@ -1,6 +1,6 @@
 import z from "zod";
 
-const evalSchema = z.strictObject({
+const evalSchema = z.object({
   depth: z.string(),
   eval: z.union([z.number(), z.string()]),
   nodes: z.number(),
@@ -10,7 +10,7 @@ const evalSchema = z.strictObject({
   wdl: z.string().optional(),
 });
 
-export const kibitzerSchema = z.strictObject({
+export const kibitzerSchema = z.object({
   desc: z.string().nullish(),
   engine: z.string().nullish(),
   gameno: z.number().nullish(),
