@@ -559,24 +559,20 @@ export class TCECWebSocket implements TournamentWebSocket {
     sfURL: string,
     gameNr?: string
   ) {
-    const responses = await Promise.all([
+    const responses = await Promise.allSettled([
       fetch(scheduleURL),
       fetch(crosstableURL),
       fetch(pgnURL),
       fetch(lc0URL),
       fetch(sfURL),
-    ]).catch(console.log);
-
-    if (!responses) {
-      return;
-    }
+    ]);
 
     const jsons = await Promise.allSettled([
-      responses[0].json(),
-      responses[1].json(),
-      responses[2].text(),
-      responses[3].json(),
-      responses[4].json(),
+      handleIfFulfilled(responses[0], "json"),
+      handleIfFulfilled(responses[1], "json"),
+      handleIfFulfilled(responses[2], "text"),
+      handleIfFulfilled(responses[3], "json"),
+      handleIfFulfilled(responses[4], "json"),
     ]);
 
     const [schedule, crosstable, livePGN, lc0, sf] = jsons;
@@ -901,4 +897,13 @@ function toTitleCaseTCEC(input: string): string {
       return word[0].toUpperCase() + word.slice(1).toLowerCase();
     })
     .join("_");
+}
+
+function handleIfFulfilled(
+  promise: PromiseSettledResult<Response>,
+  method: "json" | "text"
+) {
+  return promise.status === "fulfilled"
+    ? promise.value[method]()
+    : Promise.reject();
 }
