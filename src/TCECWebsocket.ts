@@ -145,7 +145,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         } catch (err) {
           console.log("error loading pgn: ");
           console.log(err);
-          console.log("PGN: ", pgn);
+          console.log("Errored PGN: ", pgn);
         }
 
         const round = game.getHeaders()["Round"];
@@ -161,11 +161,17 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const lc0Data =
           lc0Response.status === "fulfilled"
-            ? await lc0Response.value.json()
+            ? await lc0Response.value.json().catch((err) => {
+                console.log("Error parsing lc0 response: ", err);
+                return null;
+              })
             : null;
         const sfData =
           sfResponse.status === "fulfilled"
-            ? await sfResponse.value.json()
+            ? await sfResponse.value.json().catch((err) => {
+                console.log("Error parsing sf response: ", err);
+                return null;
+              })
             : null;
 
         this.loadKibitzerData(lc0Data, sfData);
@@ -347,18 +353,25 @@ export class TCECWebSocket implements TournamentWebSocket {
           times: { w: 1, b: 1 },
         });
 
+        const keys = Object.keys(moveData) as (keyof typeof moveData)[];
+
+        // TODO: now we can actually pick relevant keys by hand, like fen, pv etc
         // Extract the live info
-        const relevantKeys = Object.keys(moveData).filter((key) => {
-          return !key.includes(" ") || key === "pv";
+        const relevantKeys: (keyof typeof moveData)[] = keys.filter((key) => {
+          return !key.includes(" ") && key !== "pv";
         });
-        moveData.pv = moveData.pv.San; // ?
-        const commentString = relevantKeys
+
+        // ?? moveData.pv = moveData.pv.San;
+        const commentString: string = relevantKeys
           .map((key) => `${key}=${moveData[key]}`)
-          .join(", ");
+          .join(", ")
+          .concat(` pv=${moveData.pv.San}`);
+
         const liveInfo = extractLiveInfoFromTCECComment(
           commentString,
           fenBeforeMove
         );
+
         if (liveInfo && this.callback) {
           this.callback(liveInfo);
         }
