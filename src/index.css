@@ -15,6 +15,7 @@ body {
 cg-board {
   background-color: #8ca2ad !important;
   aspect-ratio: 1;
+  cursor: default !important;
 }
 
 h4 {

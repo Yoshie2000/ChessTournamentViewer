@@ -131,8 +131,4 @@
   .engineWindowMobile:has(.board) .engineLogo {
     display: none;
   }
-
-  .engineWindowMobile .moveTable {
-    text-align: left;
-  }
 }
