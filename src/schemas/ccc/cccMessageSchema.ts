@@ -1,12 +1,15 @@
 import z from "zod";
 
-const timeControlSchema = z.object({ init: z.number(), incr: z.number() });
+export const CCCTimeControlSchema = z.object({
+  init: z.number(),
+  incr: z.number(),
+});
 
-const CCCEngineSchema = z.object({
+export const CCCEngineSchema = z.object({
   authors: z.string(),
   config: z.object({
     command: z.string(),
-    timemargin: z.number(),
+    timemargin: z.number().nullish(),
     options: z.record(z.string(), z.union([z.string(), z.number()])),
     version: z.string().optional(),
   }),
@@ -27,62 +30,62 @@ const CCCEngineSchema = z.object({
   year: z.string(),
 });
 
-const CCCGameSchema = z.object({
+export const CCCGameSchema = z.object({
   blackId: z.string(),
-  blackName: z.string().optional(),
+  blackName: z.string().nullish(),
   estimatedStartTime: z.unknown(),
   gameNr: z.string(),
   matchNr: z.string(),
   opening: z.string(),
   openingType: z.string(),
-  outcome: z.string().optional(),
+  outcome: z.string().nullish(),
   roundNr: z.string(),
   timeControl: z.string(),
-  timeStart: z.string().optional(),
-  timeEnd: z.string().optional(),
+  timeStart: z.string().nullish(),
+  timeEnd: z.string().nullish(),
   variant: z.string(),
   whiteId: z.string(),
-  whiteName: z.string().optional(),
+  whiteName: z.string().nullish(),
 });
 
-const CCCEventUpdateSchema = z.object({
+export const CCCEventUpdateSchema = z.object({
   type: z.literal("eventUpdate"),
   tournamentDetails: z.object({
     name: z.string(),
     tNr: z.string(),
-    tc: timeControlSchema,
+    tc: CCCTimeControlSchema,
     schedule: z.object({
       past: z.array(CCCGameSchema),
       present: CCCGameSchema.optional(),
       future: z.array(CCCGameSchema),
     }),
     engines: z.array(CCCEngineSchema),
-    // we add these ourself ?
+    // we add these later when parsing messages
     hasGamePairs: z.union([z.boolean(), z.undefined()]).optional(),
     isRoundRobin: z.union([z.boolean(), z.undefined()]).optional(),
   }),
 });
 
-const CCCGameUpdateSchema = z.object({
+export const CCCGameUpdateSchema = z.object({
   type: z.literal("gameUpdate"),
   gameDetails: z.object({
     gameNr: z.union([z.string(), z.number()]),
     live: z.boolean().nullish(),
     opening: z.string(),
     pgn: z.string(),
-    termination: z.string().optional(),
+    termination: z.string().nullish(),
   }),
 });
 
-const CCCClocksSchema = z.object({
+export const CCCClocksSchema = z.object({
   type: z.literal("clocks"),
-  binc: z.string().optional(),
-  btime: z.string().optional(),
-  winc: z.string().optional(),
-  wtime: z.string().optional(),
+  binc: z.string().nullish(),
+  btime: z.string().nullish(),
+  winc: z.string().nullish(),
+  wtime: z.string().nullish(),
 });
 
-const CCCLiveInfoSchema = z.object({
+export const CCCLiveInfoSchema = z.object({
   type: z.literal("liveInfo"),
   info: z.object({
     color: z.string(),
@@ -103,24 +106,24 @@ const CCCLiveInfoSchema = z.object({
   }),
 });
 
-const CCCNewMoveSchema = z.object({
+export const CCCNewMoveSchema = z.object({
   type: z.literal("newMove"),
   move: z.string(),
   times: z.object({ w: z.number(), b: z.number() }),
 });
 
-const CCCEventSchema = z.object({
+export const CCCEventSchema = z.object({
   id: z.union([z.string(), z.number()]),
   name: z.string(),
-  tc: timeControlSchema.optional(),
+  tc: CCCTimeControlSchema.nullish(),
 });
 
-const CCCEventListUpdateSchema = z.object({
+export const CCCEventListUpdateSchema = z.object({
   type: z.literal("eventsListUpdate"),
   events: z.array(CCCEventSchema),
 });
 
-const CCCResultSchema = z.object({
+export const CCCResultSchema = z.object({
   type: z.literal("result"),
   reason: z.string(),
   score: z.string(),
@@ -128,7 +131,7 @@ const CCCResultSchema = z.object({
   blackName: z.string(),
 });
 
-const CCCKibitzerSchema = z.object({
+export const CCCKibitzerSchema = z.object({
   type: z.literal("kibitzer"),
   engine: CCCEngineSchema,
   color: z.string(),
