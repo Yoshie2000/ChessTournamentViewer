@@ -4,12 +4,12 @@ const timeControlSchema = z.object({ init: z.number(), incr: z.number() });
 
 const CCCEngineSchema = z.object({
   authors: z.string(),
-  config: {
+  config: z.object({
     command: z.string(),
     timemargin: z.number(),
     options: z.record(z.string(), z.union([z.string(), z.number()])),
     version: z.string().optional(),
-  },
+  }),
   country: z.string(),
   elo: z.string(),
   facts: z.string(),
@@ -129,7 +129,7 @@ const CCCResultSchema = z.object({
    *
    * blackName is `any` inside the types.d.ts file
    */
-  blackName: z.unknown(),
+  blackName: z.string(),
 });
 
 const CCCKibitzerSchema = z.object({
