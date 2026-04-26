@@ -44,6 +44,7 @@ const movesEntrySchema = z.object({
   tl: z.string().optional(),
   to: z.string().optional(),
   wv: z.string().optional(),
+  fen: z.string(),
 
   pv: pvSchema,
 });

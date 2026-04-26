@@ -43,7 +43,7 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
-          await Promise.all([
+          await Promise.allSettled([
             fetch(
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`
             ),
@@ -52,13 +52,27 @@ export class TCECWebSocket implements TournamentWebSocket {
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`
             ),
           ]);
-        const pgn = await pgnResponse.text();
-        const crosstable = await crosstableResponse.json();
-        const schedule = await scheduleResponse.json();
+
+        const pgn =
+          pgnResponse.status === "fulfilled"
+            ? await pgnResponse.value.text()
+            : null;
+
+        const crosstable =
+          crosstableResponse.status === "fulfilled"
+            ? await crosstableResponse.value.json()
+            : null;
+
+        const schedule =
+          scheduleResponse.status === "fulfilled"
+            ? await scheduleResponse.value.json()
+            : null;
 
         const game = new Chess960();
         try {
-          game.loadPgn(pgn);
+          if (pgn) {
+            game.loadPgn(pgn);
+          }
         } catch (err) {
           console.log("Error loading pgn: ");
           console.log(err);
@@ -101,12 +115,28 @@ export class TCECWebSocket implements TournamentWebSocket {
           .replaceAll(" ", "_")
           .replaceAll("DivP", "Divp")
           .replaceAll("AltSubfi", "Altsubfi");
-        const pgn = await (
-          await fetch(
-            `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
-          )
-        ).text();
+
+        console.log(safeEventNr, gameNr);
+
+        const response = await fetch(
+          `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
+        ).catch(console.log);
+
+        if (!response) {
+          // TODO: add retry logic here???
+          return;
+        }
+
+        const pgn = await response.text().catch(console.log);
+        if (!pgn) {
+          // cannot gracefully recover?
+          return;
+        }
+
         this.live = false;
+        console.log("PGN TO SEND: \n");
+        console.log(pgn);
+
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
@@ -280,6 +310,11 @@ export class TCECWebSocket implements TournamentWebSocket {
         .split(" ");
       const fen = fenParts.slice(0, -2).join(" ") + " " + fenParts.at(-1);
       // const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
+      //   if (moveData.fen) {
+      //     console.log("FEN EXISTS");
+      //   } else {
+      //     console.log("NOOOOOOOOOOOOOOOOOOOOOOO");
+      //   }
       //   const moveFenParts = moveData.fen.split(" ");
       //   const moveFen =
       //     moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
@@ -291,8 +326,6 @@ export class TCECWebSocket implements TournamentWebSocket {
           moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
         return fen === moveFen;
       });
-
-      console.log("INGNORE INDEX", ignoreIndex);
 
       let wtime: string | undefined = undefined,
         btime: string | undefined = undefined;
@@ -321,7 +354,7 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         // Extract the live info
         const relevantKeys = Object.keys(moveData).filter((key) => {
-          return !moveData[key].includes(" ") || key === "pv";
+          return !key.includes(" ") || key === "pv";
         });
         moveData.pv = moveData.pv.San; // ?
         const commentString = relevantKeys
@@ -691,6 +724,10 @@ export class TCECWebSocket implements TournamentWebSocket {
         const first = allGames[pairStart];
         const second = allGames[pairStart + 1];
 
+        if (!second) {
+          return true;
+        }
+
         // Ignore games without valid engines
         if (
           opponentsPerEngine[first.blackId] === undefined ||
@@ -743,7 +780,11 @@ export class TCECWebSocket implements TournamentWebSocket {
   private openGame(gameNr: string, pgn: string) {
     if (!this.event || !this.callback) return;
 
-    this.game.loadPgn(pgn);
+    try {
+      this.game.loadPgn(pgn);
+    } catch (err) {
+      console.log("error loading PGN\n", err);
+    }
 
     const white = this.game.getHeaders()["White"].split(" ")[0];
     const black = this.game.getHeaders()["Black"].split(" ")[0];
