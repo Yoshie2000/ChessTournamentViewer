@@ -47,7 +47,7 @@ const CCCGameSchema = z.object({
 
 const CCCEventUpdateSchema = z.object({
   type: z.literal("eventUpdate"),
-  tournamentDetails: {
+  tournamentDetails: z.object({
     name: z.string(),
     tNr: z.string(),
     tc: timeControlSchema,
@@ -59,18 +59,18 @@ const CCCEventUpdateSchema = z.object({
     engines: z.array(CCCEngineSchema),
     hasGamePairs: z.boolean(),
     isRoundRobin: z.boolean(),
-  },
+  }),
 });
 
 const CCCGameUpdateSchema = z.object({
   type: z.literal("gameUpdate"),
-  gameDetails: {
+  gameDetails: z.object({
     gameNr: z.string(),
     live: z.boolean(),
     opening: z.string(),
     pgn: z.string(),
     termination: z.string().optional(),
-  },
+  }),
 });
 
 const CCCClocksSchema = z.object({
@@ -83,7 +83,7 @@ const CCCClocksSchema = z.object({
 
 const CCCLiveInfoSchema = z.object({
   type: z.literal("liveInfo"),
-  info: {
+  info: z.object({
     color: z.string(),
     depth: z.string(),
     hashfull: z.string(),
@@ -99,7 +99,7 @@ const CCCLiveInfoSchema = z.object({
     tbhits: z.string(),
     time: z.string(),
     timeLeft: z.number(),
-  },
+  }),
 });
 
 const CCCNewMoveSchema = z.object({
@@ -148,3 +148,5 @@ export const CCCMessageSchema = z.discriminatedUnion("type", [
   CCCEventListUpdateSchema,
   CCCKibitzerSchema,
 ]);
+
+export const CCCMessageListSchema = z.array(CCCMessageSchema);
