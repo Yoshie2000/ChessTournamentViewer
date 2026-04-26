@@ -28,7 +28,7 @@ export function EngineWindow() {
     const liveInfos = state.liveInfos;
 
     const activeKibitzers = (["green", "blue", "red"] as const).filter(
-      (color) => !!liveInfos[color].liveInfo
+      (color) => liveInfos[color].engineInfo.name !== ""
     );
 
     setActiveKibitzers((previous) => {
