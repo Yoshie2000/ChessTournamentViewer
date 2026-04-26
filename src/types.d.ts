@@ -111,7 +111,7 @@ type CCCResult = {
   reason: string;
   score: string;
   whiteName: string;
-  blackName;
+  blackName: string;
 };
 
 type CCCKibitzer = { type: "kibitzer"; engine: CCCEngine; color: string };
