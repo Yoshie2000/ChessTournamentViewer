@@ -23,6 +23,7 @@ import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
 import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
 import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
 import { socketPgnSchema } from "./schemas/tcec/socketPgnSchema";
+import { eventListSchema } from "./schemas/tcec/eventListSchema";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -116,8 +117,6 @@ export class TCECWebSocket implements TournamentWebSocket {
           .replaceAll("DivP", "Divp")
           .replaceAll("AltSubfi", "Altsubfi");
 
-        console.log(safeEventNr, gameNr);
-
         const response = await fetch(
           `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
         ).catch(console.log);
@@ -134,8 +133,6 @@ export class TCECWebSocket implements TournamentWebSocket {
         }
 
         this.live = false;
-        console.log("PGN TO SEND: \n");
-        console.log(pgn);
 
         this.openGame(gameNr, pgn);
 
@@ -151,7 +148,7 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const round = game.getHeaders()["Round"];
 
-        const [lc0Response, sfResponse] = await Promise.all([
+        const [lc0Response, sfResponse] = await Promise.allSettled([
           fetch(
             `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr.toLowerCase()}_liveeval_${round}.json`
           ),
@@ -160,10 +157,16 @@ export class TCECWebSocket implements TournamentWebSocket {
           ),
         ]);
 
-        this.loadKibitzerData(
-          await lc0Response.json(),
-          await sfResponse.json()
-        );
+        const lc0Data =
+          lc0Response.status === "fulfilled"
+            ? await lc0Response.value.json()
+            : null;
+        const sfData =
+          sfResponse.status === "fulfilled"
+            ? await sfResponse.value.json()
+            : null;
+
+        this.loadKibitzerData(lc0Data, sfData);
       } else {
         this.live = true;
         this.disconnect();
@@ -309,17 +312,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         .fen({ forceEnpassantSquare: false })
         .split(" ");
       const fen = fenParts.slice(0, -2).join(" ") + " " + fenParts.at(-1);
-      // const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
-      //   if (moveData.fen) {
-      //     console.log("FEN EXISTS");
-      //   } else {
-      //     console.log("NOOOOOOOOOOOOOOOOOOOOOOO");
-      //   }
-      //   const moveFenParts = moveData.fen.split(" ");
-      //   const moveFen =
-      //     moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
-      //   return fen === moveFen;
-      // });
+
       const ignoreIndex = pgnData.Moves.findIndex((moveData) => {
         const moveFenParts = moveData.fen.split(" ");
         const moveFen =
@@ -423,8 +416,9 @@ export class TCECWebSocket implements TournamentWebSocket {
     const response = await fetch(
       "https://ctv.yoshie2000.de/tcec/archive/gamelist.json"
     ).catch(console.log);
+
     if (!response) {
-      // retry logic and loggin here?
+      // TODO: retry logic and loggin here?
       console.log(
         "Unable to fetch gamelist from archive, UNIMPLEMENTED:retry..."
       );
@@ -432,26 +426,40 @@ export class TCECWebSocket implements TournamentWebSocket {
       return;
     }
 
-    const seasons = await response.json().catch(console.log);
+    const seasonsObj = await response.json().catch(console.log);
 
-    if (!seasons) {
+    if (!seasonsObj) {
       // TODO do something?
-      // ? we cannot gracefully recover from this error I believe
+      // ? we cannot gracefully recover from this error ??
       return;
     }
+
+    const seasonsValidation = z.safeParse(eventListSchema, seasonsObj);
+
+    if (!seasonsValidation.success) {
+      console.log("Error validating seasons data\nIssues:");
+      console.log(seasonsValidation.error.issues);
+
+      console.log("Errored data: ");
+      console.log(seasonsObj);
+      return;
+    }
+
+    const seasonList = seasonsValidation.data.Seasons;
 
     const eventList: CCCEventsListUpdate = {
       type: "eventsListUpdate",
       events: [],
     };
 
-    for (const seasonKey of Object.keys(seasons.Seasons).reverse()) {
+    for (const seasonKey of Object.keys(seasonList).reverse()) {
       // I don't want to deal with this monstrosity yet
       if (seasonKey.includes("Cup") || seasonKey.includes("Bonus")) continue;
 
-      const season = seasons.Seasons[seasonKey];
+      const _season = seasonList[seasonKey];
       const title = "Season " + seasonKey;
-      const subs = season.sub.sort((a: any, b: any) =>
+
+      const subs = _season.sub.sort((a, b) =>
         (b.dno + "").localeCompare(a.dno + "")
       );
 
