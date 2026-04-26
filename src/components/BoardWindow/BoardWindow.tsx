@@ -52,7 +52,10 @@ export const BoardWindow = memo(() => {
   const handleLiveInfo = useCallback(
     (msg: CCCLiveInfo) => {
       if (activeWSRef.current instanceof CCCWebSocket) {
-        msg.info.pvSan = uciToSan(game.fen(), msg.info.pv.split(" ")).join(" ");
+        msg.info.pvSan = uciToSan(
+          game.fen(),
+          msg.info.pv.trim().split(" ")
+        ).join(" ");
       }
 
       const color = msg.info.color as EngineColor;
