@@ -1,120 +1,32 @@
-type TimeControl = { init: number; incr: number };
+import type z from "zod";
+import type {
+  CCCClocksSchema,
+  CCCEngineSchema,
+  CCCEventListUpdateSchema,
+  CCCEventSchema,
+  CCCEventUpdateSchema,
+  CCCGameSchema,
+  CCCGameUpdateSchema,
+  CCCKibitzerSchema,
+  CCCLiveInfoSchema,
+  CCCNewMoveSchema,
+  CCCResultSchema,
+  CCCTimeControlSchema,
+} from "./schemas/ccc/cccMessageSchema";
 
-type CCCEngine = {
-  authors: string;
-  config: {
-    command: string;
-    timemargin: number;
-    options: Record<string, string | number>;
-    version?: string;
-  };
-  country: string;
-  elo: string;
-  facts: string;
-  flag: string;
-  id: string;
-  imageUrl: string;
-  name: string;
-  perf: string;
-  playedGames: string;
-  points: string;
-  rating: string;
-  updatedAt: string;
-  version: string;
-  website: string;
-  year: string;
-};
+type TimeControl = z.infer<typeof CCCTimeControlSchema>;
 
-type CCCGame = {
-  blackId: string;
-  blackName: string;
-  estimatedStartTime: unknown;
-  gameNr: string;
-  matchNr: string;
-  opening: string;
-  openingType: string;
-  outcome?: string;
-  roundNr: string;
-  timeControl: string;
-  timeStart?: string;
-  timeEnd?: string;
-  variant: string;
-  whiteId: string;
-  whiteName: string;
-};
-
-type CCCEventUpdate = {
-  type: "eventUpdate";
-  tournamentDetails: {
-    name: string;
-    tNr: string;
-    tc: TimeControl;
-    schedule: { past: CCCGame[]; present?: CCCGame; future: CCCGame[] };
-    engines: CCCEngine[];
-    hasGamePairs: boolean;
-    isRoundRobin: boolean;
-  };
-};
-
-type CCCGameUpdate = {
-  type: "gameUpdate";
-  gameDetails: {
-    gameNr: string;
-    live: boolean;
-    opening: string;
-    pgn: string;
-    termination?: string;
-  };
-};
-
-type CCCClocks = {
-  type: "clocks";
-  binc?: string;
-  btime?: string;
-  winc?: string;
-  wtime?: string;
-};
-
-type CCCLiveInfo = {
-  type: "liveInfo";
-  info: {
-    color: string;
-    depth: string;
-    hashfull: string;
-    multipv: string;
-    name: string;
-    nodes: string;
-    ply: number;
-    pv: string;
-    pvSan: string;
-    score: string;
-    seldepth: string;
-    speed: string;
-    tbhits: string;
-    time: string;
-    timeLeft: number;
-  };
-};
-
-type CCCNewMove = {
-  type: "newMove";
-  move: string;
-  times: { w: number; b: number };
-};
-
-type CCCEvent = { id: string; name: string; tc?: TimeControl };
-
-type CCCEventsListUpdate = { type: "eventsListUpdate"; events: CCCEvent[] };
-
-type CCCResult = {
-  type: "result";
-  reason: string;
-  score: string;
-  whiteName: string;
-  blackName;
-};
-
-type CCCKibitzer = { type: "kibitzer"; engine: CCCEngine; color: string };
+type CCCEngine = z.infer<typeof CCCEngineSchema>;
+type CCCGame = z.infer<typeof CCCGameSchema>;
+type CCCEventUpdate = z.infer<typeof CCCEventUpdateSchema>;
+type CCCGameUpdate = z.infer<typeof CCCGameUpdateSchema>;
+type CCCClocks = z.infer<typeof CCCClocksSchema>;
+type CCCLiveInfo = z.infer<typeof CCCLiveInfoSchema>;
+type CCCNewMove = z.infer<typeof CCCNewMoveSchema>;
+type CCCEvent = z.infer<typeof CCCEventSchema>;
+type CCCEventsListUpdate = z.infer<typeof CCCEventListUpdateSchema>;
+type CCCResult = z.infer<typeof CCCResultSchema>;
+type CCCKibitzer = z.infer<typeof CCCKibitzerSchema>;
 
 export type CCCMessage =
   | CCCLiveInfo
