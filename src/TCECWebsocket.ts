@@ -40,7 +40,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       let eventNr: string | undefined = msg.eventNr;
 
       if (eventNr) {
-        eventNr = eventNr.replace("AltSubfi", "Altsubfi");
+        eventNr = toTitleCaseTCEC(eventNr);
 
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
@@ -112,10 +112,9 @@ export class TCECWebSocket implements TournamentWebSocket {
           gameNr
         );
       } else if (gameNr) {
-        const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
-          .replaceAll(" ", "_")
-          .replaceAll("DivP", "Divp")
-          .replaceAll("AltSubfi", "Altsubfi");
+        const safeEventNr = toTitleCaseTCEC(
+          eventNr ?? this.game.getHeaders()["Event"]
+        );
 
         const response = await fetch(
           `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
@@ -889,4 +888,17 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket?.close();
     this.connected = false;
   }
+}
+
+function toTitleCaseTCEC(input: string): string {
+  return input
+    .split(" ")
+    .map((word, inx) => {
+      const isEmptyOrTCECStr = word.length === 0 || inx === 0;
+      if (isEmptyOrTCECStr) {
+        return word;
+      }
+      return word[0].toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join("_");
 }
