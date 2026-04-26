@@ -31,7 +31,9 @@ export class TCECWebSocket implements TournamentWebSocket {
       let eventNr: string | undefined = msg.eventNr;
 
       if (eventNr) {
-        eventNr = eventNr.replace("AltSubfi", "Altsubfi");
+        eventNr = eventNr
+          .replace("AltSubfi", "Altsubfi")
+          .replace("FRD_5", "Frd_5");
 
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
@@ -60,7 +62,9 @@ export class TCECWebSocket implements TournamentWebSocket {
         // Round is needed for the kibitzer endpoints
         const round = game.getHeaders()["Round"];
         // The schedule link is different for the ongoing event
-        const isLive = crosstable.Event.replaceAll(" ", "_").toLowerCase() === eventNr.toLowerCase();
+        const isLive =
+          crosstable.Event.replaceAll(" ", "_").toLowerCase() ===
+          eventNr.toLowerCase();
 
         if (isLive && !gameNr) {
           this.send({
@@ -76,9 +80,12 @@ export class TCECWebSocket implements TournamentWebSocket {
         const scheduleLink = isLive
           ? "https://ctv.yoshie2000.de/tcec/schedule.json"
           : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`;
+        const crosstableLink = isLive
+          ? "https://ctv.yoshie2000.de/tcec/crosstable.json"
+          : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`;
         this.openEvent(
           scheduleLink,
-          `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`,
+          crosstableLink,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval_${round}.json`,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval1_${round}.json`,
@@ -88,7 +95,8 @@ export class TCECWebSocket implements TournamentWebSocket {
         const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
           .replaceAll(" ", "_")
           .replaceAll("DivP", "Divp")
-          .replaceAll("AltSubfi", "Altsubfi");
+          .replaceAll("AltSubfi", "Altsubfi")
+          .replaceAll("FRD_5", "Frd_5");
         const pgn = await (
           await fetch(
             `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
