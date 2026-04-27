@@ -1,20 +1,6 @@
 import z from "zod";
 
 const engineOptionsSchema = z.object({ Name: z.string(), Value: z.string() });
-const pvSchema = z.object({
-  San: z.string(),
-  Moves: z.array(
-    z.object({
-      fen: z.string(),
-      from: z.string(),
-      to: z.string(),
-      /**
-       * move in SAN format
-       */
-      m: z.string(),
-    })
-  ),
-});
 
 const movesEntrySchema = z.object({
   adjudication: z.object({
@@ -23,9 +9,6 @@ const movesEntrySchema = z.object({
     ResignOrWin: z.number(),
   }),
   book: z.boolean(),
-  d: z.string().optional(),
-  h: z.string().optional(),
-  m: z.string().optional(),
   material: z.object({
     b: z.number(),
     n: z.number(),
@@ -33,20 +16,61 @@ const movesEntrySchema = z.object({
     q: z.number(),
     r: z.number(),
   }),
-  mt: z.string().optional(),
-  n: z.string().optional(),
-  // this is the only one that was optional but whatever
+  mt: z.string(),
+  /**
+   * nps
+   */
+  n: z.string(),
+  ph: z.string(),
+  // "pd" is verified optional
   pd: z.string().optional(),
-  ph: z.string().optional(),
+  // "s", "sd", "tb", "d", "h" and "tl"
+  // further verification needed for the correctness of .optional()
   s: z.string().optional(),
   sd: z.string().optional(),
   tb: z.string().optional(),
   tl: z.string().optional(),
-  to: z.string().optional(),
-  wv: z.string().optional(),
+  d: z.string().optional(),
+  h: z.string().optional(),
+  /**
+   * single square on a chessboard
+   *
+   * @example "h3", "e4", "d6"
+   */
+  to: z.string(),
+  /**
+   * single square on a chessboard
+   *
+   * @example "h3", "e4", "d6"
+   */
+  m: z.string(),
+  wv: z.string(),
   fen: z.string(),
 
-  pv: pvSchema,
+  pv: z.object({
+    San: z.string(),
+    Moves: z.array(
+      z.object({
+        fen: z.string(),
+        /**
+         * just square
+         *
+         * @example "a6", "d5"
+         */
+        from: z.string(),
+        /**
+         * just square
+         *
+         * @example "a6", "d5"
+         */
+        to: z.string(),
+        /**
+         * move in SAN format
+         */
+        m: z.string(),
+      })
+    ),
+  }),
 });
 
 export const socketPgnSchema = z.object({
