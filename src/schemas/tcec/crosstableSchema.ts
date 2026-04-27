@@ -1,7 +1,5 @@
 import z from "zod";
 
-// TODO narrow it down later???
-// const eventType = z.enum(["gauntlet"]);
 const resultsSchema = z.record(
   z.string(),
   z.object({
