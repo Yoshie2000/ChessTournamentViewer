@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, type ReactElement } from "react";
 import {
   MdKeyboardArrowLeft,
   MdKeyboardArrowRight,
@@ -170,77 +170,64 @@ const MoveList = memo(
       window.open(downloadURL, "_blank");
     }
 
-    const rows = [];
-    for (let i = pairStart; i < moves.length; i += 2) {
-      const whiteMove = moves[i];
-      const blackMove = moves[i + 1];
-      const moveNumber =
-        moveNumberOffset + (blackMovesFirst ? (i + 1) / 2 + 1 : i / 2 + 1);
-      const isLatest = currentMoveNumber === -1;
-
-      const whiteActive =
-        currentMoveNumber === i + 1 || (isLatest && i === moves.length - 1);
-      const blackActive =
-        currentMoveNumber === i + 2 || (isLatest && i + 1 === moves.length - 1);
-
-      rows.push(
-        <MoveRow
-          key={i}
-          moveIndex={i}
-          moveNumber={moveNumber}
-          whiteMove={whiteMove}
-          blackMove={blackMove}
-          whiteActive={whiteActive}
-          blackActive={blackActive}
-          disagreementWhite={disagreementMoveIndex === i}
-          disagreementBlack={disagreementMoveIndex === i + 1}
-          bookMoveWhite={i < bookMoves}
-          bookMoveBlack={i + 1 < bookMoves}
-          setCurrentMoveNumber={setCurrentMoveNumber}
-        />
-      );
-    }
-
     return (
       <div className="movesWindow">
         <div className="moveList" ref={moveListRef}>
-          <table className="moveTable">
-            <tbody>
-              {blackMovesFirst &&
-                moves.length > 0 &&
-                (() => {
-                  const active =
-                    currentMoveNumber === 1 ||
-                    (currentMoveNumber === -1 && moves.length === 1);
-                  return (
-                    <tr>
-                      <th
-                        className={
-                          "move right" + (active ? " currentMove" : "")
-                        }
-                      >
-                        {1 + moveNumberOffset}.
-                      </th>
-                      <td>...</td>
-                      <td>
-                        <span
-                          className={moveClass(
-                            active,
-                            disagreementMoveIndex === 0,
-                            false
-                          )}
-                          onClick={() => setCurrentMoveNumber(() => 1)}
-                        >
-                          {moves[0]}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })()}
+          {blackMovesFirst && moves.length > 0 && (
+            <div className="moveRow subgrid">
+              <span className="moveNumber">{1 + moveNumberOffset}.</span>
+              <span className="movePlaceholder">...</span>
+              <span
+                className={moveClass(
+                  currentMoveNumber === 1,
+                  disagreementMoveIndex === 0,
+                  false
+                )}
+                onClick={() => setCurrentMoveNumber(() => 1)}
+              >
+                {moves[0]}
+              </span>
+            </div>
+          )}
 
-              {rows}
-            </tbody>
-          </table>
+          {moves.reduce((acc, _, i) => {
+            if (i % 2 === 0) {
+              const idx = i + pairStart;
+              const moveNumber =
+                moveNumberOffset +
+                Math.round(blackMovesFirst ? (idx + 1) / 2 + 1 : idx / 2 + 1);
+
+              const whiteMove = moves[idx];
+              const blackMove = moves[idx + 1];
+
+              const isLatest = currentMoveNumber === -1;
+
+              const whiteActive =
+                currentMoveNumber === idx + 1 ||
+                (isLatest && idx === moves.length - 1);
+              const blackActive =
+                currentMoveNumber === idx + 2 ||
+                (isLatest && idx + 1 === moves.length - 1);
+
+              acc.push(
+                <MoveRow
+                  key={idx}
+                  moveIndex={idx}
+                  moveNumber={moveNumber}
+                  whiteMove={whiteMove}
+                  blackMove={blackMove}
+                  whiteActive={whiteActive}
+                  blackActive={blackActive}
+                  disagreementWhite={disagreementMoveIndex === idx}
+                  disagreementBlack={disagreementMoveIndex === idx + 1}
+                  bookMoveWhite={idx < bookMoves}
+                  bookMoveBlack={idx + 1 < bookMoves}
+                  setCurrentMoveNumber={setCurrentMoveNumber}
+                />
+              );
+            }
+            return acc;
+          }, [] as ReactElement[])}
         </div>
 
         {controllers && (
@@ -343,37 +330,28 @@ const MoveRow = memo(
     setCurrentMoveNumber,
   }: MoveRowProps) => {
     return (
-      <tr>
-        <th
-          className={
-            "move right " +
-            moveClass(whiteActive, disagreementWhite, bookMoveWhite)
-          }
+      <div className="moveRow">
+        <span
+          className="moveNumber"
           onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
         >
           {moveNumber}.
-        </th>
-        <td
+        </span>
+        <span
           className={moveClass(whiteActive, disagreementWhite, bookMoveWhite)}
           onClick={() => setCurrentMoveNumber(() => moveIndex + 1)}
         >
           {whiteMove}
-        </td>
-        <td>
-          {blackMove && (
-            <span
-              className={moveClass(
-                blackActive,
-                disagreementBlack,
-                bookMoveBlack
-              )}
-              onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
-            >
-              {blackMove}
-            </span>
-          )}
-        </td>
-      </tr>
+        </span>
+        {blackMove && (
+          <span
+            className={moveClass(blackActive, disagreementBlack, bookMoveBlack)}
+            onClick={() => setCurrentMoveNumber(() => moveIndex + 2)}
+          >
+            {blackMove}
+          </span>
+        )}
+      </div>
     );
   }
 );

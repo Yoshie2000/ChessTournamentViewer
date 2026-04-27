@@ -368,6 +368,14 @@ export const EventList = memo(function EventList() {
         placeholder={isListLoading ? "Loading…" : "Select event"}
         disabled={isListLoading}
         suffixIcon={pendingEventId ? <Spin size="small" /> : undefined}
+        showSearch={{
+          filterTreeNode: (inputValue, treeNode) => {
+            const target = treeNode.fullLabel || treeNode.title || "";
+            return String(target)
+              .toLowerCase()
+              .includes(inputValue.toLowerCase());
+          },
+        }}
       />
     </ConfigProvider>
   );
