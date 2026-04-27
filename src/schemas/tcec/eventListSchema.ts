@@ -53,6 +53,8 @@ const cupEventsSchema = z
   .object({
     seasonName: z.string(),
     /**
+     * @todo we can extract correct url's from here later
+     *
      * @example "TCEC_Cup_10_event"
      */
     eventtag: z.string(),
