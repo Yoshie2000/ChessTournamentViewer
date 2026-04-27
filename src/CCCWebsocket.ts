@@ -12,9 +12,9 @@ export type RetryContext = {
   retryCount: number;
   retryIntervalMs: number;
   //
-  maxRetryCount?: number;
   maxRetryInterval?: number;
-  retryIntervalIncMs?: number;
+  readonly maxRetryCount?: number;
+  readonly retryIntervalIncMs?: number;
 };
 
 export interface TournamentWebSocket {
@@ -28,7 +28,7 @@ export interface TournamentWebSocket {
   isConnected: () => boolean;
 
   disconnect: () => void;
-  send: (msg: SocketMessageFromClient) => void;
+  send: (msg: SocketMessageFromClient, retryContext?: RetryContext) => void;
   fetchEventList: (
     onEventList: (msg: CCCEventsListUpdate) => void,
     retryContext?: RetryContext
