@@ -8,6 +8,15 @@ export type SocketMessageFromClient = {
   eventNr?: string;
 };
 
+export type RetryContext = {
+  retryCount: number;
+  retryIntervalMs: number;
+  //
+  maxRetryCount?: number;
+  maxRetryInterval?: number;
+  retryIntervalIncMs?: number;
+};
+
 export interface TournamentWebSocket {
   connect: (
     onMessage: (message: CCCMessage) => void,
@@ -20,7 +29,10 @@ export interface TournamentWebSocket {
 
   disconnect: () => void;
   send: (msg: SocketMessageFromClient) => void;
-  fetchEventList: (onEventList: (msg: CCCEventsListUpdate) => void) => void;
+  fetchEventList: (
+    onEventList: (msg: CCCEventsListUpdate) => void,
+    retryContext?: RetryContext
+  ) => void;
 }
 
 const TIMEOUT_RECONNECT_MS = 5000;
@@ -97,11 +109,6 @@ export class CCCWebSocket implements TournamentWebSocket {
       const filteredMessages = validMessages
         // If there are multiple liveInfos for the same ply, ignore all but the last one
         .filter((message, idx) => {
-          // lastLiveInfoIdx === -1 ||
-          // message.type !== "liveInfo" ||
-          // message.info.ply !== validMessages[lastLiveInfoIdx].info.ply ||
-          // idx === lastLiveInfoIdx
-
           if (message.type !== "liveInfo" || lastLiveInfoIdx === -1) {
             return true;
           }
@@ -135,7 +142,10 @@ export class CCCWebSocket implements TournamentWebSocket {
     };
   }
 
-  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
+  fetchEventList(
+    onEventList: (msg: CCCEventsListUpdate) => void,
+    retryContext?: RetryContext
+  ): void {
     const tempSocket = new WebSocket(this.url);
 
     tempSocket.onopen = () => {
@@ -150,6 +160,23 @@ export class CCCWebSocket implements TournamentWebSocket {
       } catch (err) {
         console.log(err);
         tempSocket.close();
+
+        const _retryContext: RetryContext = retryContext || {
+          retryCount: 0,
+          retryIntervalMs: 2000,
+        };
+
+        _retryContext.retryCount += 1;
+
+        // we can show in the UI retry attempts later
+        setTimeout(() => {
+          console.log(
+            `Fetching event list\nRetry number: ${_retryContext.retryCount}`
+          );
+          this.fetchEventList(onEventList, _retryContext);
+        }, _retryContext.retryIntervalMs);
+
+        return;
       }
 
       const messageValidation = z.safeParse(CCCMessageListSchema, messagesObj);
@@ -158,6 +185,8 @@ export class CCCWebSocket implements TournamentWebSocket {
         console.log("Error validating message from CCC socket\nIssues: ");
         console.log(messageValidation.error.issues);
         console.log("Errored data: \n", messagesObj);
+
+        tempSocket.close();
         return;
       }
 
