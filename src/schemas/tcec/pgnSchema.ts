@@ -1,3 +1,3 @@
 import z from "zod";
 
-export const pgnSchema = z.string();
+export const livePGNSchema = z.string();
