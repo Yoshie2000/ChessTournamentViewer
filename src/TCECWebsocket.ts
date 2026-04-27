@@ -1,5 +1,6 @@
 import io from "socket.io-client";
 import type {
+  RetryContext,
   SocketMessageFromClient,
   TournamentWebSocket,
 } from "./CCCWebsocket";
@@ -35,7 +36,7 @@ export class TCECWebSocket implements TournamentWebSocket {
   private game: Chess960 = new Chess960();
   private event: CCCEventUpdate | null = null;
 
-  async send(msg: SocketMessageFromClient) {
+  async send(msg: SocketMessageFromClient, retryContext?: RetryContext) {
     if (msg.type === "requestEvent") {
       const gameNr: string | undefined = msg.gameNr;
       let eventNr: string | undefined = msg.eventNr;
@@ -62,18 +63,20 @@ export class TCECWebSocket implements TournamentWebSocket {
             handleIfFulfilled(scheduleResponse, "json"),
           ]);
 
-        const result = validateEssentials({
+        const validationResult = validateEssentials({
           pgn: pgnParsed,
           crosstable: crosstableParsed,
           schedule: scheduleParsed,
         });
 
-        if (result === null) {
-          // TODO retry logic
+        const validationFailed = validationResult === null;
+
+        if (validationFailed) {
+          // no recovery for now
           return;
         }
 
-        const { crosstable, pgn, schedule } = result;
+        const { crosstable, pgn, schedule } = validationResult;
 
         const game = new Chess960();
         try {
@@ -129,14 +132,44 @@ export class TCECWebSocket implements TournamentWebSocket {
           `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
         ).catch(console.log);
 
+        // easier to inline it for now
+        const retrySend = () => {
+          const _retryContext: RetryContext = retryContext || {
+            retryCount: 0,
+            retryIntervalMs: 2000,
+            maxRetryCount: 10,
+            maxRetryInterval: 10_000,
+            retryIntervalIncMs: 1000,
+          };
+          console.log("retry attempt");
+
+          _retryContext.retryCount += 1;
+
+          const maxRetryAmountExceeded =
+            _retryContext.maxRetryCount &&
+            _retryContext.retryCount >= _retryContext.maxRetryCount;
+
+          if (maxRetryAmountExceeded) {
+            console.log(
+              `Unable to recover after ${_retryContext.retryCount} attempts`
+            );
+          } else {
+            setTimeout(() => {
+              _retryContext.retryIntervalMs +=
+                _retryContext.retryIntervalIncMs ?? 0;
+              this.send(msg, _retryContext);
+            }, _retryContext.retryIntervalMs);
+          }
+        };
+
         if (!response) {
-          // TODO: add retry logic here???
+          retrySend();
           return;
         }
 
         const pgn = await response.text().catch(console.log);
         if (!pgn) {
-          // cannot gracefully recover?
+          retrySend();
           return;
         }
 
@@ -152,6 +185,9 @@ export class TCECWebSocket implements TournamentWebSocket {
           console.log("error loading pgn: ");
           console.log(err);
           console.log("Errored PGN: ", pgn);
+
+          retrySend();
+          return;
         }
 
         const round = game.getHeaders()["Round"];
@@ -771,7 +807,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     try {
       this.game.loadPgn(pgn);
     } catch (err) {
+      // cannot gracefully recover from this with the same input data
+      // so just do early return
       console.log("error loading PGN\n", err);
+
+      return;
     }
 
     const white = this.game.getHeaders()["White"].split(" ")[0];
