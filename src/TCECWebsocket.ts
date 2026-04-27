@@ -24,6 +24,7 @@ import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
 import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
 import { socketPgnSchema } from "./schemas/tcec/socketPgnSchema";
 import { eventListSchema } from "./schemas/tcec/eventListSchema";
+import { livePGNSchema } from "./schemas/tcec/pgnSchema";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -54,27 +55,29 @@ export class TCECWebSocket implements TournamentWebSocket {
             ),
           ]);
 
-        const pgn =
-          pgnResponse.status === "fulfilled"
-            ? await pgnResponse.value.text()
-            : null;
+        const [pgnParsed, crosstableParsed, scheduleParsed] =
+          await Promise.allSettled([
+            handleIfFulfilled(pgnResponse, "text"),
+            handleIfFulfilled(crosstableResponse, "json"),
+            handleIfFulfilled(scheduleResponse, "json"),
+          ]);
 
-        const crosstable =
-          crosstableResponse.status === "fulfilled"
-            ? await crosstableResponse.value.json()
-            : null;
+        const result = validateEssentials({
+          pgn: pgnParsed,
+          crosstable: crosstableParsed,
+          schedule: scheduleParsed,
+        });
 
-        const schedule =
-          scheduleResponse.status === "fulfilled"
-            ? await scheduleResponse.value.json().catch((err) => {
-                console.log(err);
-                return null;
-              })
-            : null;
+        if (result === null) {
+          // TODO retry logic
+          return;
+        }
+
+        const { crosstable, pgn, schedule } = result;
 
         const game = new Chess960();
         try {
-          if (pgn) {
+          if (pgnParsed) {
             game.loadPgn(pgn);
           }
         } catch (err) {
@@ -96,7 +99,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           this.send({
             type: "requestEvent",
             gameNr: String(schedule.length + 1),
-            eventNr,
+            eventNr: toTitleCaseTCEC(eventNr),
           });
           return;
         }
@@ -162,22 +165,14 @@ export class TCECWebSocket implements TournamentWebSocket {
           ),
         ]);
 
-        const lc0Data =
-          lc0Response.status === "fulfilled"
-            ? await lc0Response.value.json().catch((err) => {
-                console.log("Error parsing lc0 response: ", err);
-                return null;
-              })
-            : null;
-        const sfData =
-          sfResponse.status === "fulfilled"
-            ? await sfResponse.value.json().catch((err) => {
-                console.log("Error parsing sf response: ", err);
-                return null;
-              })
-            : null;
+        const [lc0Json, sfJson] = await Promise.allSettled([
+          handleIfFulfilled(lc0Response, "json"),
+          handleIfFulfilled(sfResponse, "json"),
+        ]);
 
-        this.loadKibitzerData(lc0Data, sfData);
+        const [lc0, sf] = validateKibitzers(lc0Json, sfJson);
+
+        this.loadKibitzerData(lc0, sf);
       } else {
         this.live = true;
         this.disconnect();
@@ -235,9 +230,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     this.socket.on("livechart", (json: any) => {
-      console.log("livechart");
-      console.log(json);
-
       if (!this.live) return;
 
       const moveData = json.moves.at(-1);
@@ -259,8 +251,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     this.socket.on("livechart1", (json: any) => {
-      console.log("livechart1");
-      console.log(json);
       if (!this.live) return;
 
       const moveData = json.moves.at(-1);
@@ -282,16 +272,12 @@ export class TCECWebSocket implements TournamentWebSocket {
     });
 
     this.socket.on("liveeval", (json: any) => {
-      console.log("liveeval");
-      console.log(json);
       if (!this.live) return;
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "blue"));
     });
 
     this.socket.on("liveeval1", (json: any) => {
-      console.log("liveeval1");
-      console.log(json);
       if (!this.live) return;
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "red"));
@@ -358,22 +344,28 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const keys = Object.keys(moveData) as (keyof typeof moveData)[];
 
+        console.log("MOVE DATA");
+        console.log(moveData);
+
         // TODO: now we can actually pick relevant keys by hand, like fen, pv etc
         // Extract the live info
         const relevantKeys: (keyof typeof moveData)[] = keys.filter((key) => {
-          return !key.includes(" ") && key !== "pv";
+          return !key.includes(" ") || key !== "pv";
         });
 
         // ?? moveData.pv = moveData.pv.San;
-        const commentString: string = relevantKeys
-          .map((key) => `${key}=${moveData[key]}`)
-          .join(", ")
-          .concat(` pv=${moveData.pv.San}`);
+        const commentString: string = `pv=${moveData.pv.San}`;
+        // const commentString: string = relevantKeys
+        //   .map((key) => `${key}=${moveData[key]}`)
+        //   .join(", ")
+        //   .concat(` pv=${moveData.pv.San}`);
 
         const liveInfo = extractLiveInfoFromTCECComment(
           commentString,
           fenBeforeMove
         );
+
+        console.log(commentString);
 
         if (liveInfo && this.callback) {
           this.callback(liveInfo);
@@ -430,16 +422,14 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   async fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
-    // TODO add zod schema for the response
     const response = await fetch(
       "https://ctv.yoshie2000.de/tcec/archive/gamelist.json"
     ).catch(console.log);
 
     if (!response) {
-      // TODO: retry logic and loggin here?
-      console.log(
-        "Unable to fetch gamelist from archive, UNIMPLEMENTED:retry..."
-      );
+      setTimeout(() => {
+        this.fetchEventList(onEventList);
+      }, 2000);
 
       return;
     }
@@ -447,8 +437,9 @@ export class TCECWebSocket implements TournamentWebSocket {
     const seasonsObj = await response.json().catch(console.log);
 
     if (!seasonsObj) {
-      // TODO do something?
-      // ? we cannot gracefully recover from this error ??
+      setTimeout(() => {
+        this.fetchEventList(onEventList);
+      }, 2000);
       return;
     }
 
@@ -499,8 +490,8 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   private loadKibitzerData(
-    lc0: z.infer<typeof kibitzerSchema> | undefined,
-    sf: z.infer<typeof kibitzerSchema> | undefined
+    lc0: z.infer<typeof kibitzerSchema> | undefined | null,
+    sf: z.infer<typeof kibitzerSchema> | undefined | null
   ) {
     if (lc0 && "desc" in lc0 && lc0.desc) {
       this.callback?.({
@@ -594,83 +585,59 @@ export class TCECWebSocket implements TournamentWebSocket {
       handleIfFulfilled(responses[4], "json"),
     ]);
 
-    const [schedule, crosstable, livePGN, lc0, sf] = jsons;
+    const [
+      scheduleParsed,
+      crosstableParsed,
+      pgnParsed,
+      lc0Response,
+      sfResponse,
+    ] = jsons;
 
-    if (
-      schedule.status !== "fulfilled" ||
-      crosstable.status !== "fulfilled" ||
-      livePGN.status !== "fulfilled"
-    ) {
-      return;
-    }
-
-    const scheduleValidation = z.safeParse(scheduleSchema, schedule.value);
-    const crosstableValidation = z.safeParse(
-      crosstableSchema,
-      crosstable.value
-    );
-
-    if (!scheduleValidation.success) {
-      console.log("Schedule validation failed\nIssues:");
-      console.log(scheduleValidation.error.issues);
-      console.log("Errored data:", schedule.value);
-      return;
-    }
-
-    if (!crosstableValidation.success) {
-      console.log("Crosstable validation failed\nIssues:");
-      console.log(crosstableValidation.error.issues);
-      console.log("Errored data:", crosstable.value);
-      return;
-    }
-
-    if (lc0.status === "fulfilled") {
-      const lc0Validation = z.safeParse(kibitzerSchema, lc0.value);
-      if (!lc0Validation.success) {
-        console.log("kibitzer 1 validation failed");
-        console.log(lc0Validation.error.issues);
-        console.log("Errored data:", lc0.value);
-      }
-    }
-
-    if (sf.status === "fulfilled") {
-      const sfValidation = z.safeParse(kibitzerSchema, sf.value);
-      if (!sfValidation.success) {
-        console.log("kibitzer 1 validation failed");
-        console.log(sfValidation.error.issues);
-        console.log("Errored data:", sf.value);
-      }
-    }
-
-    const { data } = crosstableValidation;
-    const engines: CCCEngine[] = Object.keys(data.Table).map((engineName) => {
-      const engineData = crosstable.value.Table[engineName];
-      const correctName = engineName.split(" ")[0];
-      const engineVersion = engineName.split(" ").slice(1).join(" ");
-
-      return {
-        authors: "",
-        config: { command: "", options: {}, timemargin: 0 },
-        country: "",
-        elo: String(engineData.Rating),
-        facts: "",
-        flag: "",
-        id: correctName,
-        imageUrl:
-          "https://ctv.yoshie2000.de/tcec/image/engine/" + correctName + ".png",
-        name: correctName,
-        perf: String(engineData.Performance),
-        playedGames: "",
-        points: String(engineData.Score),
-        rating: String(engineData.Rating),
-        updatedAt: "",
-        version: engineVersion,
-        website: "",
-        year: "",
-      };
+    const result = validateEssentials({
+      pgn: pgnParsed,
+      crosstable: crosstableParsed,
+      schedule: scheduleParsed,
     });
 
-    const cccGameSchedule: CCCGame[] = scheduleValidation.data
+    if (result === null) {
+      // TODO retry logic
+      return;
+    }
+
+    const { crosstable, pgn, schedule } = result;
+
+    const engines: CCCEngine[] = Object.keys(crosstable.Table).map(
+      (engineName) => {
+        const engineData = crosstable.Table[engineName];
+        const correctName = engineName.split(" ")[0];
+        const engineVersion = engineName.split(" ").slice(1).join(" ");
+
+        return {
+          authors: "",
+          config: { command: "", options: {}, timemargin: 0 },
+          country: "",
+          elo: String(engineData.Rating),
+          facts: "",
+          flag: "",
+          id: correctName,
+          imageUrl:
+            "https://ctv.yoshie2000.de/tcec/image/engine/" +
+            correctName +
+            ".png",
+          name: correctName,
+          perf: String(engineData.Performance),
+          playedGames: "",
+          points: String(engineData.Score),
+          rating: String(engineData.Rating),
+          updatedAt: "",
+          version: engineVersion,
+          website: "",
+          year: "",
+        };
+      }
+    );
+
+    const cccGameSchedule: CCCGame[] = schedule
       .map((game, index) => {
         if (!game) {
           return null;
@@ -779,8 +746,8 @@ export class TCECWebSocket implements TournamentWebSocket {
     const event: CCCEventUpdate = {
       type: "eventUpdate",
       tournamentDetails: {
-        name: crosstable.value.Event,
-        tNr: crosstable.value.Event.replaceAll(" ", "_"),
+        name: crosstable.Event,
+        tNr: crosstable.Event.replaceAll(" ", "_"),
         tc: { incr: 0, init: 0 },
         engines,
         schedule: { past, future, present },
@@ -791,12 +758,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.callback?.(event);
     this.event = event;
 
-    this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN.value);
+    this.openGame(gameNr ?? (present ?? past[0]).gameNr, pgn);
 
-    this.loadKibitzerData(
-      lc0.status === "fulfilled" ? lc0.value : undefined,
-      sf.status === "fulfilled" ? sf.value : undefined
-    );
+    const [lc0, sf] = validateKibitzers(lc0Response, sfResponse);
+
+    this.loadKibitzerData(lc0, sf);
   }
 
   private openGame(gameNr: string, pgn: string) {
@@ -906,8 +872,12 @@ export class TCECWebSocket implements TournamentWebSocket {
 }
 
 function toTitleCaseTCEC(input: string): string {
+  // we sometimes receive already malformed string
+  // that is joined with "_"
+  const splitChar = input.includes("_") ? "_" : " ";
+
   return input
-    .split(" ")
+    .split(splitChar)
     .map((word, inx) => {
       const isEmptyOrTCECStr = word.length === 0 || inx === 0;
       if (isEmptyOrTCECStr) {
@@ -918,11 +888,92 @@ function toTitleCaseTCEC(input: string): string {
     .join("_");
 }
 
-function handleIfFulfilled(
+async function handleIfFulfilled(
   promise: PromiseSettledResult<Response>,
   method: "json" | "text"
-) {
+): Promise<unknown | null> {
   return promise.status === "fulfilled"
-    ? promise.value[method]()
-    : Promise.reject();
+    ? await promise.value[method]().catch((err) => {
+        console.log(err);
+        return null;
+      })
+    : Promise.reject(null);
+}
+
+function validateKibitzers(
+  kibitzer1: PromiseSettledResult<unknown>,
+  kibitzer2: PromiseSettledResult<unknown>
+) {
+  let kibitzer1Validated: z.infer<typeof kibitzerSchema> | null = null;
+  let kibitzer2Validated: z.infer<typeof kibitzerSchema> | null = null;
+
+  if (kibitzer1.status === "fulfilled") {
+    const lc0Validation = z.safeParse(kibitzerSchema, kibitzer1.value);
+    if (lc0Validation.success) {
+      kibitzer1Validated = lc0Validation.data;
+    }
+  }
+
+  if (kibitzer2.status === "fulfilled") {
+    const sfValidation = z.safeParse(kibitzerSchema, kibitzer2.value);
+    if (sfValidation.success) {
+      kibitzer2Validated = sfValidation.data;
+    }
+  }
+
+  return [kibitzer1Validated, kibitzer2Validated] as const;
+}
+
+function validateEssentials({
+  pgn,
+  crosstable,
+  schedule,
+}: {
+  pgn: PromiseSettledResult<unknown>;
+  crosstable: PromiseSettledResult<unknown>;
+  schedule: PromiseSettledResult<unknown>;
+}): {
+  pgn: z.infer<typeof livePGNSchema>;
+  crosstable: z.infer<typeof crosstableSchema>;
+  schedule: z.infer<typeof scheduleSchema>;
+} | null {
+  if (
+    schedule.status !== "fulfilled" ||
+    crosstable.status !== "fulfilled" ||
+    pgn.status !== "fulfilled"
+  ) {
+    return null;
+  }
+
+  const scheduleValidation = z.safeParse(scheduleSchema, schedule.value);
+  const crosstableValidation = z.safeParse(crosstableSchema, crosstable.value);
+  const livePGNValidation = z.safeParse(livePGNSchema, pgn.value);
+
+  // early returns needed to help typescript correctly infer types
+  if (!livePGNValidation.success) {
+    console.log("Live PGN validation failed\nIssues:");
+    console.log(livePGNValidation.error.issues);
+    console.log("Errored data:", pgn);
+    return null;
+  }
+
+  if (!scheduleValidation.success) {
+    console.log("Schedule validation failed\nIssues:");
+    console.log(scheduleValidation.error.issues);
+    console.log("Errored data:", schedule.value);
+    return null;
+  }
+
+  if (!crosstableValidation.success) {
+    console.log("Crosstable validation failed\nIssues:");
+    console.log(crosstableValidation.error.issues);
+    console.log("Errored data:", crosstable.value);
+    return null;
+  }
+
+  return {
+    pgn: livePGNValidation.data,
+    crosstable: crosstableValidation.data,
+    schedule: scheduleValidation.data,
+  } as const;
 }
