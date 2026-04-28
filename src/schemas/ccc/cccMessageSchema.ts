@@ -91,18 +91,19 @@ export const CCCLiveInfoSchema = z.object({
     color: z.string(),
     depth: z.string(),
     hashfull: z.string(),
-    multipv: z.string(),
+    multipv: z.string().optional(),
     name: z.string(),
     nodes: z.string(),
     ply: z.number(),
     pv: z.string(),
-    pvSan: z.string(),
-    score: z.string(),
     seldepth: z.string(),
     speed: z.string(),
     tbhits: z.string(),
     time: z.string(),
-    timeLeft: z.number(),
+    score: z.string().optional(),
+    timeLeft: z.number().optional(),
+    // we add this later ourself
+    pvSan: z.string().optional(),
   }),
 });
 
