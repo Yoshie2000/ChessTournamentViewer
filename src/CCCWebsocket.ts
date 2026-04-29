@@ -1,4 +1,21 @@
-import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
+import z from "zod";
+import type { CCCEventsListUpdate, CCCMessage } from "./types";
+import { CCCMessageListSchema } from "./schemas/ccc/cccMessageSchema";
+
+export type SocketMessageFromClient = {
+  type: "requestEvent";
+  gameNr?: string;
+  eventNr?: string;
+};
+
+export type RetryContext = {
+  retryCount: number;
+  retryIntervalMs: number;
+  //
+  maxRetryInterval?: number;
+  readonly maxRetryCount?: number;
+  readonly retryIntervalIncMs?: number;
+};
 
 export interface TournamentWebSocket {
   connect: (
@@ -11,8 +28,11 @@ export interface TournamentWebSocket {
   isConnected: () => boolean;
 
   disconnect: () => void;
-  send: (msg: unknown) => void;
-  fetchEventList: (onEventList: (msg: CCCEventsListUpdate) => void) => void;
+  send: (msg: SocketMessageFromClient, retryContext?: RetryContext) => void;
+  fetchEventList: (
+    onEventList: (msg: CCCEventsListUpdate) => void,
+    retryContext?: RetryContext
+  ) => void;
 }
 
 const TIMEOUT_RECONNECT_MS = 5000;
@@ -52,35 +72,55 @@ export class CCCWebSocket implements TournamentWebSocket {
     }, TIMEOUT_RECONNECT_MS);
 
     this.socket.onmessage = (e) => {
-      const messages = JSON.parse(e.data) as CCCMessage[];
+      let messagesObj: unknown = null;
+      try {
+        messagesObj = JSON.parse(e.data);
+      } catch (err) {
+        console.log(err);
+      }
 
-      const hasGameUpdate = messages.some(
+      const messageValidation = z.safeParse(CCCMessageListSchema, messagesObj);
+
+      if (!messageValidation.success) {
+        console.log("Error validating message from CCC socket\nIssues: ");
+        console.log(messageValidation.error.issues);
+        console.log("Errored data: \n", messagesObj);
+        return;
+      }
+      const validMessages = messageValidation.data;
+
+      const hasGameUpdate = validMessages.some(
         (message) => message.type === "gameUpdate"
       );
       if (hasGameUpdate) {
         clearTimeout(this.timeoutId);
       }
 
-      const lastLiveInfoIdx = messages.findLastIndex(
+      const lastLiveInfoIdx = validMessages.findLastIndex(
         (message) => message.type === "liveInfo"
       );
-      const newMoveIdx = messages.findLastIndex(
+      const newMoveIdx = validMessages.findLastIndex(
         (message) => message.type === "newMove"
       );
-      const isLiveGame = messages.find(
+      const isLiveGame = validMessages.find(
         (message) => message.type === "gameUpdate" && message.gameDetails.live
       );
 
-      const filteredMessages = messages
+      const filteredMessages = validMessages
         // If there are multiple liveInfos for the same ply, ignore all but the last one
-        .filter(
-          (message, idx) =>
-            lastLiveInfoIdx === -1 ||
-            message.type !== "liveInfo" ||
-            message.info.ply !==
-              (messages[lastLiveInfoIdx] as CCCLiveInfo).info.ply ||
-            idx === lastLiveInfoIdx
-        )
+        .filter((message, idx) => {
+          if (message.type !== "liveInfo" || lastLiveInfoIdx === -1) {
+            return true;
+          }
+
+          // to make typescript happy
+          if (validMessages[lastLiveInfoIdx].type === "liveInfo") {
+            return (
+              message.info.ply !== validMessages[lastLiveInfoIdx]!.info.ply ||
+              idx === lastLiveInfoIdx
+            );
+          }
+        })
         // Ignore liveInfo updates in the same render cycle as a new move
         .filter(
           (message) =>
@@ -102,7 +142,10 @@ export class CCCWebSocket implements TournamentWebSocket {
     };
   }
 
-  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
+  fetchEventList(
+    onEventList: (msg: CCCEventsListUpdate) => void,
+    retryContext?: RetryContext
+  ): void {
     const tempSocket = new WebSocket(this.url);
 
     tempSocket.onopen = () => {
@@ -110,10 +153,46 @@ export class CCCWebSocket implements TournamentWebSocket {
     };
 
     tempSocket.onmessage = (e) => {
-      const messages = JSON.parse(e.data) as CCCMessage[];
-      const found = messages.find((m) => m.type === "eventsListUpdate") as
-        | CCCEventsListUpdate
-        | undefined;
+      let messagesObj: unknown = null;
+      try {
+        // can throw
+        messagesObj = JSON.parse(e.data);
+      } catch (err) {
+        console.log(err);
+        tempSocket.close();
+
+        const _retryContext: RetryContext = retryContext || {
+          retryCount: 0,
+          retryIntervalMs: 2000,
+        };
+
+        _retryContext.retryCount += 1;
+
+        // we can show in the UI retry attempts later
+        setTimeout(() => {
+          console.log(
+            `Fetching event list\nRetry number: ${_retryContext.retryCount}`
+          );
+          this.fetchEventList(onEventList, _retryContext);
+        }, _retryContext.retryIntervalMs);
+
+        return;
+      }
+
+      const messageValidation = z.safeParse(CCCMessageListSchema, messagesObj);
+
+      if (!messageValidation.success) {
+        console.log("Error validating message from CCC socket\nIssues: ");
+        console.log(messageValidation.error.issues);
+        console.log("Errored data: \n", messagesObj);
+
+        tempSocket.close();
+        return;
+      }
+
+      const validMessages = messageValidation.data;
+
+      const found = validMessages.find((m) => m.type === "eventsListUpdate");
 
       if (found) {
         onEventList(found);

@@ -155,7 +155,7 @@ export const useEventStore = create<EventContext>((set, get) => {
         writeStateToUrl(
           state.activeProvider,
           state.activeEvent?.tournamentDetails.tNr,
-          game.gameDetails.gameNr
+          game.gameDetails.gameNr ? `${game.gameDetails.gameNr}` : undefined
         );
         return { activeGame: game, pendingEventId: null };
       });
