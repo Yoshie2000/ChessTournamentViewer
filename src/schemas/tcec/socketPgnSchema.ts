@@ -16,21 +16,44 @@ const movesEntrySchema = z.object({
     q: z.number(),
     r: z.number(),
   }),
+  /**
+   * @todo add description
+   */
   mt: z.string(),
   /**
-   * nps
+   * nodes
    */
   n: z.string(),
   ph: z.string(),
   // "pd" is verified optional
   pd: z.string().optional(),
-  // "s", "sd", "tb", "d", "h" and "tl"
-  // further verification needed for the correctness of .optional()
-  s: z.string().optional(),
-  sd: z.string().optional(),
-  tb: z.string().optional(),
+
+  /**
+   * speed
+   */
+  s: z.string(),
+  /**
+   * seldepth
+   */
+  sd: z.string(),
+  /**
+   * tbhits
+   */
+  tb: z.string(),
+  /**
+   * depth
+   */
+  d: z.string(),
+
+  // "h" and "tl": further verification needed for the correctness of .optional()
+
+  /**
+   * @todo add description
+   */
   tl: z.string().optional(),
-  d: z.string().optional(),
+  /**
+   * hashful
+   */
   h: z.string().optional(),
   /**
    * single square on a chessboard
