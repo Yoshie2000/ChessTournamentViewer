@@ -254,7 +254,13 @@ export class TCECWebSocket implements TournamentWebSocket {
         .split("\n")
         .filter((line) => !line.includes("currmove"))
         .at(-1);
-      const infoString = latestUsefulLine?.split(": ")[1] ?? "";
+
+      if (!latestUsefulLine) {
+        return;
+      }
+
+      const infoString = formatLiveInfo(latestUsefulLine?.split(": ")[1] ?? "");
+
       const liveInfo = extractLiveInfoFromInfoString(
         infoString,
         this.game.fen()
@@ -378,30 +384,12 @@ export class TCECWebSocket implements TournamentWebSocket {
           times: { w: 1, b: 1 },
         });
 
-        const keys = Object.keys(moveData) as (keyof typeof moveData)[];
-
-        console.log("MOVE DATA");
-        console.log(moveData);
-
-        // TODO: now we can actually pick relevant keys by hand, like fen, pv etc
-        // Extract the live info
-        const relevantKeys: (keyof typeof moveData)[] = keys.filter((key) => {
-          return !key.includes(" ") || key !== "pv";
-        });
-
-        // ?? moveData.pv = moveData.pv.San;
-        const commentString: string = `pv=${moveData.pv.San}`;
-        // const commentString: string = relevantKeys
-        //   .map((key) => `${key}=${moveData[key]}`)
-        //   .join(", ")
-        //   .concat(` pv=${moveData.pv.San}`);
+        const commentString = createTCECCommentString(moveData);
 
         const liveInfo = extractLiveInfoFromTCECComment(
           commentString,
           fenBeforeMove
         );
-
-        console.log(commentString);
 
         if (liveInfo && this.callback) {
           this.callback(liveInfo);
@@ -1016,4 +1004,127 @@ function validateEssentials({
     crosstable: crosstableValidation.data,
     schedule: scheduleValidation.data,
   } as const;
+}
+
+type MoveData = z.infer<typeof socketPgnSchema>["Moves"][number];
+type MoveDataKeys = Array<keyof MoveData>;
+
+function createTCECCommentString(moveData: MoveData): string {
+  const keys = Object.keys(moveData) as (keyof typeof moveData)[];
+  const skipKeys: MoveDataKeys = [
+    "adjudication",
+    "material",
+    // "fen"
+  ];
+  const result: string[] = [];
+
+  keys.forEach((key) => {
+    if (skipKeys.includes(key)) {
+      return;
+    }
+
+    if (key === "pv") {
+      result.push(`${key}=${moveData["pv"].San}`);
+    } else {
+      result.push(`${key}=${moveData[key]}`);
+    }
+  });
+
+  return result.join(", ");
+}
+
+// clears live info from unrelated data and formats it in a way
+// that is easily consumed by `extractLiveInfoFromInfoString`
+function formatLiveInfo(str: string) {
+  if (str.trim().length === 0) {
+    return str.trim();
+  }
+
+  const keywords = [
+    "pv",
+    "nps",
+    "tbhits",
+    "wdl",
+    "cp",
+    "nodes",
+    "time",
+    "seldepth",
+    "depth",
+  ] as const;
+
+  const pvList: string[] = [];
+  let wasPv = false;
+  let pvEnded = false;
+
+  const data: { [Key in (typeof keywords)[number]]: string | null } = {
+    nodes: null,
+    nps: null,
+    pv: null,
+    seldepth: null,
+    tbhits: null,
+    time: null,
+    wdl: null,
+    cp: null,
+    depth: null,
+  };
+
+  const uciRegex = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/;
+
+  str.split(" ").forEach((key, index, curArray) => {
+    if (key === "pv") {
+      wasPv = true;
+      return;
+    }
+
+    if (wasPv && !pvEnded) {
+      const regexMatched = key.match(uciRegex);
+      if (regexMatched) {
+        pvList.push(key);
+      } else {
+        pvEnded = true;
+      }
+    }
+
+    // @ts-expect-error somehow narrowing arbitrary string to a specific one is wrong
+    if (keywords.includes(key)) {
+      if (key === "wdl") {
+        const w = curArray[index + 1];
+        const d = curArray[index + 2];
+        const l = curArray[index + 3];
+
+        if (w && d && l) {
+          data.wdl = `${w}${d}${l}`;
+        }
+      } else {
+        const value = curArray[index + 1];
+        if (value) {
+          // @ts-expect-error i'm not dealing with this
+          data[key] = value;
+        }
+      }
+    }
+  });
+
+  data.pv = pvList.length > 0 ? pvList.join(" ") : null;
+
+  let infoString = "";
+
+  for (const key in data) {
+    // @ts-expect-error BRUH INSIDE FOR LOOP???
+    const value = data[key];
+
+    if (value === null || key === "pv") {
+      continue;
+    }
+
+    infoString += `${key} ${value} `;
+  }
+
+  // adding pv last prevents other keys accidentally be treated as moves
+  // in a `extractLiveInfoFromInfoString` function
+  if (data.pv) {
+    infoString += `pv ${data.pv}`;
+  }
+
+  return infoString.trim();
 }
