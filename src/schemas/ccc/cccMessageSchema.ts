@@ -97,7 +97,7 @@ export const CCCLiveInfoSchema = z.object({
     ply: z.number(),
     pv: z.string(),
     seldepth: z.string(),
-    speed: z.string(),
+    speed: z.string().optional(),
     tbhits: z.string(),
     time: z.string(),
     score: z.string().optional(),
