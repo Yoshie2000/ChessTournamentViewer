@@ -81,7 +81,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const moves = useMemo(() => {
     if (loading || !fen || !data?.color) return undefined;
 
-    return normalizePv(data.pvSan, data.color, fen);
+    return normalizePv(data.pvSan || "", data.color, fen);
   }, [loading, data?.pvSan, data?.color, fen]);
 
   useEffect(() => {

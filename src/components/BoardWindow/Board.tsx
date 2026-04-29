@@ -87,7 +87,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           if (liveInfos?.[color].liveInfo) {
             const liveInfo = liveInfos[color].liveInfo.info;
             const pv = liveInfo.pv.split(" ");
-            const pvSan = liveInfo.pvSan.split(" ");
+            const pvSan = liveInfo?.pvSan?.split(" ") ?? [];
             const nextMove = legalMoves.includes(pvSan[0]) ? pv[0] : pv[1];
             if (nextMove && nextMove.length >= 4) {
               arrows.push({
