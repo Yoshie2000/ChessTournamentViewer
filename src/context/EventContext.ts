@@ -155,7 +155,7 @@ export const useEventStore = create<EventContext>((set, get) => {
         writeStateToUrl(
           state.activeProvider,
           state.activeEvent?.tournamentDetails.tNr,
-          game.gameDetails.gameNr
+          game.gameDetails
         );
         return { activeGame: game, pendingEventId: null };
       });
@@ -183,14 +183,14 @@ export const useEventStore = create<EventContext>((set, get) => {
 function writeStateToUrl(
   provider: ProviderKey,
   eventId?: string,
-  gameId?: string
+  game?: CCCGameUpdate["gameDetails"]
 ) {
   const url = new URL(location.href);
 
   url.searchParams.set("provider", provider);
   if (eventId) url.searchParams.set("event", eventId);
   else url.searchParams.delete("event");
-  if (gameId) url.searchParams.set("game", gameId);
+  if (game?.gameNr && !game?.live) url.searchParams.set("game", game.gameNr);
   else url.searchParams.delete("game");
 
   const newHref = url.toString();
