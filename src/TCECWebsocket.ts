@@ -550,12 +550,14 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const cccGameSchedule = (schedule.value as any[]).map(toCccGame);
 
-        const past = cccGameSchedule.filter((game) => !!game.timeEnd);
-        const present = cccGameSchedule.find(
-          (game) => !!game.timeStart && !game.timeEnd
+        const present =
+          cccGameSchedule.find((game) => !!game.timeStart && !game.timeEnd) ??
+          cccGameSchedule.findLast((game) => !!game.outcome);
+        const past = cccGameSchedule.filter(
+          (game) => !!game.timeEnd && game !== present
         );
         const future = cccGameSchedule.filter(
-          (game) => !game.outcome && !game.timeStart
+          (game) => !game.outcome && !game.timeStart && game !== present
         );
 
         const allGames = [...past, ...(present ? [present] : []), ...future];
