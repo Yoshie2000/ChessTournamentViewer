@@ -375,7 +375,11 @@ export class TCECWebSocket implements TournamentWebSocket {
   }
 
   private loadKibitzerData(lc0: any, sf: any) {
-    if (lc0)
+    const lc0Valid =
+      lc0 && String(lc0.round) === this.game.getHeaders()["Round"];
+    const sfValid = sf && String(sf.round) === this.game.getHeaders()["Round"];
+
+    if (lc0Valid)
       this.callback?.({
         type: "kibitzer",
         color: "blue",
@@ -385,7 +389,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Lc0.png",
         },
       });
-    if (sf)
+    if (sfValid)
       this.callback?.({
         type: "kibitzer",
         color: "red",
@@ -403,7 +407,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       return moveNumber * 2 - 1;
     }
 
-    if (lc0)
+    if (lc0Valid)
       (lc0.moves as any[]).forEach((lc0Move) => {
         if (lc0Move.pv.includes("...")) {
           if (typeof lc0Move.eval === "string") {
@@ -420,7 +424,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           parseTCECLiveInfo(lc0Move, this.game.fenAt(ply - 1), "blue")
         );
       });
-    if (sf)
+    if (sfValid)
       (sf.moves as any[]).forEach((sfMove) => {
         if (sfMove.pv.includes("...")) {
           if (typeof sfMove.eval === "string") {
