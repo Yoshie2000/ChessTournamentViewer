@@ -119,8 +119,8 @@ export class TCECWebSocket implements TournamentWebSocket {
         ]);
 
         this.loadKibitzerData(
-          await lc0Response.json(),
-          await sfResponse.json()
+          lc0Response.status === 200 ? await lc0Response.json() : undefined,
+          sfResponse.status === 200 ? await sfResponse.json() : undefined
         );
       } else {
         this.live = true;
