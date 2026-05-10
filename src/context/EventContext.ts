@@ -185,6 +185,7 @@ function writeStateToUrl(
   eventId?: string,
   game?: CCCGameUpdate["gameDetails"]
 ) {
+  console.log(game)
   const url = new URL(location.href);
 
   url.searchParams.set("provider", provider);

@@ -552,7 +552,7 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const present =
           cccGameSchedule.find((game) => !!game.timeStart && !game.timeEnd) ??
-          cccGameSchedule.findLast((game) => !!game.outcome);
+          cccGameSchedule.findLast((game) => !!game.outcome && this.live);
         const past = cccGameSchedule.filter(
           (game) => !!game.timeEnd && game !== present
         );
@@ -646,13 +646,11 @@ export class TCECWebSocket implements TournamentWebSocket {
 
     const current = gameList.find((game) => game.gameNr === gameNr);
 
-    console.log(current, gameNr);
-
     const gameUpdate: CCCGameUpdate = {
       type: "gameUpdate",
       gameDetails: {
         gameNr: String(current?.gameNr ?? gameList[0]?.gameNr ?? ""),
-        live: true,
+        live: this.live,
         opening: current?.opening ?? "",
         pgn: this.game.pgn(),
       },
