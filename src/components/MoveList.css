@@ -17,6 +17,11 @@
   container-type: inline-size;
 }
 
+.boardWindow .movesWindow {
+  border: 1px solid #1a1a1a;
+  border-left: none;
+}
+
 .moveList {
   --movelist-columns: 1;
 

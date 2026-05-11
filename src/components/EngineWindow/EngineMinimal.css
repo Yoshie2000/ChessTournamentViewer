@@ -1,8 +1,3 @@
-.engineMinimal {
-  width: 100%;
-  align-self: baseline !important;
-}
-
 .engineMinimal .engineInfoTable {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr 1fr;
@@ -21,12 +16,14 @@
 }
 
 .engineMinimal {
-  display: flex;
-  flex-direction: column;
-  border-radius: 0px;
-  background: #343434;
-  max-width: 100%;
+  height: 48px !important;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: auto 1fr 11rem;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.125rem 0.25rem;
+  background: #343434;
 }
 
 .engineMinimal.borderRadiusBottom {
@@ -62,17 +59,7 @@
 .engineMinimal .engineInfoIcon {
   cursor: pointer;
   fill: #a1a1a1;
-}
-
-.engineMinimal .engineInfoHeader {
-  display: grid;
-  grid-template-columns: auto 1fr 11rem;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.boardWindow > .engineMinimal .engineInfoHeader {
-  padding: 0.25rem 0.25rem 0.25rem 0.25rem;
+  min-width: 16px;
 }
 
 .engineMinimal .engineDetailsRow {
@@ -158,5 +145,11 @@
 @media (max-width: 775px) {
   .engineMinimal {
     border: 1px solid #1a1a1a;
+  }
+  .engineMinimal:first-child {
+    border-bottom: none;
+  }
+  .engineMinimal:last-child {
+    border-top: none;
   }
 }

@@ -110,29 +110,14 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const safeFen = fen ?? new Chess().fen();
   const moveNumberOffset = new Chess960(safeFen).moveNumber() - 1;
 
-  const expandedSettingsKey = "expanded-" + color;
-  const [isExpanded, setIsExpanded] = useState(
-    loadSettings()[expandedSettingsKey] === "true"
-  );
-  const expandedClass = isExpanded ? "" : "small";
-
-  useEffect(() => {
-    saveSettings({ [expandedSettingsKey]: String(isExpanded) });
-  }, [isExpanded]);
-
   return (
     <div className={`engineComponent ${loading ? "loading" : ""}`}>
       <EngineMinimal color={color} />
 
       <hr />
 
-      <IoIosArrowDown
-        className={"collapseToggle " + expandedClass}
-        onClick={() => setIsExpanded((expanded) => !expanded)}
-      />
-
       {!isMobile && (
-        <div className={"engineRightSection " + expandedClass}>
+        <div className={"engineRightSection"}>
           {loading && <SkeletonBlock width="100%" />}
 
           {!loading && moves && (
@@ -155,7 +140,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
         </div>
       )}
 
-      {!isMobile && !loading && moves && <hr />}
+      {!isMobile && <hr />}
 
       <div className="engineInfoTable">
         {fields.map(([label, value]) => (

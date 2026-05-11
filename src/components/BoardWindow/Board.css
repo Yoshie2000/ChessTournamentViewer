@@ -5,6 +5,7 @@
 }
 
 .boardWindow .board {
+  box-sizing: border-box;
   width: var(--board-size);
   height: var(--board-size);
   min-height: var(--board-size);
@@ -18,6 +19,8 @@
   position: relative;
   border-radius: 8px;
   background: #343434;
+  border: 1px solid #1a1a1a;
+  border-right: none;
 }
 
 .boardWindow .board cg-container {
@@ -45,6 +48,9 @@
     grid-column: 1 / 2;
     grid-row: 2;
     border-radius: 0px;
+    border-top: none;
+    border-bottom: none;
+    width: calc(var(--board-size) - 1px);
   }
 
   .boardWindow > .engineMinimal:first-child {

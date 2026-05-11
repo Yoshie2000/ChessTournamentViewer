@@ -36,42 +36,40 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
     <div
       className={`engineMinimal ${loading ? "loading" : ""} ${className ?? ""}`}
     >
-      <div className="engineInfoHeader">
-        {engine ? (
-          <EngineLogo engine={engine} size={32} />
-        ) : (
-          <SkeletonBlock width={32} height={32} style={{ margin: 6 }} />
-        )}
+      {engine ? (
+        <EngineLogo engine={engine} size={32} />
+      ) : (
+        <SkeletonBlock width={32} height={32} style={{ margin: 6 }} />
+      )}
 
-        <div className="engineDetails">
-          <div className="engineDetailsRow">
-            <div className="engineName">{name}</div>
-            <Tooltip
-              color={"#212121"}
-              title={
-                <div className="engineOptionsTooltip">
-                  {optionNames.map((option) => (
-                    <div>
-                      {option}: {engine.config.options[option]}
-                    </div>
-                  ))}
-                </div>
-              }
-            >
-              <MdInfoOutline className="engineInfoIcon" />
-            </Tooltip>
-          </div>
-          <div className="engineDetailsRow engineVersion" title={version}>
-            {version}
-          </div>
+      <div className="engineDetails">
+        <div className="engineDetailsRow">
+          <div className="engineName">{name}</div>
+          <Tooltip
+            color={"#212121"}
+            title={
+              <div className="engineOptionsTooltip">
+                {optionNames.map((option) => (
+                  <div>
+                    {option}: {engine.config.options[option]}
+                  </div>
+                ))}
+              </div>
+            }
+          >
+            <MdInfoOutline className="engineInfoIcon" />
+          </Tooltip>
         </div>
+        <div className="engineDetailsRow engineVersion" title={version}>
+          {version}
+        </div>
+      </div>
 
-        <div className="engineOutput">
-          <div className="engineTime">
-            {loading ? <SkeletonText width="80px" /> : formatTime(time)}
-          </div>
-          <div> {loading ? <SkeletonText width="40px" /> : score}</div>
+      <div className="engineOutput">
+        <div className="engineTime">
+          {loading ? <SkeletonText width="80px" /> : formatTime(time)}
         </div>
+        <div> {loading ? <SkeletonText width="40px" /> : score}</div>
       </div>
     </div>
   );
