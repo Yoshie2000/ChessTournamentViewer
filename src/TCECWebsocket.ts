@@ -152,8 +152,12 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket.on("htmlread", (json: any) => {
       if (!this.live) return;
 
+      const opponentName =
+        this.game.getHeaders()[this.game.turn() === "w" ? "Black" : "White"];
       const latestUsefulLine = (json.data.split("\n") as string[])
-        .filter((line) => !line.includes("currmove"))
+        .filter(
+          (line) => !line.includes("currmove") && !line.includes(opponentName)
+        )
         .at(-1);
       const infoString = latestUsefulLine?.split(": ")[1] ?? "";
       const liveInfo = extractLiveInfoFromInfoString(
@@ -235,7 +239,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         .split(" ");
       const fen = fenParts.slice(0, -2).join(" ") + " " + fenParts.at(-1);
       const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
-        const moveFenParts = moveData.fen.split(" ");
+        const moveFenParts = new Chess960(moveData.fen).fen().split(" ");
         const moveFen =
           moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
         return fen === moveFen;
