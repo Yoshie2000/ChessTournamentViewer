@@ -580,10 +580,11 @@ export class TCECWebSocket implements TournamentWebSocket {
           .map((_, idx) => {
             const pairStart = 2 * Math.floor(idx / 2);
             const first = allGames[pairStart];
-            const second = allGames[pairStart + 1];
+            const second = allGames.at(pairStart + 1);
 
             // Ignore games without valid engines
             if (
+              !second ||
               opponentsPerEngine[first.blackId] === undefined ||
               opponentsPerEngine[first.whiteId] === undefined ||
               opponentsPerEngine[second.blackId] === undefined ||

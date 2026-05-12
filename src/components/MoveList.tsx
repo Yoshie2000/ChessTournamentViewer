@@ -38,6 +38,7 @@ export function getGameAtMoveNumber(
     (i < moveNumber || moveNumber === -1) && i < moves.length;
     i++
   ) {
+    if (!game.moves().includes(moves[i])) break;
     game.move(moves[i], { strict: false });
   }
   return game;
