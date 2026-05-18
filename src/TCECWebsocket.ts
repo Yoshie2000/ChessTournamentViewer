@@ -186,9 +186,9 @@ export class TCECWebSocket implements TournamentWebSocket {
         try {
           game.loadPgn(pgn);
         } catch (err) {
-          console.log("error loading pgn: ");
+          console.log("Errored PGN: ");
           console.log(err);
-          console.log("Errored PGN: ", pgn);
+          console.log(pgn);
 
           retrySend();
           return;
