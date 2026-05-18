@@ -15,5 +15,5 @@ export const kibitzerSchema = z.object({
   engine: z.string().nullish(),
   gameno: z.number().nullish(),
   round: z.number().nullish(),
-  moves: z.array(evalSchema).optional(),
+  moves: z.array(evalSchema),
 });
