@@ -54,7 +54,10 @@ export class TCECWebSocket implements TournamentWebSocket {
             fetch(
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`
             ),
-          ]);
+          ]).catch((err) => {
+            console.error("Error fetching TCEC data:", err);
+            return Promise.reject([null, null, null]);
+          });
 
         const [pgnParsed, crosstableParsed, scheduleParsed] =
           await Promise.allSettled([
@@ -278,18 +281,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket.on("livechart", (json: unknown) => {
       if (!this.live) return;
 
-      const validation = z.safeParse(kibitzerSchema, json);
+      const result = validateLiveChartData(json);
 
-      if (!validation.success) {
-        console.log("Error validating livechart data\nIssues:");
-        console.log(validation.error.issues);
-
-        console.log("Errored data: ");
-        console.log(json);
+      if (result === null) {
         return;
       }
-
-      const result = validation.data;
 
       const moveData = result.moves.at(-1);
 
@@ -314,10 +310,21 @@ export class TCECWebSocket implements TournamentWebSocket {
       );
     });
 
-    this.socket.on("livechart1", (json: any) => {
+    this.socket.on("livechart1", (json: unknown) => {
       if (!this.live) return;
 
-      const moveData = json.moves.at(-1);
+      const result = validateLiveChartData(json);
+
+      if (result === null) {
+        return;
+      }
+
+      const moveData = result.moves.at(-1);
+
+      if (!moveData) {
+        return;
+      }
+
       if (moveData.pv.includes("...")) {
         let score = String(moveData.eval);
         if (score.includes("-")) score = score.replace("-", "+");
@@ -335,14 +342,26 @@ export class TCECWebSocket implements TournamentWebSocket {
       );
     });
 
-    this.socket.on("liveeval", (json: any) => {
+    this.socket.on("liveeval", (json: unknown) => {
       if (!this.live) return;
+
+      const result = validateLiveChartData(json);
+
+      if (result === null) {
+        return;
+      }
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "blue"));
     });
 
-    this.socket.on("liveeval1", (json: any) => {
+    this.socket.on("liveeval1", (json: unknown) => {
       if (!this.live) return;
+
+      const result = validateLiveChartData(json);
+
+      if (result === null) {
+        return;
+      }
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "red"));
     });
@@ -1155,4 +1174,16 @@ function formatLiveInfo(str: string) {
   }
 
   return infoString.trim();
+}
+
+function validateLiveChartData(
+  json: unknown
+): z.infer<typeof kibitzerSchema> | null {
+  const validation = z.safeParse(kibitzerSchema, json);
+  if (!validation.success) {
+    console.log("Live chart data validation failed\nIssues:");
+    console.log(validation.error.issues);
+    return null;
+  }
+  return validation.data;
 }
