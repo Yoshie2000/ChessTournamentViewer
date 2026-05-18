@@ -153,7 +153,9 @@ function calculateEloAndMargin(penta: Penta): {
 
   const errorMargin = (scoreToElo(maxScore) - scoreToElo(minScore)) / 2;
 
-  const eloWithSign = `${elo >= 0 ? "+" : ""}${ELO_FORMATTER.format(elo)}`;
+  const displayElo = Object.is(elo, -0) ? 0 : elo;
+  const eloWithSign = `${displayElo >= 0 ? "+" : ""}${ELO_FORMATTER.format(displayElo)}`;
+
   const errorMarginString =
     variance === 0 ? "Inf" : ELO_FORMATTER.format(errorMargin);
 
