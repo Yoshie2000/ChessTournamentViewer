@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EngineWorker } from "../engine/EngineWorker";
 import { NativeWorker } from "../engine/NativeWorker";
 import { StockfishWorker } from "../engine/StockfishWorker";
@@ -27,6 +27,17 @@ export const useKibitzer = ({
     (state) => state.updateLiveEngineData
   );
 
+  const [activeKibitzer, setActiveKibitzer] = useState<EngineWorker>();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveKibitzer(
+        kibitzer.current?.find((kibitzer) => kibitzer.isReady())
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (kibitzerSettings.enableKibitzer) {
       kibitzer.current = [
@@ -42,10 +53,6 @@ export const useKibitzer = ({
     }
     return () => kibitzer.current?.forEach((worker) => worker.terminate());
   }, [kibitzerSettings]);
-
-  const activeKibitzer = kibitzer.current?.find((kibitzer) =>
-    kibitzer.isReady()
-  );
 
   useEffect(() => {
     if (!kibitzer.current || !activeKibitzer) return;
