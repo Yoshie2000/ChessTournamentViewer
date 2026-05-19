@@ -670,11 +670,10 @@ export class TCECWebSocket implements TournamentWebSocket {
           return null;
         }
 
-        const [time, , date] = "Start" in game ? game.Start.split(" ") : [
-          "00:00:00",
-          "on",
-          "1970.01.01",
-        ];
+        const [time, , date] =
+          "Start" in game
+            ? game.Start.split(" ")
+            : ["00:00:00", "on", "1970.01.01"];
         const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
         const startDate = new Date(isoString);
 
