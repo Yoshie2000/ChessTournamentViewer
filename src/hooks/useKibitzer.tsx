@@ -43,10 +43,18 @@ export const useKibitzer = ({
     if (kibitzerSettings.enableKibitzer) {
       kibitzer.current = [
         new EngineWorker(
-          new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads, chess960)
+          new NativeWorker(
+            kibitzerSettings.hash,
+            kibitzerSettings.threads,
+            chess960
+          )
         ),
         new EngineWorker(
-          new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads, chess960)
+          new StockfishWorker(
+            kibitzerSettings.hash,
+            kibitzerSettings.threads,
+            chess960
+          )
         ),
       ];
     } else {
