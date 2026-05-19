@@ -538,7 +538,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       return moveNumber * 2 - 1;
     }
 
-    if (lc0) {
+    if (lc0 && lc0Valid) {
       lc0.moves?.forEach((lc0Move) => {
         if (lc0Move.pv.includes("...")) {
           if (typeof lc0Move.eval === "string") {
@@ -556,7 +556,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         );
       });
     }
-    if (sf) {
+    if (sf && sfValid) {
       sf.moves?.forEach((sfMove) => {
         if (sfMove.pv.includes("...")) {
           if (typeof sfMove.eval === "string") {
@@ -670,11 +670,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           return null;
         }
 
-        if (!("Start" in game)) {
-          return null;
-        }
-
-        const [time, , date] = game.Start.split(" ") ?? [
+        const [time, , date] = "Start" in game ? game.Start.split(" ") : [
           "00:00:00",
           "on",
           "1970.01.01",
@@ -687,8 +683,8 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
 
-        const gameStarted = !!game.Result;
-        const gameOver = !!game.Result && game.Result !== "*";
+        const gameStarted = "Result" in game;
+        const gameOver = "Result" in game && game.Result !== "*";
 
         const black = game.Black.split(" ")[0];
         const white = game.White.split(" ")[0];
