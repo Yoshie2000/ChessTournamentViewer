@@ -33,8 +33,8 @@ export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
       src={src}
       style={{
         width: `${size * (activeProvider === "tcec" ? 1.75 : 1)}px`,
-        height: `${size}px`,
         margin: `${size / 6}px`,
+        borderRadius: activeProvider === "tcec" ? "2px" : "4px",
       }}
       className="engineLogo"
       onError={(event) => {
