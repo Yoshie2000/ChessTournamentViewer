@@ -71,13 +71,8 @@ export class TCECWebSocket implements TournamentWebSocket {
           schedule: scheduleParsed,
         });
 
-        const validationFailed = validationResult === null;
-
-        if (validationFailed) {
-          // most common cause of this
-          // is 404 on a (live?) game request, so we just recover with
-          // requesting the whole event with live game
-
+        if (!validationResult) {
+          // The backend most likely threw a 404, which means this is a live game, not technically an error
           this.send({ type: "requestEvent" });
           return;
         }
@@ -90,9 +85,7 @@ export class TCECWebSocket implements TournamentWebSocket {
             game.loadPgn(pgn);
           }
         } catch (err) {
-          console.log("Error loading pgn: ");
-          console.log(err);
-          // The backend threw a 404, which means this is a live game
+          // The backend most likely threw a 404, which means this is a live game, not technically an error
           this.send({ type: "requestEvent" });
           return;
         }
@@ -134,21 +127,16 @@ export class TCECWebSocket implements TournamentWebSocket {
           eventNr ?? this.game.getHeaders()["Event"]
         );
 
-        const response = await fetch(
+        const pgn = await fetch(
           `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
-        ).catch(console.log);
-
-        if (!response) {
-          return;
-        }
-
-        const pgn = await response.text().catch(console.log);
+        )
+          .then((response) => response.text())
+          .catch(console.log);
         if (!pgn) {
           return;
         }
 
         this.live = false;
-
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
@@ -159,7 +147,6 @@ export class TCECWebSocket implements TournamentWebSocket {
           console.log("Errored PGN: ");
           console.log(err);
           console.log(pgn);
-
           return;
         }
 
@@ -211,21 +198,16 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket.on("htmlread", (json: unknown) => {
       if (!this.live) return;
 
-      const opponentName =
-        this.game.getHeaders()[this.game.turn() === "w" ? "Black" : "White"];
-
       const validationResult = z.safeParse(htmlReadSchema, json);
-
       if (!validationResult.success) {
         console.warn("Error validating data, aborting...");
         console.warn(validationResult.error);
-
         return;
       }
 
-      const { data } = validationResult.data;
-
-      const latestUsefulLine = data
+      const opponentName =
+        this.game.getHeaders()[this.game.turn() === "w" ? "Black" : "White"];
+      const latestUsefulLine = validationResult.data.data
         .split("\n")
         .filter(
           (line) => !line.includes("currmove") && !line.includes(opponentName)
@@ -236,14 +218,12 @@ export class TCECWebSocket implements TournamentWebSocket {
         return;
       }
 
-      const infoString = formatLiveInfo(latestUsefulLine?.split(": ")[1] ?? "");
-
       const liveInfo = extractLiveInfoFromInfoString(
-        infoString,
+        latestUsefulLine.split(": ")[1],
         this.game.fen()
       );
 
-      if (infoString && liveInfo) {
+      if (liveInfo) {
         this.callback?.(liveInfo.liveInfo);
       }
     });
@@ -252,13 +232,11 @@ export class TCECWebSocket implements TournamentWebSocket {
       if (!this.live) return;
 
       const result = validateLiveChartData(json);
-
-      if (result === null) {
+      if (!result) {
         return;
       }
 
       const moveData = result.moves.at(-1);
-
       if (!moveData) {
         return;
       }
@@ -284,13 +262,11 @@ export class TCECWebSocket implements TournamentWebSocket {
       if (!this.live) return;
 
       const result = validateLiveChartData(json);
-
-      if (result === null) {
+      if (!result) {
         return;
       }
 
       const moveData = result.moves.at(-1);
-
       if (!moveData) {
         return;
       }
@@ -316,8 +292,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       if (!this.live) return;
 
       const result = validateLiveChartData(json);
-
-      if (result === null) {
+      if (!result) {
         return;
       }
 
@@ -328,8 +303,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       if (!this.live) return;
 
       const result = validateLiveChartData(json);
-
-      if (result === null) {
+      if (!result) {
         return;
       }
 
@@ -342,20 +316,19 @@ export class TCECWebSocket implements TournamentWebSocket {
       if (!pgnValidation.success) {
         console.log("Error validation pgn from socket.\nIssues:");
         console.log(pgnValidation.error.issues);
-
         console.log("Errored data: ", json);
         return;
       }
 
       if (!this.live) return;
 
-      const pgnData = pgnValidation.data;
-
       if (this.live && this.game.getHeaders()["Result"] !== "*") {
         this.disconnect();
         this.connect(this.callback ?? function () {});
         return;
       }
+
+      const pgnData = pgnValidation.data;
 
       // For some reason, the halfmove numbers sometimes differ
       const fenParts = this.game
@@ -470,7 +443,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     }
 
     const seasonsObj = await response.json().catch(console.log);
-
     if (!seasonsObj) {
       setTimeout(() => {
         this.fetchEventList(onEventList);
@@ -483,7 +455,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     if (!seasonsValidation.success) {
       console.log("Error validating seasons data\nIssues:");
       console.log(seasonsValidation.error.issues);
-
       console.log("Errored data: ");
       console.log(seasonsObj);
       return;
@@ -643,7 +614,7 @@ export class TCECWebSocket implements TournamentWebSocket {
       schedule: scheduleParsed,
     });
 
-    if (result === null) {
+    if (!result) {
       // Retry
       setTimeout(
         () =>
@@ -828,7 +799,6 @@ export class TCECWebSocket implements TournamentWebSocket {
       // cannot gracefully recover from this with the same input data
       // so just do early return
       console.log("error loading PGN\n", err);
-
       return;
     }
 
@@ -1047,11 +1017,7 @@ type MoveDataKeys = Array<keyof MoveData>;
 
 function createTCECCommentString(moveData: MoveData): string {
   const keys = Object.keys(moveData) as (keyof typeof moveData)[];
-  const skipKeys: MoveDataKeys = [
-    "adjudication",
-    "material",
-    // "fen"
-  ];
+  const skipKeys: MoveDataKeys = ["adjudication", "material"];
   const result: string[] = [];
 
   keys.forEach((key) => {
@@ -1067,102 +1033,6 @@ function createTCECCommentString(moveData: MoveData): string {
   });
 
   return result.join(", ");
-}
-
-// clears live info from unrelated data and formats it in a way
-// that is easily consumed by `extractLiveInfoFromInfoString`
-function formatLiveInfo(str: string) {
-  if (str.trim().length === 0) {
-    return str.trim();
-  }
-
-  const keywords = [
-    "pv",
-    "nps",
-    "tbhits",
-    "wdl",
-    "cp",
-    "nodes",
-    "time",
-    "seldepth",
-    "depth",
-  ] as const;
-
-  const pvList: string[] = [];
-  let wasPv = false;
-  let pvEnded = false;
-
-  const data: { [Key in (typeof keywords)[number]]: string | null } = {
-    nodes: null,
-    nps: null,
-    pv: null,
-    seldepth: null,
-    tbhits: null,
-    time: null,
-    wdl: null,
-    cp: null,
-    depth: null,
-  };
-
-  const uciRegex = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/;
-
-  str.split(" ").forEach((key, index, curArray) => {
-    if (key === "pv") {
-      wasPv = true;
-      return;
-    }
-
-    if (wasPv && !pvEnded) {
-      const regexMatched = key.match(uciRegex);
-      if (regexMatched) {
-        pvList.push(key);
-      } else {
-        pvEnded = true;
-      }
-    }
-
-    // @ts-expect-error somehow narrowing arbitrary string to a specific one is wrong
-    if (keywords.includes(key)) {
-      if (key === "wdl") {
-        const w = curArray[index + 1];
-        const d = curArray[index + 2];
-        const l = curArray[index + 3];
-
-        if (w && d && l) {
-          data.wdl = `${w}${d}${l}`;
-        }
-      } else {
-        const value = curArray[index + 1];
-        if (value) {
-          // @ts-expect-error i'm not dealing with this
-          data[key] = value;
-        }
-      }
-    }
-  });
-
-  data.pv = pvList.length > 0 ? pvList.join(" ") : null;
-
-  let infoString = "";
-
-  for (const key in data) {
-    // @ts-expect-error BRUH INSIDE FOR LOOP???
-    const value = data[key];
-
-    if (value === null || key === "pv") {
-      continue;
-    }
-
-    infoString += `${key} ${value} `;
-  }
-
-  // adding pv last prevents other keys accidentally be treated as moves
-  // in a `extractLiveInfoFromInfoString` function
-  if (data.pv) {
-    infoString += `pv ${data.pv}`;
-  }
-
-  return infoString.trim();
 }
 
 function validateLiveChartData(
