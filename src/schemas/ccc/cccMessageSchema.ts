@@ -90,7 +90,7 @@ export const CCCLiveInfoSchema = z.object({
   info: z.object({
     color: z.string(),
     depth: z.string(),
-    hashfull: z.string(),
+    hashfull: z.string().optional(),
     multipv: z.string().optional(),
     name: z.string(),
     nodes: z.string(),
