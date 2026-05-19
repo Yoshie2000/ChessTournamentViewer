@@ -18,6 +18,7 @@ export const useKibitzer = ({
   );
 
   const game = useLiveInfo((state) => state.game);
+  const chess960 = useEventStore((state) => state.chess960);
 
   const activeEvent = useEventStore((state) => state.activeEvent);
   const activeGame = useEventStore((state) => state.activeGame);
@@ -42,17 +43,17 @@ export const useKibitzer = ({
     if (kibitzerSettings.enableKibitzer) {
       kibitzer.current = [
         new EngineWorker(
-          new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+          new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads, chess960)
         ),
         new EngineWorker(
-          new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+          new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads, chess960)
         ),
       ];
     } else {
       kibitzer.current = [];
     }
     return () => kibitzer.current?.forEach((worker) => worker.terminate());
-  }, [kibitzerSettings]);
+  }, [kibitzerSettings, chess960]);
 
   useEffect(() => {
     if (!kibitzer.current || !activeKibitzer) return;

@@ -36,6 +36,9 @@ type EventContext = {
   pendingEventId: string | null;
   setPendingEventId: (id: string | null) => void;
 
+  chess960: boolean;
+  setChess960: (chess960: boolean) => void;
+
   setEventList: (provider: ProviderKey, eventList: CCCEventsListUpdate) => void;
   setGame: (game: CCCGameUpdate) => void;
   setEvent: (provider: ProviderKey, event: CCCEventUpdate) => void;
@@ -64,6 +67,11 @@ export const useEventStore = create<EventContext>((set, get) => {
 
     activeGame: null,
     engines: [],
+
+    chess960: false,
+    setChess960(chess960) {
+      set((state) => ({ ...state, chess960 }));
+    },
 
     pendingEventId: null,
     setPendingEventId: (id) => set({ pendingEventId: id }),
