@@ -377,7 +377,9 @@ export function extractLiveInfoFromInfoString(
         }
       : null;
 
-  const pvMoves = data.slice(data.indexOf("pv") + 1);
+  const pvMoves = data
+    .slice(data.indexOf("pv") + 1)
+    .filter((s) => s.length > 0);
   const sanMoves = uciToSan(fen, pvMoves);
 
   const liveInfo: CCCLiveInfo = {

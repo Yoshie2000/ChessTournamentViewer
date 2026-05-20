@@ -130,7 +130,12 @@ export const BoardWindow = memo(() => {
           liveInfoState.setCurrentMoveNumber(() => -1);
           updateBoard();
 
+          const isChess960 = ["chess960", "fischerandom"].includes(
+            game.getHeaders()["Variant"]?.toLowerCase()
+          );
           eventState.setGame(msg);
+          eventState.setChess960(isChess960);
+
           liveInfoState.setCurrentFen(game.fen());
           liveInfoState.setMoves(game.history());
 

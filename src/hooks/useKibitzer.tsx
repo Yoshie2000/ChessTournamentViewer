@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EngineWorker } from "../engine/EngineWorker";
 import { NativeWorker } from "../engine/NativeWorker";
 import { StockfishWorker } from "../engine/StockfishWorker";
@@ -18,6 +18,7 @@ export const useKibitzer = ({
   );
 
   const game = useLiveInfo((state) => state.game);
+  const chess960 = useEventStore((state) => state.chess960);
 
   const activeEvent = useEventStore((state) => state.activeEvent);
   const activeGame = useEventStore((state) => state.activeGame);
@@ -27,25 +28,40 @@ export const useKibitzer = ({
     (state) => state.updateLiveEngineData
   );
 
+  const [activeKibitzer, setActiveKibitzer] = useState<EngineWorker>();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveKibitzer(
+        kibitzer.current?.find((kibitzer) => kibitzer.isReady())
+      );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (kibitzerSettings.enableKibitzer) {
       kibitzer.current = [
         new EngineWorker(
-          new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+          new NativeWorker(
+            kibitzerSettings.hash,
+            kibitzerSettings.threads,
+            chess960
+          )
         ),
         new EngineWorker(
-          new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads)
+          new StockfishWorker(
+            kibitzerSettings.hash,
+            kibitzerSettings.threads,
+            chess960
+          )
         ),
       ];
     } else {
       kibitzer.current = [];
     }
     return () => kibitzer.current?.forEach((worker) => worker.terminate());
-  }, [kibitzerSettings]);
-
-  const activeKibitzer = kibitzer.current?.find((kibitzer) =>
-    kibitzer.isReady()
-  );
+  }, [kibitzerSettings, chess960]);
 
   useEffect(() => {
     if (!kibitzer.current || !activeKibitzer) return;

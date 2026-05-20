@@ -3,12 +3,18 @@ import { movesToSan, movesToLan } from "labut";
 import type { CCCLiveInfo } from "./types";
 
 export function uciToSan(fen: string, moves: string[]): string[] {
-  const result = movesToSan(fen, moves).moves.map((m) => m.san);
-  if (result.length !== moves.length) {
+  // some engines report stuff after the pv, starting with "string"
+  const sliceEnd = moves.includes("string")
+    ? moves.indexOf("string")
+    : undefined;
+  const result = movesToSan(fen, moves.slice(0, sliceEnd)).moves.map(
+    (m) => m.san
+  );
+  if (result.length !== (sliceEnd ?? moves.length) && moves.length > 0) {
     console.warn(
       "uciToSan() produced mismatching pv lengths",
       fen,
-      moves,
+      moves.slice(0, sliceEnd),
       result
     );
   }
