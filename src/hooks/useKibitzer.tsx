@@ -4,7 +4,7 @@ import { NativeWorker } from "../engine/NativeWorker";
 import { StockfishWorker } from "../engine/StockfishWorker";
 import { useLiveInfo } from "../context/LiveInfoContext";
 import { useEventStore } from "../context/EventContext";
-import { useKibitzerSettings } from "../context/KibitzerSettings";
+import { useSettings } from "../context/KibitzerSettings";
 import { saveLiveInfos } from "../LocalStorage";
 
 export const useKibitzer = ({
@@ -13,7 +13,7 @@ export const useKibitzer = ({
   updateBoard: (bypassRateLimit?: boolean) => void;
 }) => {
   const kibitzer = useRef<EngineWorker[]>(null);
-  const kibitzerSettings = useKibitzerSettings(
+  const { enableKibitzer, hash, threads } = useSettings(
     (state) => state.kibitzerSettings
   );
 
@@ -40,20 +40,16 @@ export const useKibitzer = ({
   }, []);
 
   useEffect(() => {
-    if (kibitzerSettings.enableKibitzer) {
+    if (enableKibitzer) {
       kibitzer.current = [
-        new EngineWorker(
-          new NativeWorker(kibitzerSettings.hash, kibitzerSettings.threads, chess960)
-        ),
-        new EngineWorker(
-          new StockfishWorker(kibitzerSettings.hash, kibitzerSettings.threads, chess960)
-        ),
+        new EngineWorker(new NativeWorker(hash, threads, chess960)),
+        new EngineWorker(new StockfishWorker(hash, threads, chess960)),
       ];
     } else {
       kibitzer.current = [];
     }
     return () => kibitzer.current?.forEach((worker) => worker.terminate());
-  }, [kibitzerSettings, chess960]);
+  }, [enableKibitzer, hash, threads, chess960]);
 
   useEffect(() => {
     if (!kibitzer.current || !activeKibitzer) return;
@@ -97,8 +93,7 @@ export const useKibitzer = ({
   const _kibitzerId = activeKibitzer?.getID();
 
   useEffect(() => {
-    if (!activeGame?.gameDetails.live || !kibitzerSettings.enableKibitzer)
-      return;
+    if (!activeGame?.gameDetails.live || !enableKibitzer) return;
 
     activeKibitzer?.analyze({
       fen: useLiveInfo.getState().currentFen,
@@ -116,7 +111,7 @@ export const useKibitzer = ({
   }, [
     _kibitzerId,
     activeGame?.gameDetails.gameNr,
-    kibitzerSettings.enableKibitzer,
+    enableKibitzer,
     activeGame?.gameDetails.live,
     activeKibitzer,
     game,

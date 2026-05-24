@@ -6,6 +6,7 @@ import type { DrawShape } from "@lichess-org/chessground/draw";
 import type { LiveEngineDataEntry } from "../../LiveInfo";
 import { Chess960, type Square } from "../../chess.js/chess";
 import "./Board.css";
+import { useSettings } from "@/context/KibitzerSettings";
 
 const BOARD_THROTTLE_MS = 50;
 
@@ -149,5 +150,12 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
     []
   );
 
-  return <div ref={boardElementRef} className="board" {...props} />;
+  const noCoordinates = !useSettings().showCoordinates;
+  return (
+    <div
+      ref={boardElementRef}
+      className={`board ${noCoordinates ? "noCoordinates" : ""}`}
+      {...props}
+    />
+  );
 });
