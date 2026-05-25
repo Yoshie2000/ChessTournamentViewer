@@ -62,6 +62,16 @@
   grid-template-columns: repeat(4, auto);
 }
 
+.crosstable.twoEngines .h2h {
+  --gamepair-columns: round(
+    down,
+    /* tan(atan2()) to remove the unit from the value */
+    tan(atan2(clamp(900px, 100vw, 1800px) - 900px, 1px)) / 75 + 4,
+    1
+  );
+  grid-template-columns: repeat(var(--gamepair-columns), auto);
+}
+
 .crosstable .gamePair {
   width: 2.25rem;
   margin-right: 0.125rem;

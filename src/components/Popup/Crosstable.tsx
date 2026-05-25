@@ -245,8 +245,10 @@ export const Crosstable = memo(() => {
     ...activeEvent.tournamentDetails.schedule.future,
   ];
 
+  const crosstableClass = engines.length === 2 ? "twoEngines" : "";
+
   return (
-    <table className="crosstable">
+    <table className={`crosstable ${crosstableClass}`}>
       <tbody>
         <tr>
           <td>
