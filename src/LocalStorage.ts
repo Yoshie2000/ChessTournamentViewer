@@ -20,8 +20,8 @@ export function saveLiveInfos(
   try {
     deleteLiveInfosForGame(searchSuffix);
     localStorage.setItem(key, value);
-  } catch (e: any) {
-    if (e.name === "QuotaExceededError") {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
       const success = deleteOldLiveInfos(eventId);
       if (success) saveLiveInfos(event, game, liveInfos);
       else {
@@ -76,7 +76,9 @@ export function loadSettings() {
   return settings;
 }
 
-export function saveSettings(settings: Record<string, any>) {
+export function saveSettings(
+  settings: Record<string, string | number | boolean>
+) {
   const keys = Object.keys(settings);
 
   for (const key of keys) {

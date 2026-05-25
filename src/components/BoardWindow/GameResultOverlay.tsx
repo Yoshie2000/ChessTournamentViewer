@@ -6,7 +6,8 @@ import { useInterval } from "../../hooks/useInterval";
 import { useShallow } from "zustand/shallow";
 
 export function GameResultOverlay() {
-  const [_, setCurrentFen] = useState<string>();
+  const [currentFen, setCurrentFen] = useState<string>();
+  void currentFen;
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
 
   useInterval((state) => {

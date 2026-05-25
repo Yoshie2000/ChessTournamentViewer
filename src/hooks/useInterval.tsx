@@ -12,5 +12,5 @@ export function useInterval(
       callback(state);
     }, MAX_UPDATE_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [callback]);
 }

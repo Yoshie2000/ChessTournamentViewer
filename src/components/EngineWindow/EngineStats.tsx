@@ -1,23 +1,24 @@
 import { useState } from "react";
 import type { EngineColor, LiveEngineDataEntry } from "../../LiveInfo";
 import type { CCCLiveInfo } from "../../types";
-import { formatLargeNumber } from "./EngineCard";
 import "./EngineStats.css";
 import { useInterval } from "../../hooks/useInterval";
 import { shallow } from "zustand/shallow";
 import { SkeletonText } from "../Loading";
+import { formatLargeNumber } from "@/utils";
 
 type EngineStatsProps = { colors: readonly (keyof LiveEngineDataEntry)[] };
+type EngineStatType = string | number | undefined;
 
 type SingleStatProps = {
   color: keyof LiveEngineDataEntry;
   property: keyof CCCLiveInfo["info"];
-  transform: (value: any) => any;
+  transform: (value: EngineStatType) => EngineStatType;
   loading: boolean;
 };
 
 function SingleStat({ color, property, transform, loading }: SingleStatProps) {
-  const [stat, setStat] = useState();
+  const [stat, setStat] = useState<string | number>();
 
   useInterval((state) => {
     setStat(transform(state.liveInfos[color].liveInfo?.info[property]));
@@ -29,7 +30,7 @@ function SingleStat({ color, property, transform, loading }: SingleStatProps) {
   return stat;
 }
 
-const identity = (value: any) => value;
+const identity = (value: EngineStatType) => value;
 
 export function EngineStats({ colors }: EngineStatsProps) {
   const [loadingByColor, setLoadingByColor] = useState(

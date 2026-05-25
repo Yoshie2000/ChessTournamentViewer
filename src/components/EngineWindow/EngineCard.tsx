@@ -2,7 +2,7 @@ import { useMemo, memo, useEffect, useState } from "react";
 import "./EngineCard.css";
 import { SkeletonBlock, SkeletonText } from "../Loading";
 import { MoveList } from "../MoveList";
-import { buildPvGame, normalizePv } from "../../utils";
+import { buildPvGame, formatLargeNumber, normalizePv } from "../../utils";
 import { Chess, Chess960 } from "../../chess.js/chess";
 import { useMediaQuery } from "react-responsive";
 import { useKibitzerBoard } from "../../hooks/BoardHook";
@@ -13,31 +13,14 @@ import { useInterval } from "../../hooks/useInterval";
 
 type EngineCardProps = { color: EngineColor };
 
-export function formatLargeNumber(value?: string) {
-  if (!value) return "-";
-  const x = Number(value);
-  if (isNaN(x)) return "-";
-  if (x >= 1_000_000_000) return (x / 1_000_000_000).toFixed(2) + "B";
-  if (x >= 1_000_000) return (x / 1_000_000).toFixed(2) + "M";
-  if (x >= 1_000) return (x / 1_000).toFixed(2) + "K";
-  return x.toFixed(2);
-}
-
-export function formatTime(time: number) {
-  if (time < 0) time = 0;
-  const hundreds = String(Math.floor(time / 100) % 10).padEnd(2, "0");
-  const seconds = String(Math.floor(time / 1000) % 60).padStart(2, "0");
-  const minutes = String(Math.floor(time / (1000 * 60))).padStart(2, "0");
-  return `${minutes}:${seconds}.${hundreds}`;
-}
-
 const EngineCard = memo(({ color }: EngineCardProps) => {
   const state = useLiveInfo.getState();
 
   const [fen, setFen] = useState(state.currentFen);
   const [time, setTime] = useState(1);
   const [pvDisagreementPoint, setPvDisagreementPoint] = useState<number>();
-  const [_, setDepth] = useState<number>();
+  const [depth, setDepth] = useState<number>();
+  void depth;
 
   useInterval((state) => {
     setFen(state.currentFen);
@@ -88,7 +71,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
     game.current = buildPvGame(fen, moves, -1);
     setCurrentFen(game.current.fen());
     setCurrentMoveNumber(-1);
-  }, [moves]);
+  }, [moves, fen, game, setCurrentFen, setCurrentMoveNumber]);
 
   const fields = loading
     ? ["Depth", "Nodes", "NPS", "TB Hits", "Hashfull"].map((label) => [

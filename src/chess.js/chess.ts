@@ -96,7 +96,6 @@ export const SUFFIX_LIST = ['!', '?', '!!', '!?', '?!', '??'] as const
 export type Suffix = (typeof SUFFIX_LIST)[number]
 
 // NAG (Numeric Annotation Glyph) to symbol mapping
-/* eslint-disable @typescript-eslint/naming-convention */
 export const NAG_TO_SYMBOL = {
   7: '□', // Only move
   22: '⨀', // Zugzwang
@@ -117,7 +116,6 @@ export const NAG_TO_SYMBOL = {
   44: '=∞', // With compensation
   140: '∆', // With the idea
 } as const
-/* eslint-enable @typescript-eslint/naming-convention */
 
 export type NAG = number
 
@@ -287,8 +285,6 @@ const BITS: Record<string, number> = {
   NULL_MOVE: 128,
 }
 
-/* eslint-disable @typescript-eslint/naming-convention */
-
 // these are required, according to spec
 export const SEVEN_TAG_ROSTER: Record<string, string> = {
   Event: '?',
@@ -341,7 +337,6 @@ const HEADER_TEMPLATE = {
   ...SEVEN_TAG_ROSTER,
   ...SUPLEMENTAL_TAGS,
 }
-/* eslint-enable @typescript-eslint/naming-convention */
 
 /*
  * NOTES ABOUT 0x88 MOVE GENERATION ALGORITHM
@@ -383,7 +378,6 @@ const HEADER_TEMPLATE = {
  */
 
 // prettier-ignore
-// eslint-disable-next-line
 const Ox88: Record<Square, number> = {
   a8:   0, b8:   1, c8:   2, d8:   3, e8:   4, f8:   5, g8:   6, h8:   7,
   a7:  16, b7:  17, c7:  18, d7:  19, e7:  20, f7:  21, g7:  22, h7:  23,

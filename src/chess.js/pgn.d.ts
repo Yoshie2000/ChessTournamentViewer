@@ -59,8 +59,7 @@ export type ClassRange = [
   end: string,
 ]
 
-export interface ClassParts extends Array<string | ClassRange> {
-}
+export type ClassParts = Array<string | ClassRange>;
 
 /**
  * Expected a class, such as `[^acd-gz]i`

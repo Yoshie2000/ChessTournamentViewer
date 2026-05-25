@@ -1,22 +1,9 @@
 import { MdOutlineClose } from "react-icons/md";
-import type { EngineSettings } from "../../engine/EngineWorker";
 import "./Settings.css";
 import { memo, useState } from "react";
-import { loadSettings, saveSettings } from "../../LocalStorage";
+import { saveSettings } from "../../LocalStorage";
 import { usePopup } from "../../context/PopupContext";
 import { useSettings } from "../../context/KibitzerSettings";
-
-export function getDefaultKibitzerSettings(): EngineSettings {
-  const settings = loadSettings();
-
-  const loadedSettings = {
-    hash: settings["hash"] ? Number(settings["hash"]) : 128,
-    threads: settings["threads"] ? Number(settings["threads"]) : 1,
-    enableKibitzer: settings["enableKibitzer"] === "true",
-  };
-
-  return loadedSettings;
-}
 
 export const Settings = memo(() => {
   const settings = useSettings();

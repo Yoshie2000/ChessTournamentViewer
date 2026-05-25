@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, type ReactElement } from "react";
+import { memo, useCallback, useEffect, useRef, type ReactElement } from "react";
 import {
   MdKeyboardArrowLeft,
   MdKeyboardArrowRight,
@@ -26,11 +26,7 @@ type MoveListProps = {
   disagreementMoveIndex?: number;
 };
 
-export function getGameAtMoveNumber(
-  fen: string,
-  moves: string[],
-  moveNumber: number
-) {
+function getGameAtMoveNumber(fen: string, moves: string[], moveNumber: number) {
   const game = new Chess960(fen);
 
   for (
@@ -87,9 +83,9 @@ const MoveList = memo(
           el.scrollTop = el.scrollHeight;
         });
       }
-    }, [moves.length, currentMoveNumber]);
+    }, [moves.length, currentMoveNumber, controllers]);
 
-    function undoAllMoves() {
+    const undoAllMoves = useCallback(() => {
       setCurrentMoveNumber(() => 0);
       const el = moveListRef.current;
       if (el) {
@@ -97,8 +93,8 @@ const MoveList = memo(
           el.scrollTop = 0;
         });
       }
-    }
-    function redoAllMoves() {
+    }, [setCurrentMoveNumber]);
+    const redoAllMoves = useCallback(() => {
       setCurrentMoveNumber(() => -1);
       const el = moveListRef.current;
       if (el) {
@@ -106,8 +102,8 @@ const MoveList = memo(
           el.scrollTop = el.scrollHeight;
         });
       }
-    }
-    function undoMove() {
+    }, [setCurrentMoveNumber]);
+    const undoMove = useCallback(() => {
       if (currentMoveNumber === 0) return;
 
       setCurrentMoveNumber((previous) => {
@@ -115,8 +111,8 @@ const MoveList = memo(
         if (previous === -1) return moves.length - 1;
         return previous - 1;
       });
-    }
-    function redoMove() {
+    }, [currentMoveNumber, moves.length, setCurrentMoveNumber]);
+    const redoMove = useCallback(() => {
       if (currentMoveNumber === -1) return;
 
       setCurrentMoveNumber((previous) => {
@@ -124,7 +120,7 @@ const MoveList = memo(
         if (previous + 1 >= moves.length) return -1;
         return previous + 1;
       });
-    }
+    }, [currentMoveNumber, moves.length, setCurrentMoveNumber]);
 
     useEffect(() => {
       if (controllers) {
@@ -147,7 +143,15 @@ const MoveList = memo(
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
       }
-    }, [currentMoveNumber, moves.length]);
+    }, [
+      currentMoveNumber,
+      moves.length,
+      controllers,
+      redoAllMoves,
+      undoAllMoves,
+      undoMove,
+      redoMove,
+    ]);
 
     function copyFen() {
       copyToClipboard(

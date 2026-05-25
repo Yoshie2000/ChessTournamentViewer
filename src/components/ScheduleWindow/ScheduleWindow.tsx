@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Schedule } from "./Schedule";
 import { TwitchChat } from "./TwitchChat";
 import { useEventStore } from "@/context/EventContext";
@@ -11,12 +11,15 @@ export const ScheduleWindow = () => {
   const [activeTab, setActiveTab] = useState<Tab>("Schedule");
 
   const engines = useEventStore((state) => state.engines);
+  const activeEvent = useEventStore((state) => state.activeEvent);
+
   const [selectedEngineId, setSelectedEngineId] = useState<string>("");
 
-  const activeEvent = useEventStore((state) => state.activeEvent);
-  useEffect(() => {
+  const [previousEvent, setPreviousEvent] = useState(activeEvent);
+  if (activeEvent !== previousEvent) {
+    setPreviousEvent(activeEvent);
     setSelectedEngineId("");
-  }, [activeEvent]);
+  }
 
   return (
     <div className="scheduleWindow">

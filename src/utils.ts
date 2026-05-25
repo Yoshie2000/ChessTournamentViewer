@@ -116,3 +116,22 @@ export function findPvDisagreementPoint(
 
   return minLength;
 }
+
+export function formatLargeNumber(value?: string | number) {
+  if (!value) return "-";
+  const x = Number(value);
+  if (isNaN(x)) return "-";
+  if (x >= 1_000_000_000) return (x / 1_000_000_000).toFixed(2) + "B";
+  if (x >= 1_000_000) return (x / 1_000_000).toFixed(2) + "M";
+  if (x >= 1_000) return (x / 1_000).toFixed(2) + "K";
+  return x.toFixed(2);
+}
+
+export function formatTime(value: string | number) {
+  let time = Number(value);
+  if (time < 0) time = 0;
+  const hundreds = String(Math.floor(time / 100) % 10).padEnd(2, "0");
+  const seconds = String(Math.floor(time / 1000) % 60).padStart(2, "0");
+  const minutes = String(Math.floor(time / (1000 * 60))).padStart(2, "0");
+  return `${minutes}:${seconds}.${hundreds}`;
+}
