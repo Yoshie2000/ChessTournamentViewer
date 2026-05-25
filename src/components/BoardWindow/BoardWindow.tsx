@@ -239,19 +239,25 @@ export const BoardWindow = memo(() => {
   }, []);
 
   useEffect(() => {
-    // If the tab was in the background and the websocket disconnected, reload the page
     const onVisibilityChange = () => {
       if (
         document.visibilityState === "visible" &&
         !activeWSRef.current.isConnected()
       ) {
-        window.location.reload();
+        const { activeProvider, activeEvent, activeGame } =
+          useEventStore.getState();
+        const ws = wsByProvider[activeProvider];
+        ws.connect(
+          handleMessage,
+          activeEvent?.tournamentDetails.tNr,
+          activeGame ? String(activeGame.gameDetails.gameNr) : undefined
+        );
       }
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, []);
+  }, [handleMessage]);
 
   useEffect(() => {
     const eventState = useEventStore.getState();
