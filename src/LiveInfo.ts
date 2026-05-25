@@ -2,6 +2,8 @@ import type { DrawShape } from "@lichess-org/chessground/draw";
 import { Chess960, type Color, type Square } from "./chess.js/chess";
 import type { CCCEngine, CCCLiveInfo } from "./types";
 import { sanToUci, uciToSan } from "./utils";
+import z from "zod";
+import { liveInfoSchema } from "./schemas/tcec/liveInfoSchema";
 
 export type EngineColor = "white" | "black" | "red" | "blue" | "green";
 export type LiveInfoEntry = CCCLiveInfo | undefined;
@@ -41,23 +43,56 @@ export const EmptyEngineDefinition: CCCEngine = {
 };
 
 export function parseTCECLiveInfo(
-  json: any,
+  json: unknown,
   fen: string,
   color: "blue" | "red"
 ): CCCLiveInfo {
-  const blackToMove = json.pv.includes("...");
+  const liveInfoValidation = z.safeParse(liveInfoSchema, json);
+
+  if (!liveInfoValidation.success) {
+    // we cannot recover from this
+    console.log("Error validating liveInfoSchema\nIssues:\n");
+    console.log(liveInfoValidation.error.issues);
+    console.log("Errored data", json);
+
+    // empty definition
+    return {
+      type: "liveInfo",
+      info: {
+        color: color,
+        depth: "1",
+        hashfull: "-",
+        multipv: "1",
+        name: "",
+        nodes: "0",
+        pv: "",
+        pvSan: "",
+        score: "",
+        seldepth: "",
+        speed: "0",
+        tbhits: "0",
+        time: "-",
+        timeLeft: 0,
+        ply: 0,
+      },
+    };
+  }
+
+  const liveInfo = liveInfoValidation.data;
+
+  const blackToMove = liveInfo.pv.includes("...");
   const fullmove = blackToMove
-    ? Number(json.pv.split("...")[0])
-    : Number(json.pv.split(".")[0]);
+    ? Number(liveInfo.pv.split("...")[0])
+    : Number(liveInfo.pv.split(".")[0]);
   const ply = 2 * (fullmove - 1) + (blackToMove ? 1 : 0);
 
-  const pvMoves = json.pv
+  const pvMoves = liveInfo.pv
     .split(/ |\.\.\./)
     .filter((str: string) => !str.match(/^\d+\.?$/));
 
   const lanMoves = sanToUci(fen, pvMoves);
 
-  let score = String(json.eval);
+  let score = String(liveInfo.eval);
   const scoreNumber = Number(score);
   if (!isNaN(scoreNumber)) {
     score = scoreNumber.toFixed(2);
@@ -70,19 +105,20 @@ export function parseTCECLiveInfo(
     type: "liveInfo",
     info: {
       color: color,
-      depth: json.depth.split("/")[0],
+      depth: liveInfo.depth.split("/")[0],
       hashfull: "-",
       multipv: "1",
       name: "",
-      nodes: String(json.nodes),
+      nodes: String(liveInfo.nodes),
       pv: lanMoves.join(" "),
       pvSan: pvMoves.join(" "),
       score,
-      seldepth: json.depth.split("/")[1],
+      seldepth: liveInfo.depth.split("/")[1],
       speed: String(
-        Number(json.speed.split(" ")[0]) * (color === "blue" ? 1000 : 1000000)
+        Number(liveInfo.speed.split(" ")[0]) *
+          (color === "blue" ? 1000 : 1000000)
       ),
-      tbhits: String(json.tbhits),
+      tbhits: String(liveInfo.tbhits),
       time: "-",
       timeLeft: 0,
       ply,

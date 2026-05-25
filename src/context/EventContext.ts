@@ -198,7 +198,8 @@ function writeStateToUrl(
   url.searchParams.set("provider", provider);
   if (eventId) url.searchParams.set("event", eventId);
   else url.searchParams.delete("event");
-  if (game?.gameNr && !game?.live) url.searchParams.set("game", game.gameNr);
+  if (game?.gameNr && !game?.live)
+    url.searchParams.set("game", String(game.gameNr));
   else url.searchParams.delete("game");
 
   const newHref = url.toString();

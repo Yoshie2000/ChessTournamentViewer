@@ -22,8 +22,8 @@ const MODES = [
     name: "Eval",
     map: function (liveInfo?: CCCLiveInfo) {
       if (!liveInfo) return NaN;
-      else if (liveInfo.info.score.includes("+M")) return 64.0;
-      else if (liveInfo.info.score.includes("-M")) return -64.0;
+      else if (liveInfo.info.score?.includes("+M")) return 64.0;
+      else if (liveInfo.info.score?.includes("-M")) return -64.0;
       else return Math.min(Math.max(Number(liveInfo!.info.score), -49.0), 49.0);
     },
     mapLabel: function (liveInfo?: CCCLiveInfo) {

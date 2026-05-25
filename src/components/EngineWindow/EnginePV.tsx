@@ -45,7 +45,7 @@ export function EnginePV({ color }: EnginePVProps) {
     if (!data) return;
 
     // If the PV is different, re-build the game & re-render it
-    const moves = normalizePv(data.pvSan, color, state.currentFen);
+    const moves = normalizePv(data.pvSan ?? "", color, state.currentFen);
     setMoves((previous) => {
       if (shallow(moves, previous)) return previous;
 

@@ -4,7 +4,11 @@ export class StockfishWorker implements IEngineWorker {
   private worker: Worker;
   private callback: null | ((e: any) => void) = null;
 
-  constructor(hash: number = 128, threads: number = 1, chess960: boolean = false) {
+  constructor(
+    hash: number = 128,
+    threads: number = 1,
+    chess960: boolean = false
+  ) {
     this.worker = new Worker("/stockfish-18-single.js");
 
     this.worker.onmessage = this.callback;

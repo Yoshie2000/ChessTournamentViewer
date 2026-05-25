@@ -69,11 +69,13 @@ export const useLiveInfo = create<LiveInfoData>()(
           const whitePly = state.liveEngineData.white.liveInfo.findLastIndex(
             (liveInfo) => !!liveInfo
           );
+
           const wtime =
             whitePly !== -1
               ? callback(
                   "white",
-                  state.liveEngineData.white.liveInfo[whitePly]!.info.timeLeft
+                  state.liveEngineData.white.liveInfo[whitePly]!.info
+                    .timeLeft ?? 0
                 )
               : undefined;
           if (wtime)
@@ -87,7 +89,8 @@ export const useLiveInfo = create<LiveInfoData>()(
             blackPly !== -1
               ? callback(
                   "black",
-                  state.liveEngineData.black.liveInfo[blackPly]!.info.timeLeft
+                  state.liveEngineData.black.liveInfo[blackPly]!.info
+                    .timeLeft ?? 0
                 )
               : undefined;
           if (btime)

@@ -1,4 +1,12 @@
-import type { CCCLiveInfo, CCCEventsListUpdate, CCCMessage } from "./types";
+import z from "zod";
+import type { CCCEventsListUpdate, CCCMessage } from "./types";
+import { CCCMessageListSchema } from "./schemas/ccc/cccMessageSchema";
+
+export type SocketMessageFromClient = {
+  type: "requestEvent";
+  gameNr?: string;
+  eventNr?: string;
+};
 
 export interface TournamentWebSocket {
   connect: (
@@ -11,7 +19,7 @@ export interface TournamentWebSocket {
   isConnected: () => boolean;
 
   disconnect: () => void;
-  send: (msg: unknown) => void;
+  send: (msg: SocketMessageFromClient) => void;
   fetchEventList: (onEventList: (msg: CCCEventsListUpdate) => void) => void;
 }
 
@@ -52,29 +60,49 @@ export class CCCWebSocket implements TournamentWebSocket {
     }, TIMEOUT_RECONNECT_MS);
 
     this.socket.onmessage = (e) => {
-      const messages = JSON.parse(e.data) as CCCMessage[];
+      let messagesObj: unknown = null;
+      try {
+        messagesObj = JSON.parse(e.data);
+      } catch (err) {
+        console.log(err);
+      }
 
-      const hasGameUpdate = messages.some(
+      const messageValidation = z.safeParse(CCCMessageListSchema, messagesObj);
+
+      if (!messageValidation.success) {
+        console.log("Error validating message from CCC socket\nIssues: ");
+        console.log(messageValidation.error.issues);
+        console.log("Errored data: \n", messagesObj);
+        return;
+      }
+      const validMessages = messageValidation.data;
+
+      const hasGameUpdate = validMessages.some(
         (message) => message.type === "gameUpdate"
       );
       if (hasGameUpdate) {
         clearTimeout(this.timeoutId);
       }
 
-      const lastLiveInfoIdx = messages.findLastIndex(
+      const lastLiveInfoIdx = validMessages.findLastIndex(
         (message) => message.type === "liveInfo"
       );
 
-      const filteredMessages = messages
+      const filteredMessages = validMessages
         // If there are multiple liveInfos for the same ply, ignore all but the last one
-        .filter(
-          (message, idx) =>
-            lastLiveInfoIdx === -1 ||
-            message.type !== "liveInfo" ||
-            message.info.ply !==
-              (messages[lastLiveInfoIdx] as CCCLiveInfo).info.ply ||
-            idx === lastLiveInfoIdx
-        );
+        .filter((message, idx) => {
+          if (message.type !== "liveInfo" || lastLiveInfoIdx === -1) {
+            return true;
+          }
+
+          if (validMessages[lastLiveInfoIdx].type === "liveInfo") {
+            return (
+              message.info.ply !== validMessages[lastLiveInfoIdx]!.info.ply ||
+              idx === lastLiveInfoIdx
+            );
+          }
+          return false;
+        });
 
       for (const msg of filteredMessages) {
         if (msg.type === "eventUpdate") {
@@ -91,7 +119,7 @@ export class CCCWebSocket implements TournamentWebSocket {
     };
   }
 
-  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
+  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void): void {
     const tempSocket = new WebSocket(this.url);
 
     tempSocket.onopen = () => {
@@ -99,10 +127,31 @@ export class CCCWebSocket implements TournamentWebSocket {
     };
 
     tempSocket.onmessage = (e) => {
-      const messages = JSON.parse(e.data) as CCCMessage[];
-      const found = messages.find((m) => m.type === "eventsListUpdate") as
-        | CCCEventsListUpdate
-        | undefined;
+      let messagesObj: unknown = null;
+      try {
+        // can throw
+        messagesObj = JSON.parse(e.data);
+      } catch (err) {
+        console.log(err);
+        tempSocket.close();
+
+        return;
+      }
+
+      const messageValidation = z.safeParse(CCCMessageListSchema, messagesObj);
+
+      if (!messageValidation.success) {
+        console.log("Error validating message from CCC socket\nIssues: ");
+        console.log(messageValidation.error.issues);
+        console.log("Errored data: \n", messagesObj);
+
+        tempSocket.close();
+        return;
+      }
+
+      const validMessages = messageValidation.data;
+
+      const found = validMessages.find((m) => m.type === "eventsListUpdate");
 
       if (found) {
         onEventList(found);

@@ -1,5 +1,8 @@
 import io from "socket.io-client";
-import type { TournamentWebSocket } from "./CCCWebsocket";
+import type {
+  SocketMessageFromClient,
+  TournamentWebSocket,
+} from "./CCCWebsocket";
 import type {
   CCCEngine,
   CCCEventsListUpdate,
@@ -15,6 +18,13 @@ import {
   extractLiveInfoFromTCECComment,
   parseTCECLiveInfo,
 } from "./LiveInfo";
+import z from "zod";
+import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
+import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
+import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
+import { socketPgnSchema } from "./schemas/tcec/socketPgnSchema";
+import { eventListSchema } from "./schemas/tcec/eventListSchema";
+import { livePGNSchema } from "./schemas/tcec/pgnSchema";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -25,19 +35,17 @@ export class TCECWebSocket implements TournamentWebSocket {
   private game: Chess960 = new Chess960();
   private event: CCCEventUpdate | null = null;
 
-  async send(msg: any) {
+  async send(msg: SocketMessageFromClient) {
     if (msg.type === "requestEvent") {
       const gameNr: string | undefined = msg.gameNr;
       let eventNr: string | undefined = msg.eventNr;
 
       if (eventNr) {
-        eventNr = eventNr
-          .replace("AltSubfi", "Altsubfi")
-          .replace("FRD_5", "Frd_5");
+        eventNr = toTitleCaseTCEC(eventNr);
 
         // This code needs to distinguish a bunch of cases
         const [pgnResponse, crosstableResponse, scheduleResponse] =
-          await Promise.all([
+          await Promise.allSettled([
             fetch(
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`
             ),
@@ -45,16 +53,39 @@ export class TCECWebSocket implements TournamentWebSocket {
             fetch(
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`
             ),
+          ]).catch((err) => {
+            console.error("Error fetching TCEC data:", err);
+            return Promise.reject([null, null, null]);
+          });
+
+        const [pgnParsed, crosstableParsed, scheduleParsed] =
+          await Promise.allSettled([
+            handleIfFulfilled(pgnResponse, "text"),
+            handleIfFulfilled(crosstableResponse, "json"),
+            handleIfFulfilled(scheduleResponse, "json"),
           ]);
-        const pgn = await pgnResponse.text();
-        const crosstable = await crosstableResponse.json();
-        const schedule = await scheduleResponse.json();
+
+        const validationResult = validateEssentials({
+          pgn: pgnParsed,
+          crosstable: crosstableParsed,
+          schedule: scheduleParsed,
+        });
+
+        if (!validationResult) {
+          // The backend most likely threw a 404, which means this is a live game, not technically an error
+          this.send({ type: "requestEvent" });
+          return;
+        }
+
+        const { crosstable, pgn, schedule } = validationResult;
 
         const game = new Chess960();
         try {
-          game.loadPgn(pgn);
-        } catch (error) {
-          // The backend threw a 404, which means this is a live game
+          if (pgnParsed) {
+            game.loadPgn(pgn);
+          }
+        } catch {
+          // The backend most likely threw a 404, which means this is a live game, not technically an error
           this.send({ type: "requestEvent" });
           return;
         }
@@ -70,7 +101,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           this.send({
             type: "requestEvent",
             gameNr: String(schedule.length + 1),
-            eventNr,
+            eventNr: toTitleCaseTCEC(eventNr),
           });
           return;
         }
@@ -92,24 +123,36 @@ export class TCECWebSocket implements TournamentWebSocket {
           gameNr
         );
       } else if (gameNr) {
-        const safeEventNr = (eventNr ?? this.game.getHeaders()["Event"])
-          .replaceAll(" ", "_")
-          .replaceAll("DivP", "Divp")
-          .replaceAll("AltSubfi", "Altsubfi")
-          .replaceAll("FRD_5", "Frd_5");
-        const pgn = await (
-          await fetch(
-            `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
-          )
-        ).text();
+        const safeEventNr = toTitleCaseTCEC(
+          eventNr ?? this.game.getHeaders()["Event"]
+        );
+
+        const pgn = await fetch(
+          `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr}_${gameNr}.pgn`
+        )
+          .then((response) => response.text())
+          .catch(console.log);
+        if (!pgn) {
+          return;
+        }
+
         this.live = false;
         this.openGame(gameNr, pgn);
 
         const game = new Chess960();
-        game.loadPgn(pgn);
+
+        try {
+          game.loadPgn(pgn);
+        } catch (err) {
+          console.log("Errored PGN: ");
+          console.log(err);
+          console.log(pgn);
+          return;
+        }
+
         const round = game.getHeaders()["Round"];
 
-        const [lc0Response, sfResponse] = await Promise.all([
+        const [lc0Response, sfResponse] = await Promise.allSettled([
           fetch(
             `https://ctv.yoshie2000.de/tcec/archive/json/${safeEventNr.toLowerCase()}_liveeval_${round}.json`
           ),
@@ -118,10 +161,13 @@ export class TCECWebSocket implements TournamentWebSocket {
           ),
         ]);
 
-        this.loadKibitzerData(
-          lc0Response.status === 200 ? await lc0Response.json() : undefined,
-          sfResponse.status === 200 ? await sfResponse.json() : undefined
-        );
+        const [lc0Json, sfJson] = await Promise.allSettled([
+          handleIfFulfilled(lc0Response, "json"),
+          handleIfFulfilled(sfResponse, "json"),
+        ]);
+
+        const [lc0, sf] = validateKibitzers(lc0Json, sfJson);
+        this.loadKibitzerData(lc0, sf);
       } else {
         this.live = true;
         this.disconnect();
@@ -149,31 +195,52 @@ export class TCECWebSocket implements TournamentWebSocket {
       reconnectionDelayMax: 5000,
     });
 
-    this.socket.on("htmlread", (json: any) => {
+    this.socket.on("htmlread", (json: unknown) => {
       if (!this.live) return;
+
+      const validationResult = z.safeParse(htmlReadSchema, json);
+      if (!validationResult.success) {
+        console.warn("Error validating data, aborting...");
+        console.warn(validationResult.error);
+        return;
+      }
 
       const opponentName =
         this.game.getHeaders()[this.game.turn() === "w" ? "Black" : "White"];
-      const latestUsefulLine = (json.data.split("\n") as string[])
+      const latestUsefulLine = validationResult.data.data
+        .split("\n")
         .filter(
           (line) => !line.includes("currmove") && !line.includes(opponentName)
         )
         .at(-1);
-      const infoString = latestUsefulLine?.split(": ")[1] ?? "";
+
+      if (!latestUsefulLine) {
+        return;
+      }
+
       const liveInfo = extractLiveInfoFromInfoString(
-        infoString,
+        latestUsefulLine.split(": ")[1],
         this.game.fen()
       );
 
-      if (infoString && liveInfo) {
+      if (liveInfo) {
         this.callback?.(liveInfo.liveInfo);
       }
     });
 
-    this.socket.on("livechart", (json: any) => {
+    this.socket.on("livechart", (json: unknown) => {
       if (!this.live) return;
 
-      const moveData = json.moves.at(-1);
+      const result = validateLiveChartData(json);
+      if (!result) {
+        return;
+      }
+
+      const moveData = result.moves.at(-1);
+      if (!moveData) {
+        return;
+      }
+
       if (moveData.pv.includes("...")) {
         let score = String(moveData.eval);
         if (score.includes("-")) score = score.replace("-", "+");
@@ -191,10 +258,19 @@ export class TCECWebSocket implements TournamentWebSocket {
       );
     });
 
-    this.socket.on("livechart1", (json: any) => {
+    this.socket.on("livechart1", (json: unknown) => {
       if (!this.live) return;
 
-      const moveData = json.moves.at(-1);
+      const result = validateLiveChartData(json);
+      if (!result) {
+        return;
+      }
+
+      const moveData = result.moves.at(-1);
+      if (!moveData) {
+        return;
+      }
+
       if (moveData.pv.includes("...")) {
         let score = String(moveData.eval);
         if (score.includes("-")) score = score.replace("-", "+");
@@ -212,19 +288,38 @@ export class TCECWebSocket implements TournamentWebSocket {
       );
     });
 
-    this.socket.on("liveeval", (json: any) => {
+    this.socket.on("liveeval", (json: unknown) => {
       if (!this.live) return;
+
+      const result = validateLiveChartData(json);
+      if (!result) {
+        return;
+      }
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "blue"));
     });
 
-    this.socket.on("liveeval1", (json: any) => {
+    this.socket.on("liveeval1", (json: unknown) => {
       if (!this.live) return;
+
+      const result = validateLiveChartData(json);
+      if (!result) {
+        return;
+      }
 
       this.callback?.(parseTCECLiveInfo(json, this.game.fen(), "red"));
     });
 
-    this.socket.on("pgn", (json: any) => {
+    this.socket.on("pgn", (json: unknown) => {
+      const pgnValidation = z.safeParse(socketPgnSchema, json);
+
+      if (!pgnValidation.success) {
+        console.log("Error validation pgn from socket.\nIssues:");
+        console.log(pgnValidation.error.issues);
+        console.log("Errored data: ", json);
+        return;
+      }
+
       if (!this.live) return;
 
       if (this.live && this.game.getHeaders()["Result"] !== "*") {
@@ -233,12 +328,15 @@ export class TCECWebSocket implements TournamentWebSocket {
         return;
       }
 
+      const pgnData = pgnValidation.data;
+
       // For some reason, the halfmove numbers sometimes differ
       const fenParts = this.game
         .fen({ forceEnpassantSquare: false })
         .split(" ");
       const fen = fenParts.slice(0, -2).join(" ") + " " + fenParts.at(-1);
-      const ignoreIndex = (json.Moves as any[]).findIndex((moveData) => {
+
+      const ignoreIndex = pgnData.Moves.findIndex((moveData) => {
         const moveFenParts = new Chess960(moveData.fen).fen().split(" ");
         const moveFen =
           moveFenParts.slice(0, -2).join(" ") + " " + moveFenParts.at(-1);
@@ -247,7 +345,8 @@ export class TCECWebSocket implements TournamentWebSocket {
 
       let wtime: string | undefined = undefined,
         btime: string | undefined = undefined;
-      for (const moveData of json.Moves.slice(ignoreIndex + 1)) {
+
+      for (const moveData of pgnData.Moves.slice(ignoreIndex + 1)) {
         const fenBeforeMove = this.game.fen();
 
         // Make the move
@@ -269,38 +368,30 @@ export class TCECWebSocket implements TournamentWebSocket {
           times: { w: 1, b: 1 },
         });
 
-        // Extract the live info
-        const relevantKeys = Object.keys(moveData).filter(
-          (key) =>
-            (typeof moveData[key] === "string" &&
-              !moveData[key].includes(" ")) ||
-            key === "pv"
-        );
-        moveData.pv = moveData.pv.San;
-        const commentString = relevantKeys
-          .map((key) => `${key}=${moveData[key]}`)
-          .join(", ");
+        const commentString = createTCECCommentString(moveData);
+
         const liveInfo = extractLiveInfoFromTCECComment(
           commentString,
           fenBeforeMove
         );
-        if (liveInfo) {
-          this.callback?.(liveInfo);
+
+        if (liveInfo && this.callback) {
+          this.callback(liveInfo);
         }
       }
 
       onMessage({ type: "clocks", binc: "1", winc: "1", btime, wtime });
 
-      if (json.Headers.Result !== "*") {
+      if (pgnData.Headers.Result !== "*") {
         this.callback?.({
           type: "result",
-          blackName: json.Headers.Black,
-          whiteName: json.Headers.White,
-          reason: json.Headers.TerminationDetails,
-          score: json.Headers.Result,
+          blackName: pgnData.Headers.Black,
+          whiteName: pgnData.Headers.White,
+          reason: pgnData.Headers.TerminationDetails,
+          score: pgnData.Headers.Result,
         });
 
-        this.game.setHeader("Result", json.Headers.Result);
+        this.game.setHeader("Result", pgnData.Headers.Result);
       }
     });
 
@@ -338,36 +429,62 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.fetchEventList((msg) => this.callback?.(msg));
   }
 
-  fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
-    fetch("https://ctv.yoshie2000.de/tcec/archive/gamelist.json")
-      .then((response) => response.json())
-      .then((seasons) => {
-        const eventList: CCCEventsListUpdate = {
-          type: "eventsListUpdate",
-          events: [],
-        };
-        for (const seasonKey of Object.keys(seasons.Seasons).reverse()) {
-          // I don't want to deal with this monstrosity yet
-          if (seasonKey.includes("Cup") || seasonKey.includes("Bonus"))
-            continue;
+  async fetchEventList(onEventList: (msg: CCCEventsListUpdate) => void) {
+    const response = await fetch(
+      "https://ctv.yoshie2000.de/tcec/archive/gamelist.json"
+    ).catch(console.log);
 
-          const season = seasons.Seasons[seasonKey];
-          const title = "Season " + seasonKey;
-          const subs = season.sub.sort((a: any, b: any) =>
-            (b.dno + "").localeCompare(a.dno + "")
-          );
+    if (!response) {
+      setTimeout(() => {
+        this.fetchEventList(onEventList);
+      }, 2000);
 
-          for (const sub of subs) {
-            if (sub.menu.includes("-=")) continue;
+      return;
+    }
 
-            eventList.events.push({
-              id: sub.abb,
-              name: title + " - " + sub.menu,
-            });
-          }
-        }
-        onEventList(eventList);
-      });
+    const seasonsObj = await response.json().catch(console.log);
+    if (!seasonsObj) {
+      setTimeout(() => {
+        this.fetchEventList(onEventList);
+      }, 2000);
+      return;
+    }
+
+    const seasonsValidation = z.safeParse(eventListSchema, seasonsObj);
+
+    if (!seasonsValidation.success) {
+      console.log("Error validating seasons data\nIssues:");
+      console.log(seasonsValidation.error.issues);
+      console.log("Errored data: ");
+      console.log(seasonsObj);
+      return;
+    }
+
+    const seasonList = seasonsValidation.data.Seasons;
+
+    const eventList: CCCEventsListUpdate = {
+      type: "eventsListUpdate",
+      events: [],
+    };
+
+    for (const seasonKey of Object.keys(seasonList).reverse()) {
+      // I don't want to deal with this monstrosity yet
+      if (seasonKey.includes("Cup") || seasonKey.includes("Bonus")) continue;
+
+      const _season = seasonList[seasonKey];
+      const title = "Season " + seasonKey;
+
+      const subs = _season.sub.sort((a, b) =>
+        (b.dno + "").localeCompare(a.dno + "")
+      );
+
+      for (const sub of subs) {
+        if (sub.menu.includes("-=")) continue;
+
+        eventList.events.push({ id: sub.abb, name: title + " - " + sub.menu });
+      }
+    }
+    onEventList(eventList);
   }
 
   isConnected() {
@@ -378,12 +495,20 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.callback = onMessage;
   }
 
-  private loadKibitzerData(lc0: any, sf: any) {
+  private loadKibitzerData(
+    lc0: z.infer<typeof kibitzerSchema> | undefined | null,
+    sf: z.infer<typeof kibitzerSchema> | undefined | null
+  ) {
     const lc0Valid =
-      lc0 && String(lc0.round) === this.game.getHeaders()["Round"];
-    const sfValid = sf && String(sf.round) === this.game.getHeaders()["Round"];
+      lc0 &&
+      String(lc0.round) === this.game.getHeaders()["Round"] &&
+      "desc" in lc0;
+    const sfValid =
+      sf &&
+      String(sf.round) === this.game.getHeaders()["Round"] &&
+      "desc" in sf;
 
-    if (lc0Valid)
+    if (lc0Valid && lc0.desc) {
       this.callback?.({
         type: "kibitzer",
         color: "blue",
@@ -393,7 +518,8 @@ export class TCECWebSocket implements TournamentWebSocket {
           imageUrl: "https://ctv.yoshie2000.de/tcec/image/engine/Lc0.png",
         },
       });
-    if (sfValid)
+    }
+    if (sfValid && sf.desc) {
       this.callback?.({
         type: "kibitzer",
         color: "red",
@@ -403,6 +529,7 @@ export class TCECWebSocket implements TournamentWebSocket {
           imageUrl: `https://ctv.yoshie2000.de/tcec/image/engine/${sf.desc.split(" ")[0]}.png`,
         },
       });
+    }
 
     function plyFromPv(pv: string) {
       const isBlackMove = pv.includes("...");
@@ -411,8 +538,8 @@ export class TCECWebSocket implements TournamentWebSocket {
       return moveNumber * 2 - 1;
     }
 
-    if (lc0Valid)
-      (lc0.moves as any[]).forEach((lc0Move) => {
+    if (lc0 && lc0Valid) {
+      lc0.moves?.forEach((lc0Move) => {
         if (lc0Move.pv.includes("...")) {
           if (typeof lc0Move.eval === "string") {
             if (lc0Move.eval.startsWith("-"))
@@ -428,8 +555,9 @@ export class TCECWebSocket implements TournamentWebSocket {
           parseTCECLiveInfo(lc0Move, this.game.fenAt(ply - 1), "blue")
         );
       });
-    if (sfValid)
-      (sf.moves as any[]).forEach((sfMove) => {
+    }
+    if (sf && sfValid) {
+      sf.moves?.forEach((sfMove) => {
         if (sfMove.pv.includes("...")) {
           if (typeof sfMove.eval === "string") {
             if (sfMove.eval.startsWith("-"))
@@ -445,9 +573,10 @@ export class TCECWebSocket implements TournamentWebSocket {
           parseTCECLiveInfo(sfMove, this.game.fenAt(ply - 1), "red")
         );
       });
+    }
   }
 
-  private openEvent(
+  private async openEvent(
     scheduleURL: string,
     crosstableURL: string,
     pgnURL: string,
@@ -455,189 +584,218 @@ export class TCECWebSocket implements TournamentWebSocket {
     sfURL: string,
     gameNr?: string
   ) {
-    Promise.all([
+    const responses = await Promise.allSettled([
       fetch(scheduleURL),
       fetch(crosstableURL),
       fetch(pgnURL),
       fetch(lc0URL),
       fetch(sfURL),
-    ])
-      .then((responses) =>
-        Promise.allSettled([
-          responses[0].json(),
-          responses[1].json(),
-          responses[2].text(),
-          responses[3].json(),
-          responses[4].json(),
-        ])
-      )
-      .then((jsons) => {
-        const [schedule, crosstable, livePGN, lc0, sf] = jsons;
+    ]);
 
-        if (
-          schedule.status !== "fulfilled" ||
-          crosstable.status !== "fulfilled" ||
-          livePGN.status !== "fulfilled"
-        )
-          return;
+    const jsons = await Promise.allSettled([
+      handleIfFulfilled(responses[0], "json"),
+      handleIfFulfilled(responses[1], "json"),
+      handleIfFulfilled(responses[2], "text"),
+      handleIfFulfilled(responses[3], "json"),
+      handleIfFulfilled(responses[4], "json"),
+    ]);
 
-        const engines: CCCEngine[] = Object.keys(crosstable.value.Table).map(
-          (engineName) => {
-            const engineData = crosstable.value.Table[engineName];
-            const correctName = engineName.split(" ")[0];
-            const engineVersion = engineName.split(" ").slice(1).join(" ");
+    const [
+      scheduleParsed,
+      crosstableParsed,
+      pgnParsed,
+      lc0Response,
+      sfResponse,
+    ] = jsons;
 
-            return {
-              authors: "",
-              config: { command: "", options: {}, timemargin: 0 },
-              country: "",
-              elo: String(engineData.Rating),
-              facts: "",
-              flag: "",
-              id: correctName,
-              imageUrl:
-                "https://ctv.yoshie2000.de/tcec/image/engine/" +
-                correctName +
-                ".png",
-              name: correctName,
-              perf: String(engineData.Performance),
-              playedGames: "",
-              points: String(engineData.Score),
-              rating: String(engineData.Rating),
-              updatedAt: "",
-              version: engineVersion,
-              website: "",
-              year: "",
-            };
-          }
-        );
+    const result = validateEssentials({
+      pgn: pgnParsed,
+      crosstable: crosstableParsed,
+      schedule: scheduleParsed,
+    });
 
-        function toCccGame(game: any, index: number): CCCGame {
-          if (!game) return undefined as unknown as CCCGame;
+    if (!result) {
+      // Retry
+      setTimeout(
+        () =>
+          this.openEvent(
+            scheduleURL,
+            crosstableURL,
+            pgnURL,
+            lc0URL,
+            sfURL,
+            gameNr
+          ),
+        1000
+      );
+      return;
+    }
 
-          const [time, , date] = game.Start?.split(" ") ?? [
-            "00:00:00",
-            "on",
-            "1970.01.01",
-          ];
-          const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
-          const startDate = new Date(isoString);
+    const { crosstable, pgn, schedule } = result;
 
-          const [hours, minutes, seconds] = game.Duration?.split(":").map(
-            Number
-          ) ?? [0, 0, 0];
-          const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    const engines: CCCEngine[] = Object.keys(crosstable.Table).map(
+      (engineName) => {
+        const engineData = crosstable.Table[engineName];
+        const correctName = engineName.split(" ")[0];
+        const engineVersion = engineName.split(" ").slice(1).join(" ");
 
-          const gameStarted = !!game.Result;
-          const gameOver = !!game.Result && game.Result !== "*";
+        return {
+          authors: "",
+          config: { command: "", options: {}, timemargin: 0 },
+          country: "",
+          elo: String(engineData.Rating),
+          facts: "",
+          flag: "",
+          id: correctName,
+          imageUrl:
+            "https://ctv.yoshie2000.de/tcec/image/engine/" +
+            correctName +
+            ".png",
+          name: correctName,
+          perf: String(engineData.Performance),
+          playedGames: "",
+          points: String(engineData.Score),
+          rating: String(engineData.Rating),
+          updatedAt: "",
+          version: engineVersion,
+          website: "",
+          year: "",
+        };
+      }
+    );
 
-          const black = game.Black.split(" ")[0];
-          const white = game.White.split(" ")[0];
-
-          return {
-            blackId: black,
-            blackName: black,
-            estimatedStartTime: "",
-            gameNr: String(index + 1),
-            matchNr: "",
-            opening: game.Opening,
-            openingType: game.Opening,
-            roundNr: game.Round,
-            timeControl: "",
-            variant: "",
-            whiteId: white,
-            whiteName: white,
-            outcome: gameOver ? game.Result : undefined,
-            timeEnd: gameOver
-              ? new Date(startDate.getTime() + duration).toString()
-              : undefined,
-            timeStart: gameStarted ? startDate.toString() : undefined,
-          };
+    const cccGameSchedule: CCCGame[] = schedule
+      .map((game, index) => {
+        if (!game) {
+          return null;
         }
 
-        const cccGameSchedule = (schedule.value as any[]).map(toCccGame);
+        const [time, , date] =
+          "Start" in game
+            ? game.Start.split(" ")
+            : ["00:00:00", "on", "1970.01.01"];
+        const isoString = `${date.replace(/\./g, "-")}T${time}Z`;
+        const startDate = new Date(isoString);
 
-        const present =
-          cccGameSchedule.find((game) => !!game.timeStart && !game.timeEnd) ??
-          cccGameSchedule.findLast((game) => !!game.outcome && this.live);
-        const past = cccGameSchedule.filter(
-          (game) => !!game.timeEnd && game !== present
-        );
-        const future = cccGameSchedule.filter(
-          (game) => !game.outcome && !game.timeStart && game !== present
-        );
+        const [hours, minutes, seconds] =
+          "Duration" in game ? game.Duration.split(":").map(Number) : [0, 0, 0];
 
-        const allGames = [...past, ...(present ? [present] : []), ...future];
+        const duration = (hours * 3600 + minutes * 60 + seconds) * 1000;
 
-        // Create an empty set of opponents per engine
-        const opponentsPerEngine = engines.reduce(
-          (prev, cur) => ({ ...prev, [cur.id]: new Set<string>() }),
-          {} as Record<string, Set<string>>
-        );
+        const gameStarted = "Result" in game;
+        const gameOver = "Result" in game && game.Result !== "*";
 
-        // Check that each pair of consecutive games has switched opponents
-        const hasGamePairs = allGames
-          .map((_, idx) => {
-            const pairStart = 2 * Math.floor(idx / 2);
-            const first = allGames[pairStart];
-            const second = allGames.at(pairStart + 1);
+        const black = game.Black.split(" ")[0];
+        const white = game.White.split(" ")[0];
 
-            // Ignore games without valid engines
-            if (
-              !second ||
-              opponentsPerEngine[first.blackId] === undefined ||
-              opponentsPerEngine[first.whiteId] === undefined ||
-              opponentsPerEngine[second.blackId] === undefined ||
-              opponentsPerEngine[second.whiteId] === undefined
-            ) {
-              return true;
-            }
+        const opening = "Opening" in game ? game.Opening : "unknown";
 
-            opponentsPerEngine[first.blackId].add(first.whiteId);
-            opponentsPerEngine[first.whiteId].add(first.blackId);
-            opponentsPerEngine[second.blackId].add(second.whiteId);
-            opponentsPerEngine[second.whiteId].add(second.blackId);
-
-            return (
-              first.blackId === second.whiteId &&
-              first.whiteId === second.blackId
-            );
-          })
-          .every((value) => value);
-
-        // Check that all engines are playing each other
-        const isRoundRobin = engines.every(
-          (engine) => opponentsPerEngine[engine.id].size === engines.length - 1
-        );
-
-        const event: CCCEventUpdate = {
-          type: "eventUpdate",
-          tournamentDetails: {
-            name: crosstable.value.Event,
-            tNr: crosstable.value.Event.replaceAll(" ", "_"),
-            tc: { incr: 0, init: 0 },
-            engines,
-            schedule: { past, future, present },
-            hasGamePairs,
-            isRoundRobin,
-          },
+        return {
+          blackId: black,
+          blackName: black,
+          estimatedStartTime: "",
+          gameNr: String(index + 1),
+          matchNr: "",
+          opening: opening,
+          openingType: opening, // we have `game.ECO` sometimes
+          roundNr: "unknown", // we do not have `game.Round` in TCEC I think
+          timeControl: "",
+          variant: "",
+          whiteId: white,
+          whiteName: white,
+          outcome: gameOver ? game.Result : undefined,
+          timeEnd: gameOver
+            ? new Date(startDate.getTime() + duration).toString()
+            : undefined,
+          timeStart: gameStarted ? startDate.toString() : undefined,
         };
-        this.callback?.(event);
-        this.event = event;
+      })
+      .filter((el) => !!el);
 
-        this.openGame(gameNr ?? (present ?? past[0]).gameNr, livePGN.value);
+    const present =
+      cccGameSchedule.find((game) => !!game.timeStart && !game.timeEnd) ??
+      cccGameSchedule.findLast((game) => !!game.outcome && this.live);
+    const past = cccGameSchedule.filter(
+      (game) => !!game.timeEnd && game !== present
+    );
+    const future = cccGameSchedule.filter(
+      (game) => !game.outcome && !game.timeStart && game !== present
+    );
 
-        this.loadKibitzerData(
-          lc0.status === "fulfilled" ? lc0.value : undefined,
-          sf.status === "fulfilled" ? sf.value : undefined
+    const allGames = [...past, ...(present ? [present] : []), ...future];
+
+    // Create an empty set of opponents per engine
+    const opponentsPerEngine = engines.reduce(
+      (prev, cur) => ({ ...prev, [cur.id]: new Set<string>() }),
+      {} as Record<string, Set<string>>
+    );
+
+    // Check that each pair of consecutive games has switched opponents
+    const hasGamePairs = allGames
+      .map((_, idx) => {
+        const pairStart = 2 * Math.floor(idx / 2);
+        const first = allGames[pairStart];
+        const second = allGames.at(pairStart + 1);
+
+        // Ignore games without valid engines
+        if (
+          !second ||
+          opponentsPerEngine[first.blackId] === undefined ||
+          opponentsPerEngine[first.whiteId] === undefined ||
+          opponentsPerEngine[second.blackId] === undefined ||
+          opponentsPerEngine[second.whiteId] === undefined
+        ) {
+          return true;
+        }
+
+        opponentsPerEngine[first.blackId].add(first.whiteId);
+        opponentsPerEngine[first.whiteId].add(first.blackId);
+        opponentsPerEngine[second.blackId].add(second.whiteId);
+        opponentsPerEngine[second.whiteId].add(second.blackId);
+
+        return (
+          first.blackId === second.whiteId && first.whiteId === second.blackId
         );
-      });
+      })
+      .every((value) => value);
+
+    // Check that all engines are playing each other
+    const isRoundRobin = engines.every(
+      (engine) => opponentsPerEngine[engine.id].size === engines.length - 1
+    );
+
+    const event: CCCEventUpdate = {
+      type: "eventUpdate",
+      tournamentDetails: {
+        name: crosstable.Event,
+        tNr: crosstable.Event.replaceAll(" ", "_"),
+        tc: { incr: 0, init: 0 },
+        engines,
+        schedule: { past, future, present },
+        hasGamePairs,
+        isRoundRobin,
+      },
+    };
+    this.callback?.(event);
+    this.event = event;
+
+    this.openGame(gameNr ?? (present ?? past[0]).gameNr, pgn);
+
+    const [lc0, sf] = validateKibitzers(lc0Response, sfResponse);
+    this.loadKibitzerData(lc0, sf);
   }
 
   private openGame(gameNr: string, pgn: string) {
     if (!this.event || !this.callback) return;
 
-    this.game.loadPgn(pgn);
+    try {
+      this.game.loadPgn(pgn);
+    } catch (err) {
+      // cannot gracefully recover from this with the same input data
+      // so just do early return
+      console.log("error loading PGN\n", err);
+      return;
+    }
 
     const white = this.game.getHeaders()["White"].split(" ")[0];
     const black = this.game.getHeaders()["Black"].split(" ")[0];
@@ -734,4 +892,152 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket?.close();
     this.connected = false;
   }
+}
+
+function toTitleCaseTCEC(input: string): string {
+  // we sometimes receive already malformed string
+  // that is joined with "_"
+  const splitChar = input.includes("_") ? "_" : " ";
+
+  return input
+    .split(splitChar)
+    .map((word, inx) => {
+      const isEmptyOrTCECStr = word.length === 0 || inx === 0;
+      if (isEmptyOrTCECStr) {
+        return word;
+      }
+      return word[0].toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join("_");
+}
+
+async function handleIfFulfilled(
+  promise: PromiseSettledResult<Response>,
+  method: "json" | "text"
+): Promise<unknown | null> {
+  if (promise.status === "fulfilled") {
+    if (!promise.value.ok || promise.value.status > 400) {
+      return Promise.reject(null);
+    }
+
+    return await promise.value[method]().catch((err) => {
+      console.log(err);
+      return null;
+    });
+  } else {
+    return Promise.reject(null);
+  }
+}
+
+function validateKibitzers(
+  kibitzer1: PromiseSettledResult<unknown>,
+  kibitzer2: PromiseSettledResult<unknown>
+) {
+  let kibitzer1Validated: z.infer<typeof kibitzerSchema> | null = null;
+  let kibitzer2Validated: z.infer<typeof kibitzerSchema> | null = null;
+
+  if (kibitzer1.status === "fulfilled") {
+    const lc0Validation = z.safeParse(kibitzerSchema, kibitzer1.value);
+    if (lc0Validation.success) {
+      kibitzer1Validated = lc0Validation.data;
+    }
+  }
+
+  if (kibitzer2.status === "fulfilled") {
+    const sfValidation = z.safeParse(kibitzerSchema, kibitzer2.value);
+    if (sfValidation.success) {
+      kibitzer2Validated = sfValidation.data;
+    }
+  }
+
+  return [kibitzer1Validated, kibitzer2Validated] as const;
+}
+
+function validateEssentials({
+  pgn,
+  crosstable,
+  schedule,
+}: {
+  pgn: PromiseSettledResult<unknown>;
+  crosstable: PromiseSettledResult<unknown>;
+  schedule: PromiseSettledResult<unknown>;
+}): {
+  pgn: z.infer<typeof livePGNSchema>;
+  crosstable: z.infer<typeof crosstableSchema>;
+  schedule: z.infer<typeof scheduleSchema>;
+} | null {
+  if (
+    schedule.status !== "fulfilled" ||
+    crosstable.status !== "fulfilled" ||
+    pgn.status !== "fulfilled"
+  ) {
+    return null;
+  }
+
+  const scheduleValidation = z.safeParse(scheduleSchema, schedule.value);
+  const crosstableValidation = z.safeParse(crosstableSchema, crosstable.value);
+  const livePGNValidation = z.safeParse(livePGNSchema, pgn.value);
+
+  // early returns needed to help typescript correctly infer types
+  if (!livePGNValidation.success) {
+    console.log("Live PGN validation failed\nIssues:");
+    console.log(livePGNValidation.error.issues);
+    console.log("Errored data:", pgn);
+    return null;
+  }
+
+  if (!scheduleValidation.success) {
+    console.log("Schedule validation failed\nIssues:");
+    console.log(scheduleValidation.error.issues);
+    console.log("Errored data:", schedule.value);
+    return null;
+  }
+
+  if (!crosstableValidation.success) {
+    console.log("Crosstable validation failed\nIssues:");
+    console.log(crosstableValidation.error.issues);
+    console.log("Errored data:", crosstable.value);
+    return null;
+  }
+
+  return {
+    pgn: livePGNValidation.data,
+    crosstable: crosstableValidation.data,
+    schedule: scheduleValidation.data,
+  } as const;
+}
+
+type MoveData = z.infer<typeof socketPgnSchema>["Moves"][number];
+type MoveDataKeys = Array<keyof MoveData>;
+
+function createTCECCommentString(moveData: MoveData): string {
+  const keys = Object.keys(moveData) as (keyof typeof moveData)[];
+  const skipKeys: MoveDataKeys = ["adjudication", "material"];
+  const result: string[] = [];
+
+  keys.forEach((key) => {
+    if (skipKeys.includes(key)) {
+      return;
+    }
+
+    if (key === "pv") {
+      result.push(`${key}=${moveData["pv"].San}`);
+    } else {
+      result.push(`${key}=${moveData[key]}`);
+    }
+  });
+
+  return result.join(", ");
+}
+
+function validateLiveChartData(
+  json: unknown
+): z.infer<typeof kibitzerSchema> | null {
+  const validation = z.safeParse(kibitzerSchema, json);
+  if (!validation.success) {
+    console.log("Live chart data validation failed\nIssues:");
+    console.log(validation.error.issues);
+    return null;
+  }
+  return validation.data;
 }
