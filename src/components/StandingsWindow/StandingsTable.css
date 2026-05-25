@@ -1,6 +1,6 @@
 .standings {
-  height: 100%;
   overflow: auto;
+  border: 1px solid #232323;
 }
 
 .standingsEntry {
@@ -10,14 +10,12 @@
   grid-template-columns: 40px auto 1fr 100px 60px 60px;
   height: 40px;
   border-bottom: 1px solid #232323;
-  border-left: 1px solid #232323;
-  border-right: 1px solid #232323;
   font-size: var(--font-sm);
   background: #2a2a2a;
 }
 
-.standingsEntry:first-child {
-  border-top: 1px solid #232323;
+.standingsEntry:last-child {
+  border-bottom: none;
 }
 
 .standingsEntry:nth-child(2n) {
@@ -50,6 +48,13 @@
   right: var(--gap);
 }
 
+.standingsWindow .githubPlug,
+.standingsWindow .githubPlug a {
+  color: #a1a1a1;
+  font-size: var(--font-sm);
+  margin: calc(-0.5 * var(--gap)) 0 0 0 !important;
+}
+
 @media ((min-width: 1401px) and (max-width: 1550px)) or (max-width: 450px) {
   .standingsEntry {
     grid-template-columns: 40px auto 1fr 100px 60px;
@@ -70,5 +75,10 @@
   .standingsWindow button {
     padding-top: 0.375rem;
     padding-bottom: 0.375rem;
+  }
+
+  .standingsWindow .githubPlug,
+  .standingsWindow .githubPlug a {
+    margin: calc(-0.5 * var(--gap)) auto 0 auto !important;
   }
 }

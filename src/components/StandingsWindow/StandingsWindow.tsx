@@ -31,6 +31,16 @@ export const StandingsWindow = memo(() => {
           <Spinner />
         </div>
       )}
+
+      <p className="githubPlug">
+        Contribute or report issues on{" "}
+        <a
+          href="https://github.com/Yoshie2000/ChessTournamentViewer"
+          target="_blank"
+        >
+          GitHub
+        </a>
+      </p>
     </div>
   );
 });
