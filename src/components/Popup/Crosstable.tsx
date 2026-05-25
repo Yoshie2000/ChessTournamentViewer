@@ -4,6 +4,7 @@ import "./Crosstable.css";
 import { useEventStore } from "../../context/EventContext";
 import { memo } from "react";
 import { usePopup } from "../../context/PopupContext";
+import { EngineLogo } from "../EngineWindow/EngineLogo";
 
 type GameResult = "win" | "loss" | "draw" | "tbd";
 type GameScore = -1 | 0 | 1;
@@ -266,6 +267,7 @@ export const Crosstable = memo(() => {
         {engines.map((engine, i) => (
           <tr key={engine.id}>
             <td>
+              <EngineLogo engine={engine}/>
               <p className="engineName">
                 #{i + 1}. {engine.name}
               </p>

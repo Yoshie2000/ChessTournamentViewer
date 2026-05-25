@@ -16,6 +16,7 @@
 }
 
 .crosstable tr:first-child td {
+  text-align: center;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -26,6 +27,7 @@
 }
 
 .crosstable tr td:first-child {
+  text-align: center;
   position: sticky;
   left: 0;
   z-index: 2;
