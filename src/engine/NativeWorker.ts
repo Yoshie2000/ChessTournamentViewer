@@ -1,10 +1,10 @@
-import type { IEngineWorker } from "./EngineWorker";
+import type { IEngineWorker, MessageData, MessageEvent } from "./EngineWorker";
 
 export class NativeWorker implements IEngineWorker {
   private ws!: WebSocket;
   private ready: boolean = false;
   private shouldTerminate: boolean = false;
-  private callback: null | ((e: any) => void) = null;
+  private callback: null | ((e: MessageEvent) => void) = null;
   private errorCallback: null | (() => void) = null;
 
   constructor(
@@ -52,12 +52,12 @@ export class NativeWorker implements IEngineWorker {
     this.errorCallback = () => callback();
   }
 
-  public onMessage(callback: (e: any) => void) {
+  public onMessage(callback: (e: MessageData) => void) {
     this.callback = (e) => callback(e.data);
     this.ws.onmessage = this.callback;
   }
 
-  public postMessage(e: any) {
+  public postMessage(e: MessageData) {
     if (!this.ready || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(e);
   }

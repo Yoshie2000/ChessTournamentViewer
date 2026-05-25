@@ -1,8 +1,8 @@
-import type { IEngineWorker } from "./EngineWorker";
+import type { IEngineWorker, MessageData, MessageEvent } from "./EngineWorker";
 
 export class StockfishWorker implements IEngineWorker {
   private worker: Worker;
-  private callback: null | ((e: any) => void) = null;
+  private callback: null | ((e: MessageEvent) => void) = null;
 
   constructor(
     hash: number = 128,
@@ -25,17 +25,20 @@ export class StockfishWorker implements IEngineWorker {
     return true;
   }
 
-  public onError(_: () => void) {}
+  public onError() {}
 
-  public onMessage(callback: (e: any) => void) {
+  public onMessage(callback: (e: MessageData) => void) {
     this.callback = (e) => {
-      const data = e.data.replace(" Multithreaded", "");
+      const data =
+        typeof e.data === "string"
+          ? e.data.replace(" Multithreaded", "")
+          : e.data;
       callback(data);
     };
     this.worker.onmessage = this.callback;
   }
 
-  public postMessage(e: any) {
+  public postMessage(e: unknown) {
     this.worker.postMessage(e);
   }
 

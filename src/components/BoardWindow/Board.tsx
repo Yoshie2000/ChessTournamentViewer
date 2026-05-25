@@ -34,7 +34,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
       selectable: { enabled: false },
       animation: { enabled: props.animated },
     });
-  }, []);
+  }, [props.animated]);
 
   useImperativeHandle(
     ref,
@@ -102,7 +102,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
 
         const config: Config = {
           drawable: {
-            // @ts-ignore
+            // @ts-expect-error custom brush colors
             brushes: {
               white: { key: "white", color: "#fff", opacity: 1, lineWidth: 10 },
               black: { key: "black", color: "#000", opacity: 1, lineWidth: 10 },

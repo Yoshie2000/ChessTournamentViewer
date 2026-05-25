@@ -1,8 +1,19 @@
 import { create } from "zustand";
 import type { EngineSettings } from "../engine/EngineWorker";
-import { getDefaultKibitzerSettings } from "../components/Popup/Settings";
 import { zustandHmrFix } from "./ZustandHMRFix";
 import { loadSettings } from "@/LocalStorage";
+
+function getDefaultKibitzerSettings(): EngineSettings {
+  const settings = loadSettings();
+
+  const loadedSettings = {
+    hash: settings["hash"] ? Number(settings["hash"]) : 128,
+    threads: settings["threads"] ? Number(settings["threads"]) : 1,
+    enableKibitzer: settings["enableKibitzer"] === "true",
+  };
+
+  return loadedSettings;
+}
 
 export type SettingsType = {
   kibitzerSettings: EngineSettings;

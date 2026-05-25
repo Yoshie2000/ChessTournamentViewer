@@ -6,11 +6,14 @@ import {
   extractLiveInfoFromInfoString,
 } from "../LiveInfo";
 
+export type MessageData = string | BufferSource | Blob;
+export type MessageEvent = { data: MessageData };
+
 export interface IEngineWorker {
   isReady(): boolean;
-  onMessage(callback: (e: any) => void): void;
+  onMessage(callback: (e: MessageData) => void): void;
   onError(callback: () => void): void;
-  postMessage(e: any): void;
+  postMessage(e: MessageData): void;
   terminate(): void;
 }
 
@@ -104,7 +107,9 @@ export class EngineWorker {
     this.isSearching = true;
   }
 
-  private handleWorkerMessage(msg: any) {
+  private handleWorkerMessage(msg: unknown) {
+    if (typeof msg !== "string") return;
+
     if (msg.startsWith("id name")) {
       this.engine = {
         ...this.engine,

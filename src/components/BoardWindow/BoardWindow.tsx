@@ -236,7 +236,7 @@ export const BoardWindow = memo(() => {
       (state) => state.currentMoveNumber,
       () => updateBoard(true)
     );
-  }, []);
+  }, [updateBoard]);
 
   useEffect(() => {
     const onVisibilityChange = () => {

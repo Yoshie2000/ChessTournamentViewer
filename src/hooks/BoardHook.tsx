@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Chess960 } from "../chess.js/chess";
+import { Chess, Chess960 } from "../chess.js/chess";
 import {
   Board as BoardComponent,
   type BoardHandle,
@@ -37,7 +37,7 @@ export function useKibitzerBoard({ animated, id }: BoardProps) {
   const game = useRef(new Chess960());
 
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
-  const [currentFen, setCurrentFen] = useState(game.current.fen());
+  const [currentFen, setCurrentFen] = useState(new Chess().fen());
 
   useEffect(() => {
     setTimeout(() => {

@@ -1,13 +1,13 @@
 import { memo, useState } from "react";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { type EngineColor } from "../../LiveInfo";
-import { formatTime } from "./EngineCard";
 import { EngineLogo } from "./EngineLogo";
 import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "../Loading";
 import { useInterval } from "../../hooks/useInterval";
 import { MdInfoOutline } from "react-icons/md";
 import { Tooltip } from "antd";
+import { formatTime } from "@/utils";
 
 type EngineCardProps = { color: EngineColor; className?: string };
 

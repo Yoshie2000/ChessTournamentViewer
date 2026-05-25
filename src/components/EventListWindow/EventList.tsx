@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, useEffect } from "react";
+import { memo, useMemo, useState } from "react";
 import { Spin } from "antd";
 import { TreeSelect } from "antd";
 import {
@@ -299,11 +299,9 @@ export const EventList = memo(function EventList() {
       ? encodeEventValue(activeProvider, matchedEventId)
       : undefined;
 
-  useEffect(() => {
-    if (optimisticValue && optimisticValue === realSelectedValue) {
-      setOptimisticValue(undefined);
-    }
-  }, [realSelectedValue, optimisticValue]);
+  if (optimisticValue && optimisticValue === realSelectedValue) {
+    setOptimisticValue(undefined);
+  }
 
   const selectedValue = optimisticValue ?? realSelectedValue;
 
@@ -319,7 +317,7 @@ export const EventList = memo(function EventList() {
           providerData[providerKey]?.eventList ?? null
         ),
       })),
-    [activeProvider, providerData]
+    [providerData]
   );
 
   const handleChange = (value: string) => {
