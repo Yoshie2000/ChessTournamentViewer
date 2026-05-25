@@ -9,7 +9,7 @@ export class StockfishWorker implements IEngineWorker {
     threads: number = 1,
     chess960: boolean = false
   ) {
-    this.worker = new Worker("/stockfish-18-single.js");
+    this.worker = new Worker("/cached-stockfish-worker.js");
 
     this.worker.onmessage = this.callback;
 
