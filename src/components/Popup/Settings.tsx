@@ -4,7 +4,7 @@ import "./Settings.css";
 import { memo, useState } from "react";
 import { loadSettings, saveSettings } from "../../LocalStorage";
 import { usePopup } from "../../context/PopupContext";
-import { useKibitzerSettings } from "../../context/KibitzerSettings";
+import { useSettings } from "../../context/KibitzerSettings";
 
 export function getDefaultKibitzerSettings(): EngineSettings {
   const settings = loadSettings();
@@ -19,25 +19,27 @@ export function getDefaultKibitzerSettings(): EngineSettings {
 }
 
 export const Settings = memo(() => {
-  const kibitzerSettings = useKibitzerSettings(
-    (state) => state.kibitzerSettings
-  );
-  const setKibitzerSettings = useKibitzerSettings(
-    (state) => state.setKibitzerSettings
+  const settings = useSettings();
+
+  const [hash, setHash] = useState(settings.kibitzerSettings.hash);
+  const [threads, setThreads] = useState(settings.kibitzerSettings.threads);
+  const [enableKibitzer, setEnableKibitzer] = useState(
+    settings.kibitzerSettings.enableKibitzer
   );
 
-  const [hash, setHash] = useState(kibitzerSettings.hash);
-  const [threads, setThreads] = useState(kibitzerSettings.threads);
-  const [enableKibitzer, setEnableKibitzer] = useState(
-    kibitzerSettings.enableKibitzer
+  const [showCoordinates, setShowCoordinates] = useState(
+    settings.showCoordinates
   );
 
   const setPopupState = usePopup((state) => state.setPopupState);
 
   function applySettings() {
-    const settings = { hash, threads, enableKibitzer };
-    saveSettings(settings);
-    setKibitzerSettings(settings);
+    saveSettings({ hash, threads, enableKibitzer, showCoordinates });
+
+    settings.setShowCoordinates(showCoordinates);
+    settings.setKibitzerSettings({ hash, threads, enableKibitzer });
+
+    if (showCoordinates !== settings.showCoordinates) location.reload();
   }
 
   return (
@@ -88,6 +90,22 @@ export const Settings = memo(() => {
           The 'Threads' setting only applies to native kibitzers, not to
           Stockfish WASM
         </small>
+      </div>
+
+      <div className="settingsHeader">
+        <h4>UI Settings</h4>
+      </div>
+
+      <div className="engineSettings">
+        <div className="checkbox">
+          <input
+            type="checkbox"
+            id="id3"
+            checked={showCoordinates}
+            onChange={(e) => setShowCoordinates(e.target.checked)}
+          />
+          <label htmlFor="id3">Show Board Coordinates</label>
+        </div>
       </div>
 
       <button className="applySettings" onClick={applySettings}>
