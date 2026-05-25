@@ -28,27 +28,32 @@
   width: var(--board-size) !important;
 }
 
-.boardWindow .board coords.ranks {
-  top: 0;
-  left: 0.25rem;
-  align-items: flex-start;
-}
+.boardWindow .board coords.ranks,
 .boardWindow .board coords.ranks coord {
-  transform: translateY(0);
-}
-.boardWindow .board coords.files {
-  bottom: 0.5rem;
+  top: 0;
   left: 0;
+}
+
+.boardWindow .board coords.ranks coord {
+  transform: translate(0.25rem, 0.25rem);
+}
+
+.boardWindow .board coords.files,
+.boardWindow .board coords.files coord {
+  bottom: 0;
+  right: 0;
+  left: unset;
   text-align: right;
 }
 .boardWindow .board coords.files coord {
-  padding-right: 0.375rem;
+  transform: translate(-0.25rem, -0.25rem);
 }
+
 .boardWindow .board coords coord {
   color: rgba(255, 255, 255, 0.7);
-  /* text-shadow: 0 0 2px rgba(0, 0, 0, 0.7); */
   font-weight: 600;
   font-size: 1rem;
+  line-height: 1;
 }
 
 .engineComponent .board coords,

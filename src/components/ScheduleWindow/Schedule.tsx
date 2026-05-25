@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { EngineLogo } from "../EngineWindow/EngineLogo";
 import "./Schedule.css";
 import { MdOutlineClose } from "react-icons/md";
@@ -22,7 +22,7 @@ const Schedule = memo(() => {
   const scheduleRef = useRef<HTMLDivElement>(null);
   const currentGameRef = useRef<HTMLDivElement>(null);
 
-  const [scrolledToCurrentGame, setScrolledToCurrentGame] = useState(false);
+  const scrolledToCurrentGameRef = useRef(false);
   const userClickedRef = useRef(false);
 
   const selectedGame = useEventStore((state) => state.activeGame);
@@ -34,7 +34,7 @@ const Schedule = memo(() => {
     if (
       !scheduleRef.current ||
       !currentGameRef.current ||
-      scrolledToCurrentGame
+      scrolledToCurrentGameRef.current
     )
       return;
 
@@ -50,28 +50,27 @@ const Schedule = memo(() => {
         currentGameRef.current.clientHeight / 2,
       behavior: "instant",
     });
-  }, [scrolledToCurrentGame]);
 
-  useEffect(() => {
-    if (
-      !scheduleRef.current ||
-      !currentGameRef.current ||
-      scrolledToCurrentGame
-    )
-      return;
+    scrolledToCurrentGameRef.current = true;
+  }, []);
 
-    scrollToCurrentGame();
-
-    setScrolledToCurrentGame(true);
-  }, [scheduleRef.current, currentGameRef.current]);
+  const currentGameCallbackRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      currentGameRef.current = node;
+      if (node) {
+        scrollToCurrentGame();
+      }
+    },
+    [scrollToCurrentGame],
+  );
 
   useEffect(() => {
     if (userClickedRef.current) {
       userClickedRef.current = false;
       return;
     }
+    scrolledToCurrentGameRef.current = false;
     scrollToCurrentGame();
-    setScrolledToCurrentGame(false);
   }, [
     event?.tournamentDetails.tNr,
     event?.tournamentDetails.schedule.present?.gameNr,
@@ -144,14 +143,16 @@ const Schedule = memo(() => {
                   ? "draw"
                   : "tbd";
 
-          const isCurrentGame =
+          const isLiveGame =
             game.gameNr === event.tournamentDetails.schedule.present?.gameNr;
           const isSelectedGame =
             game.gameNr === String(selectedGame.gameDetails.gameNr);
-          const ref = isSelectedGame ? currentGameRef : null;
+          const ref = isSelectedGame ? currentGameCallbackRef : null;
 
-          let gameClass = isCurrentGame || isSelectedGame ? " active" : "";
-          gameClass += !game.outcome && !isCurrentGame ? " future" : "";
+          let gameClass = "";
+          gameClass += !game.outcome && !isLiveGame ? " future" : "";
+          gameClass += isSelectedGame ? " active" : "";
+          gameClass += isLiveGame ? " live" : "";
 
           const isLastOfRound =
             event.tournamentDetails.isRoundRobin &&
@@ -159,13 +160,13 @@ const Schedule = memo(() => {
             (i + 1) % gamesPerRound === 0;
           gameClass += isLastOfRound ? " lastOfRound" : "";
 
-          const vsText = isCurrentGame
+          const vsText = isLiveGame
             ? "vs."
             : game.outcome
               ? formatOutcome(game.outcome)
               : formatDuration(averageDuration * (i - currentGameIdx));
 
-          const ongoingAndNotSelectedGame = isCurrentGame && !isSelectedGame;
+          const ongoingAndNotSelectedGame = isLiveGame && !isSelectedGame;
 
           return (
             <div

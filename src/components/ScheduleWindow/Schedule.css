@@ -66,7 +66,12 @@
   background: #4d4d4d !important;
 }
 
-.schedule .game.active .engineName {
+.schedule .game.live {
+  outline: 1px solid #5a7080;
+  outline-offset: -1px;
+}
+
+.schedule .game.active:not(:has(.draw)) .engineName {
   color: #fff;
 }
 
