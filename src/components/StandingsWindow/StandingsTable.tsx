@@ -13,7 +13,9 @@ export const StandingsTable = memo(function () {
         <div key={engine.id} className="standingsEntry">
           <div className="placement">#{index + 1}</div>
           <EngineLogo engine={engine} size={28} />
-          <div className="name">{engine.name}</div>
+          <div className="name" title={engine.name}>
+            {engine.name}
+          </div>
           <div className="score">
             {engine.points} / {engine.playedGames}
           </div>

@@ -45,7 +45,7 @@
 }
 
 .crosstable tr td:first-child {
-  text-wrap: nowrap;
+  min-width: 200px;
 }
 
 .crosstable .engineName,

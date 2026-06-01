@@ -35,6 +35,7 @@ export function EngineLogo({ engine, size = 36 }: EngineLogoProps) {
         width: `${size * (activeProvider === "tcec" ? 1.75 : 1)}px`,
         margin: `${size / 6}px`,
         borderRadius: activeProvider === "tcec" ? "2px" : "4px",
+        aspectRatio: activeProvider === "tcec" ? "1.75 / 1" : "1 / 1",
       }}
       className="engineLogo"
       onError={(event) => {

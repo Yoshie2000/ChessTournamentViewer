@@ -110,12 +110,12 @@ export const BoardWindow = memo(() => {
             eventState.activeEvent?.tournamentDetails.engines ?? [];
           const wEngine =
             engines.find(
-              (engine) => engine.name === game.getHeaders()["White"]
+              (engine) => engine.id === game.getHeaders()["White"]
             ) || EmptyEngineDefinition;
 
           const bEngine =
             engines.find(
-              (engine) => engine.name === game.getHeaders()["Black"]
+              (engine) => engine.id === game.getHeaders()["Black"]
             ) || EmptyEngineDefinition;
 
           liveInfoState.setLiveEngineData("white", {

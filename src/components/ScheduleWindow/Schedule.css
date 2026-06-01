@@ -71,8 +71,10 @@
   outline-offset: -1px;
 }
 
-.schedule .game.active:not(:has(.draw)) .engineName {
-  color: #fff;
+.schedule .game .engineName {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .schedule .game.lastOfRound {

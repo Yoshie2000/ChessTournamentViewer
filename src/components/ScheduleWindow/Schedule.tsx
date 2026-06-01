@@ -198,11 +198,17 @@ const Schedule = memo(({ selectedEngineId }: ScheduleProps) => {
             >
               <span className="round">#{i + 1}</span>
               <EngineLogo engine={gameWhite} size={28} />
-              <span className={"engineName " + whiteClass}>
+              <span
+                className={"engineName " + whiteClass}
+                title={gameWhite?.name}
+              >
                 {gameWhite?.name}
               </span>
               <span className="vs">{vsText}</span>
-              <span className={"engineName " + blackClass}>
+              <span
+                className={"engineName " + blackClass}
+                title={gameBlack?.name}
+              >
                 {gameBlack?.name}
               </span>
               <EngineLogo engine={gameBlack} size={28} />

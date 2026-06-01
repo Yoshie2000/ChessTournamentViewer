@@ -34,6 +34,10 @@
 
 .standings .name {
   padding-left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding-right: 1rem;
 }
 
 .standings .score,

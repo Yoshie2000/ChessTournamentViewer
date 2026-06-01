@@ -54,6 +54,9 @@
 .engineMinimal .engineName {
   font-weight: bold;
   text-transform: capitalize;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .engineMinimal .engineInfoIcon {
