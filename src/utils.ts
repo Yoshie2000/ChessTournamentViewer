@@ -124,7 +124,7 @@ export function formatLargeNumber(value?: string | number) {
   if (x >= 1_000_000_000) return (x / 1_000_000_000).toFixed(2) + "B";
   if (x >= 1_000_000) return (x / 1_000_000).toFixed(2) + "M";
   if (x >= 1_000) return (x / 1_000).toFixed(2) + "K";
-  return x.toFixed(2);
+  return x.toFixed(0);
 }
 
 export function formatTime(value: string | number) {
