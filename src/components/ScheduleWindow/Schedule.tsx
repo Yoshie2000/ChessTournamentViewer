@@ -93,7 +93,7 @@ const Schedule = memo(({ selectedEngineId }: ScheduleProps) => {
     ...event.tournamentDetails.schedule.future,
   ];
 
-  const timeControl = getTimeControl(useLiveInfo.getState().game);
+  const { tcW, tcB } = getTimeControl(useLiveInfo.getState().game);
 
   const durationPerGame = event.tournamentDetails.schedule.past
     .map((game) => {
@@ -106,7 +106,7 @@ const Schedule = memo(({ selectedEngineId }: ScheduleProps) => {
   const averageDuration =
     durationPerGame.reduce(
       (prev, cur) => prev! + cur!,
-      2 * timeControl.tcBase + 100 * timeControl.tcIncrement
+      tcW.tcBase + tcB.tcBase + (100 * (tcW.tcIncrement + tcB.tcIncrement)) / 2
     ) /
     (durationPerGame.length + 1) /
     1000 /

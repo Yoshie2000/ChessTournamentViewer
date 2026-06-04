@@ -22,7 +22,7 @@ export type LiveEngineDataEntry = Record<
   LiveEngineDataEntryObject
 >;
 
-export const EmptyEngineDefinition: CCCEngine = {
+export const EmptyEngineDefinition: Readonly<CCCEngine> = {
   authors: "",
   config: { command: "", options: {}, timemargin: 0 },
   country: "",
@@ -236,7 +236,9 @@ function extractLiveInfoFromTCECGame(game: Chess960) {
   const liveInfosWhite: LiveInfoEntry[] = [];
   const liveInfosBlack: LiveInfoEntry[] = [];
 
-  const { tcBase, tcIncrement } = getTimeControl(game);
+  const {
+    tcW: { tcBase, tcIncrement },
+  } = getTimeControl(game);
 
   game
     .getComments()
@@ -262,19 +264,56 @@ function extractLiveInfoFromTCECGame(game: Chess960) {
   return { liveInfosWhite, liveInfosBlack };
 }
 
-export function getTimeControl(game: Chess960) {
+type TimeControlEntry = { tcBase: number; tcIncrement: number };
+
+export function getTimeControl(game: Chess960): {
+  tcW: TimeControlEntry;
+  tcB: TimeControlEntry;
+} {
   const timeControl = game.getHeaders()["TimeControl"];
-  if (!timeControl) return { tcBase: 0, tcIncrement: 0 };
-  const tcBase = 1000 * Number(timeControl.split("+")[0]);
-  const tcIncrement = 1000 * Number(timeControl.split("+")[1]);
-  return { tcBase, tcIncrement };
+
+  if (!timeControl) {
+    const timeControlWhite = game.getHeaders()["WhiteTimeControl"];
+    const timeControlBlack = game.getHeaders()["BlackTimeControl"];
+
+    const _fallbackTc = {
+      tcW: { tcBase: 0, tcIncrement: 0 },
+      tcB: { tcBase: 0, tcIncrement: 0 },
+    };
+
+    if (!timeControlWhite || !timeControlBlack) {
+      return _fallbackTc;
+    }
+    const tcPartsW = timeControlWhite.split("+");
+    const tcPartsB = timeControlBlack.split("+");
+
+    if (tcPartsW.length !== 2 || tcPartsB.length !== 2) {
+      return _fallbackTc;
+    }
+
+    const tcBaseW = 1000 * Number([tcPartsW[0]]);
+    const tcIncrementW = 1000 * Number([tcPartsW[1]]);
+
+    const tcBaseB = 1000 * Number(tcPartsB[0]);
+    const tcIncrementB = 1000 * Number(tcPartsB[1]);
+
+    return {
+      tcW: { tcBase: tcBaseW, tcIncrement: tcIncrementW },
+      tcB: { tcBase: tcBaseB, tcIncrement: tcIncrementB },
+    };
+  } else {
+    const tcBase = 1000 * Number(timeControl.split("+")[0]);
+    const tcIncrement = 1000 * Number(timeControl.split("+")[1]);
+    return { tcW: { tcBase, tcIncrement }, tcB: { tcBase, tcIncrement } };
+  }
 }
 
 export function extractLiveInfoFromGame(game: Chess960) {
-  if (game.getHeaders()["Site"]?.includes("tcec"))
+  if (game.getHeaders()["Site"]?.includes("tcec")) {
     return extractLiveInfoFromTCECGame(game);
+  }
 
-  const { tcBase, tcIncrement } = getTimeControl(game);
+  const { tcW, tcB } = getTimeControl(game);
 
   const startingFen = game.getHeaders()["FEN"] ?? "";
 
@@ -298,10 +337,12 @@ export function extractLiveInfoFromGame(game: Chess960) {
     const pvString = data[8].replace("pv=", "").replaceAll('"', "");
     const sanPv = uciToSan(fenBeforeMove, pvString.trim().split(" "));
 
+    const tcRef = color === "white" ? tcW : tcB;
+
     const array = color === "white" ? liveInfosWhite : liveInfosBlack;
     const time = data[0].split(" ")[1].split("s")[0].replace(".", "");
-    const previousTimeLeft = array.at(-1)?.info.timeLeft ?? tcBase;
-    const timeLeft = previousTimeLeft + tcIncrement - Number(time);
+    const previousTimeLeft = array.at(-1)?.info.timeLeft ?? tcRef.tcBase;
+    const timeLeft = previousTimeLeft + tcRef.tcIncrement - Number(time);
 
     const liveInfo: CCCLiveInfo = {
       type: "liveInfo",

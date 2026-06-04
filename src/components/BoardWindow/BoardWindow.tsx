@@ -61,12 +61,14 @@ export const BoardWindow = memo(() => {
       const color = msg.info.color as EngineColor;
       const liveInfoState = useLiveInfo.getState();
 
-      const { tcBase, tcIncrement } = getTimeControl(liveInfoState.game);
+      const { tcW, tcB } = getTimeControl(liveInfoState.game);
+      const tcRef = color === "white" ? tcW : tcB;
+
       const liveInfos = liveInfoState.liveEngineData[color].liveInfo;
       const previousTimeLeft =
-        liveInfos[msg.info.ply - 2]?.info.timeLeft ?? tcBase;
+        liveInfos[msg.info.ply - 2]?.info.timeLeft ?? tcRef.tcBase;
       msg.info.timeLeft =
-        previousTimeLeft + tcIncrement - Number(msg.info.time);
+        previousTimeLeft + tcRef.tcIncrement - Number(msg.info.time);
 
       liveInfoState.updateLiveEngineData(color, msg);
     },
