@@ -6,8 +6,7 @@ import { useInterval } from "../../hooks/useInterval";
 import { useShallow } from "zustand/shallow";
 
 export function GameResultOverlay() {
-  const [currentFen, setCurrentFen] = useState<string>();
-  void currentFen;
+  const [_currentFen, setCurrentFen] = useState<string>();
   const [currentMoveNumber, setCurrentMoveNumber] = useState(-1);
 
   useInterval((state) => {
@@ -32,44 +31,6 @@ export function GameResultOverlay() {
     })
   );
 
-  function getTerminationString() {
-    switch (termination.toLowerCase()) {
-      case "drawsyzygy":
-        return "Syzygy Adjudication";
-      case "drawadj":
-        return "Draw Adjudication";
-      case "draw50move":
-        return "50 Move Rule";
-      case "whitestall":
-        return "White stalls";
-      case "blackstall":
-        return "Black stalls";
-      case "draw3fold":
-        return "Threefold Repetition";
-      case "whitemates":
-        return "White mates";
-      case "blackmates":
-        return "Black mates";
-      case "blackdc":
-        return "Black disconnects";
-      case "whitedc":
-        return "White disconnects";
-      case "blackillegal":
-        return "Black makes illegal move";
-      case "whiteillegal":
-        return "White makes illegal move";
-      case "adjudication":
-        if (result === "1/2-1/2") return "Draw Adjudication";
-        else return "Adjudication";
-      case "abandoned":
-        if (result === "1-0") return "Black crashed";
-        if (result === "0-1") return "White crashed";
-        return termination;
-      default:
-        return termination;
-    }
-  }
-
   return (
     termination &&
     result &&
@@ -77,8 +38,48 @@ export function GameResultOverlay() {
     (currentMoveNumber === -1 || currentMoveNumber === game.length()) && (
       <div className="gameResultOverlay">
         <div className="result">{result}</div>
-        <div className="termination">{getTerminationString()}</div>
+        <div className="termination">
+          {getTerminationString(termination, result)}
+        </div>
       </div>
     )
   );
+}
+
+function getTerminationString(termination: string, result: string) {
+  switch (termination.toLowerCase()) {
+    case "drawsyzygy":
+      return "Syzygy Adjudication";
+    case "drawadj":
+      return "Draw Adjudication";
+    case "draw50move":
+      return "50 Move Rule";
+    case "whitestall":
+      return "White stalls";
+    case "blackstall":
+      return "Black stalls";
+    case "draw3fold":
+      return "Threefold Repetition";
+    case "whitemates":
+      return "White mates";
+    case "blackmates":
+      return "Black mates";
+    case "blackdc":
+      return "Black disconnects";
+    case "whitedc":
+      return "White disconnects";
+    case "blackillegal":
+      return "Black makes illegal move";
+    case "whiteillegal":
+      return "White makes illegal move";
+    case "adjudication":
+      if (result === "1/2-1/2") return "Draw Adjudication";
+      else return "Adjudication";
+    case "abandoned":
+      if (result === "1-0") return "Black crashed";
+      if (result === "0-1") return "White crashed";
+      return termination;
+    default:
+      return termination;
+  }
 }
