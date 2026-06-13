@@ -19,8 +19,7 @@ const EngineCard = memo(({ color }: EngineCardProps) => {
   const [fen, setFen] = useState(state.currentFen);
   const [time, setTime] = useState(1);
   const [pvDisagreementPoint, setPvDisagreementPoint] = useState<number>();
-  const [depth, setDepth] = useState<number>();
-  void depth;
+  const [_depth, setDepth] = useState<number>();
 
   useInterval((state) => {
     setFen(state.currentFen);
