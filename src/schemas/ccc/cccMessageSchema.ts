@@ -31,20 +31,20 @@ export const CCCEngineSchema = z.object({
 });
 
 export const CCCGameSchema = z.object({
-  blackId: z.string(),
+  blackId: z.string().nullish(),
   blackName: z.string().nullish(),
   estimatedStartTime: z.unknown(),
-  gameNr: z.string(),
+  gameNr: z.string().nullish(),
   matchNr: z.string(),
-  opening: z.string(),
-  openingType: z.string(),
+  opening: z.string().nullish(),
+  openingType: z.string().nullish(),
   outcome: z.string().nullish(),
   roundNr: z.string(),
   timeControl: z.string(),
   timeStart: z.string().nullish(),
   timeEnd: z.string().nullish(),
-  variant: z.string(),
-  whiteId: z.string(),
+  variant: z.string().nullish(),
+  whiteId: z.string().nullish(),
   whiteName: z.string().nullish(),
 });
 
