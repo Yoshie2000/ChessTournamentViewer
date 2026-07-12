@@ -190,7 +190,7 @@ const Schedule = memo(({ selectedEngineId }: ScheduleProps) => {
                       if (ongoingAndNotSelectedGame) {
                         requestEvent();
                       } else {
-                        requestEvent(game.gameNr);
+                        requestEvent(game.gameNr || undefined);
                       }
                     }
                   : undefined
