@@ -15,7 +15,7 @@ export const zustandHmrFix = <S extends HmrFixStore<Record<string, unknown>>>(
 ) => {
   type T = ReturnType<S["getState"]>;
   if (import.meta.hot) {
-    const savedState = import.meta.hot!.data[name];
+    const savedState = import.meta.hot!.data[name] as Partial<T> | undefined;
     if (savedState) {
       useStore.setState(savedState);
     }
