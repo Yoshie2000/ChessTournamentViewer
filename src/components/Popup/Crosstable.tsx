@@ -344,7 +344,7 @@ export const Crosstable = memo(() => {
                             className={class1}
                             style={{ cursor: "pointer" }}
                             onClick={() => {
-                              requestEvent(gamePair[0].gameNr || undefined);
+                              requestEvent(gamePair[0].gameNr);
                               setPopupState("none");
                             }}
                           >
@@ -354,7 +354,7 @@ export const Crosstable = memo(() => {
                             className={class2}
                             style={{ cursor: "pointer" }}
                             onClick={() => {
-                              requestEvent(gamePair[1].gameNr || undefined);
+                              requestEvent(gamePair[1].gameNr);
                               setPopupState("none");
                             }}
                           >

@@ -743,15 +743,6 @@ export class TCECWebSocket implements TournamentWebSocket {
         const first = allGames[pairStart];
         const second = allGames.at(pairStart + 1);
 
-        if (
-          !first.blackId ||
-          !first.whiteId ||
-          !second?.whiteId ||
-          !second.blackId
-        ) {
-          return;
-        }
-
         // Ignore games without valid engines
         if (
           !second ||
@@ -794,7 +785,7 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.callback?.(event);
     this.event = event;
 
-    this.openGame(gameNr ?? (present ?? past[0]).gameNr ?? "", pgn);
+    this.openGame(gameNr ?? (present ?? past[0]).gameNr, pgn);
 
     const [lc0, sf] = validateKibitzers(lc0Response, sfResponse);
     this.loadKibitzerData(lc0, sf);
