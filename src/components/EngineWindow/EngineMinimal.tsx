@@ -69,7 +69,10 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
         <div className="engineTime">
           {loading ? <SkeletonText width="80px" /> : formatTime(time)}
         </div>
-        <div> {loading ? <SkeletonText width="40px" /> : score}</div>
+        <div className="engineEvaluation">
+          {" "}
+          {loading ? <SkeletonText width="40px" /> : score}
+        </div>
       </div>
     </div>
   );

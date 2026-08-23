@@ -91,11 +91,17 @@
 
 .engineMinimal .engineOutput {
   display: flex;
-  gap: 2rem;
+  width: 100%;
+  overflow: hidden;
   justify-content: space-between;
   align-items: flex-end;
-  margin: 0 0.5rem 0 auto;
+  margin: 0 0 0 auto;
   font-weight: bold;
+}
+
+.engineMinimal .engineOutput .engineEvaluation {
+  text-align: right;
+  margin-right: 0.5rem;
 }
 
 .engineMinimal .engineInfoTable {
