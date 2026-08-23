@@ -103,8 +103,8 @@
 
 .scheduleWindow .closeButton {
   position: absolute;
-  top: var(--gap);
-  right: var(--gap);
+  top: calc(0.75 * var(--gap));
+  right: calc(0.75 * var(--gap));
 }
 
 @media (max-width: 1920px) {

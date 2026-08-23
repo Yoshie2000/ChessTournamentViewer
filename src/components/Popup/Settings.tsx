@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 import { saveSettings } from "../../LocalStorage";
 import { usePopup } from "../../context/PopupContext";
 import { useSettings } from "../../context/KibitzerSettings";
+import { Button, Checkbox, InputNumber } from "@douyinfe/semi-ui";
 
 export const Settings = memo(() => {
   const settings = useSettings();
@@ -33,44 +34,39 @@ export const Settings = memo(() => {
     <div className="settings">
       <div className="settingsHeader">
         <h4>Kibitzer Settings</h4>
-        <button
+        <Button
           className="closeButton"
           onClick={() => setPopupState("none")}
           title="Close"
         >
           <MdOutlineClose />
-        </button>
+        </Button>
       </div>
 
       <div className="engineSettings">
-        <div className="checkbox">
-          <input
-            type="checkbox"
-            id="id0"
-            checked={enableKibitzer}
-            onChange={(e) => setEnableKibitzer(e.target.checked)}
-          />
-          <label htmlFor="id0">Enable Kibitzer</label>
-        </div>
+        <Checkbox
+          onChange={(e) => setEnableKibitzer(!!e.target.checked)}
+          defaultChecked={enableKibitzer}
+        >
+          Enable Kibitzer
+        </Checkbox>
       </div>
 
       <div className="engineSettings">
         <div className="input">
-          <label htmlFor="id1">Hash</label>
-          <input
-            id="id1"
-            type="number"
+          <label htmlFor="hash">Hash</label>
+          <InputNumber
+            id="hash"
             value={hash}
-            onChange={(e) => setHash(Number(e.target.value))}
+            onChange={(value) => setHash(Number(value))}
           />
         </div>
         <div className="input">
-          <label htmlFor="id2">Threads</label>
-          <input
-            id="id2"
-            type="number"
+          <label htmlFor="threads">Threads</label>
+          <InputNumber
+            id="threads"
             value={threads}
-            onChange={(e) => setThreads(Number(e.target.value))}
+            onChange={(value) => setThreads(Number(value))}
           />
         </div>
         <small>
@@ -102,20 +98,17 @@ export const Settings = memo(() => {
       </div>
 
       <div className="engineSettings">
-        <div className="checkbox">
-          <input
-            type="checkbox"
-            id="id3"
-            checked={showCoordinates}
-            onChange={(e) => setShowCoordinates(e.target.checked)}
-          />
-          <label htmlFor="id3">Show Board Coordinates</label>
-        </div>
+        <Checkbox
+          onChange={(e) => setShowCoordinates(!!e.target.checked)}
+          defaultChecked={showCoordinates}
+        >
+          Show Board Coordinates
+        </Checkbox>
       </div>
 
-      <button className="applySettings" onClick={applySettings}>
+      <Button className="applySettings" onClick={applySettings}>
         Apply Settings
-      </button>
+      </Button>
     </div>
   );
 });

@@ -5,6 +5,7 @@ import { MdOutlineClose } from "react-icons/md";
 import { useEventStore } from "../../context/EventContext";
 import { useLiveInfo } from "../../context/LiveInfoContext";
 import { getTimeControl } from "../../LiveInfo";
+import { Button } from "@douyinfe/semi-ui";
 
 function formatDuration(value: number) {
   if (value === 1) return `ìn 1 minute`;
@@ -218,13 +219,13 @@ const Schedule = memo(({ selectedEngineId }: ScheduleProps) => {
       </div>
       {String(selectedGame.gameDetails.gameNr) !==
         event.tournamentDetails.schedule.present?.gameNr && (
-        <button
+        <Button
           className="closeButton"
           onClick={() => requestEvent()}
           title="Return to live game"
         >
           <MdOutlineClose />
-        </button>
+        </Button>
       )}
     </>
   );

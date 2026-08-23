@@ -11,6 +11,7 @@ import { useClocks } from "../../hooks/useClocks";
 import type { EngineColor } from "../../LiveInfo";
 import { shallow } from "zustand/shallow";
 import { useInterval } from "../../hooks/useInterval";
+import { Button } from "@douyinfe/semi-ui";
 
 const TABS = ["Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
@@ -63,13 +64,13 @@ export function EngineWindow() {
       <div className="kibitzerWindow">
         <div className="engineTabs">
           {TABS.map((tab) => (
-            <button
+            <Button
               key={tab}
               className={activeTab === tab ? "active" : ""}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
-            </button>
+            </Button>
           ))}
         </div>
 

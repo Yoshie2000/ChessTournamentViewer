@@ -1,6 +1,5 @@
 import { memo, useMemo, useState } from "react";
-import { Spin } from "antd";
-import { TreeSelect } from "antd";
+import { TreeSelect, Spin } from "@douyinfe/semi-ui";
 import {
   useEventStore,
   PROVIDERS,
@@ -342,26 +341,43 @@ export const EventList = memo(function EventList() {
     <TreeSelect
       className="eventListContainer"
       style={{ width: "100%", height: "35px" }}
-      styles={{ popup: { root: { width: "0" } } }}
-      treeExpandAction="click"
+      labelEllipsis={false}
+      dropdownStyle={{ maxHeight: 400, overflow: "auto", width: "max-content" }}
+      keyMaps={{ label: "title" }}
       treeData={treeData}
-      virtual={true}
-      popupMatchSelectWidth={false}
       value={selectedValue}
-      onChange={handleChange}
+      onChange={(value) => handleChange(value as string)}
       treeNodeLabelProp="fullLabel"
-      treeDefaultExpandAll={false}
       placeholder={isListLoading ? "Loading…" : "Select event"}
       disabled={isListLoading}
-      suffixIcon={pendingEventId ? <Spin size="small" /> : undefined}
-      showSearch={{
-        filterTreeNode: (inputValue, treeNode) => {
-          const target = treeNode.fullLabel || treeNode.title || "";
-          return String(target)
-            .toLowerCase()
-            .includes(inputValue.toLowerCase());
-        },
+      arrowIcon={pendingEventId ? <Spin size="small" /> : undefined}
+      renderFullLabel={({
+        data,
+        className,
+        style,
+        expandIcon,
+        onExpand,
+        onClick,
+      }) => {
+        const isLeaf = !data.children?.length;
+        return (
+          <li
+            className={className}
+            style={{ ...style, minWidth: "max-content", whiteSpace: "nowrap" }}
+            role="treeitem"
+            onClick={isLeaf ? onClick : onExpand}
+          >
+            {isLeaf ? null : expandIcon}
+            {data.title}
+          </li>
+        );
       }}
+      filterTreeNode={(input, target) => {
+        return target.toLowerCase().includes(input.toLowerCase());
+      }}
+      showFilteredOnly
+      searchPlaceholder="Search events"
+      searchAutoFocus
     />
   );
 });

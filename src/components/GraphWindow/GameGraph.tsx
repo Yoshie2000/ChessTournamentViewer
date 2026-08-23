@@ -7,6 +7,7 @@ import { useLiveInfo } from "../../context/LiveInfoContext";
 import type { LiveEngineData } from "../../LiveInfo";
 import { useInterval } from "../../hooks/useInterval";
 import { formatLargeNumber, formatTime } from "@/utils";
+import { Button } from "@douyinfe/semi-ui";
 
 const COLORS = {
   white: "rgba(255, 255, 255, 0.7)",
@@ -228,14 +229,14 @@ export const GameGraph = memo(() => {
     <div className="gameGraph">
       <div className="modeSelectorList">
         {MODES.map((m, i) => (
-          <button
+          <Button
             key={m.name}
             onClick={() => setMode(i)}
             className={"modeSelector" + (mode === i ? " active" : "")}
             title={m.name}
           >
             {m.name}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="graphWrapper">

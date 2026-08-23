@@ -2,10 +2,17 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: "Sora", system-ui, sans-serif;
+  font-family: "Sora", system-ui, sans-serif !important;
   box-sizing: border-box;
   background: #212121;
   font-size: var(--font-lg);
+
+  --semi-blue-5: 55, 120, 225 !important;
+  --semi-blue-6: 45, 100, 195 !important;
+  --semi-blue-7: 35, 82, 165 !important;
+
+  --semi-color-fill-0: #434343 !important;
+  --semi-color-primary-light-default: #4d4d4d !important;
 }
 
 * {
@@ -34,40 +41,127 @@ pre {
   border-radius: 4px;
 }
 
-button,
-input,
-.button,
-.ant-select {
-  outline: none;
-  border: 1px solid #232323;
-  background: #323232;
-  padding: 0.5rem 0.625rem;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: var(--font-sm);
-  line-height: 1.25;
+.semi-button,
+.semi-select,
+.semi-tree-select {
+  outline: none !important;
+  border: 1px solid #232323 !important;
+  background: #323232 !important;
+  padding: 0.5rem 0.625rem !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  font-size: var(--font-sm) !important;
+  line-height: 1.25 !important;
+  height: 2.25rem !important;
+  font-weight: 400 !important;
+
+  &:hover {
+    background: #434343 !important;
+  }
+
+  &:active,
+  &.active {
+    background: #4d4d4d !important;
+  }
+}
+
+.semi-input-wrapper {
+  outline: none !important;
+  border: 1px solid #232323 !important;
+  background: #323232 !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  font-size: var(--font-sm) !important;
+  width: 100px !important;
+
+  &:hover {
+    background: #434343 !important;
+  }
+
+  &:active {
+    background: #4d4d4d !important;
+  }
+}
+
+.semi-input-number-suffix-btns {
+  border: 1px solid #232323 !important;
+  background: #323232 !important;
+}
+
+.semi-input-number-button:hover {
+  background: #434343 !important;
+}
+
+.semi-input-number-button:active {
+  background: #4d4d4d !important;
 }
 
 .closeButton {
-  background: #c62828;
-  color: #fff;
-  border: 1px solid #8e0000;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: var(--font-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 1 / 1;
-  margin: 0 auto;
-  padding: 0.25rem;
+  background: #c62828 !important;
+  color: #fff !important;
+  border: 1px solid #8e0000 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: var(--font-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  width: 28px !important;
+  height: 28px !important;
 }
 
 .closeButton:hover {
-  background: #b71c1c;
+  background: #b71c1c !important;
 }
 
-iframe {
+.semi-select-selection,
+.semi-tree-select-selection {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.semi-select-option-icon {
+  display: none !important;
+}
+
+.semi-tooltip-content {
+  background: #323232;
+  border: 1px solid #232323 !important;
+  border-radius: 4px !important;
+  overflow: hidden;
+}
+
+.semi-select-option-list-wrapper {
+  padding: 0 !important;
+}
+
+.semi-input-wrapper.semi-tree-input {
+  outline: none !important;
+  border: none !important;
+}
+
+.semi-popover .semi-input-wrapper {
+  width: 100% !important;
+}
+
+.semi-button-split {
+  width: max-content !important;
+
+  .semi-button-first {
+    border-radius: 4px 0 0 4px !important;
+    margin-right: 0 !important;
+    border-right: none !important;
+  }
+
+  .semi-button-last {
+    border-radius: 0 4px 4px 0 !important;
+  }
+}
+
+.semi-button-split .semi-button-split iframe {
   outline: none !important;
   border: 1px solid #232323 !important;
 }
@@ -76,18 +170,4 @@ label {
   margin-bottom: 0.125rem;
   display: block;
   font-size: var(--font-sm);
-}
-
-input {
-  cursor: unset;
-}
-
-button:hover,
-input:hover,
-.button:hover {
-  background: #434343;
-}
-
-button.active {
-  background: #4d4d4d;
 }

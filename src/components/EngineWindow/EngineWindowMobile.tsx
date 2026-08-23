@@ -4,6 +4,7 @@ import { EngineStats } from "./EngineStats";
 import "./EngineWindowMobile.css";
 import { KibitzerTableHeader } from "./EngineWindow";
 import type { EngineColor } from "../../LiveInfo";
+import { Button } from "@douyinfe/semi-ui";
 
 const TABS = ["Engines", "Engine PVs", "Kibitzers", "Kibitzer PVs"] as const;
 type Tab = (typeof TABS)[number];
@@ -29,13 +30,13 @@ export function EngineWindowMobile({
         {TABS.filter(
           (tab) => !tab.includes("Kibitzer") || activeKibitzers.length > 0
         ).map((tab) => (
-          <button
+          <Button
             key={tab}
             className={activeTab === tab ? "active" : ""}
             onClick={() => setActiveTab(tab)}
           >
             {tab}
-          </button>
+          </Button>
         ))}
       </div>
 

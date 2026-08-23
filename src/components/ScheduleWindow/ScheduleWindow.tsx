@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Schedule } from "./Schedule";
 import { TwitchChat } from "./TwitchChat";
 import { useEventStore } from "@/context/EventContext";
-import { Select } from "antd";
+import { Select, Button } from "@douyinfe/semi-ui";
 
 const TABS = ["Schedule", "Chat"] as const;
 type Tab = (typeof TABS)[number];
@@ -25,24 +25,26 @@ export const ScheduleWindow = () => {
     <div className="scheduleWindow">
       <div className="scheduleWindowTabs">
         {TABS.map((tab) => (
-          <button
+          <Button
             key={tab}
             className={activeTab === tab ? "active" : ""}
             onClick={() => setActiveTab(tab)}
           >
             {tab}
-          </button>
+          </Button>
         ))}
 
         <Select
-          onChange={setSelectedEngineId}
+          onChange={(value) => setSelectedEngineId(value as string)}
+          multiple={false}
           style={{ width: 140 }}
           value={selectedEngineId}
-          options={[
+          optionList={[
             { value: "", label: "All Engines" },
             ...engines.map((engine) => ({
               value: engine.id,
               label: engine.name,
+              showTick: false,
             })),
           ]}
         />

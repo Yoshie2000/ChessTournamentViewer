@@ -13,6 +13,7 @@ import {
   LuDatabase,
   LuDownload,
 } from "react-icons/lu";
+import { Button } from "@douyinfe/semi-ui";
 
 type MoveListProps = {
   startFen: string;
@@ -233,68 +234,60 @@ const MoveList = memo(
         {controllers && (
           <div className="moveButtonsWrapper">
             <div className="moveButtons">
-              <button
+              <Button
                 onClick={undoAllMoves}
                 disabled={currentMoveNumber === 0}
                 title="Go to start (↑)"
               >
                 <MdKeyboardDoubleArrowLeft />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={undoMove}
                 disabled={currentMoveNumber === 0}
                 title="Previous move (←)"
               >
                 <MdKeyboardArrowLeft />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={redoMove}
                 disabled={currentMoveNumber === -1}
                 title="Next move (→)"
               >
                 <MdKeyboardArrowRight />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={redoAllMoves}
                 disabled={currentMoveNumber === -1}
                 title="Go to end (↓)"
               >
                 <MdKeyboardDoubleArrowRight />
-              </button>
+              </Button>
             </div>
             <div className="moveButtons">
-              <button
+              <Button
                 onClick={copyFen}
                 style={{ fontSize: "1rem" }}
                 title="Copy FEN to clipboard"
               >
                 <LuClipboard />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={copyPgn}
                 style={{ fontSize: "1rem" }}
                 title="Copy PGN to clipboard"
               >
                 <LuClipboardList />
-              </button>
-              <a
-                href={chessdbURL}
-                target="_blank"
-                style={{ fontSize: "1rem" }}
-                className="button"
-                title="Analyse on ChessDB"
-              >
-                <LuDatabase />
+              </Button>
+              <a href={chessdbURL} target="_blank">
+                <Button title="Analyse on ChessDB">
+                  <LuDatabase />
+                </Button>
               </a>
               {downloadURL && (
-                <a
-                  href={downloadURL}
-                  target="_blank"
-                  style={{ fontSize: "1rem" }}
-                  className="button"
-                  title="Download logs"
-                >
-                  <LuDownload />
+                <a href={downloadURL} target="_blank">
+                  <Button title="Download logs">
+                    <LuDownload />
+                  </Button>
                 </a>
               )}
             </div>

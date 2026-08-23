@@ -17,7 +17,9 @@ import { StandingsWindow } from "./components/StandingsWindow/StandingsWindow";
 import { BoardWindow } from "./components/BoardWindow/BoardWindow";
 import { ScheduleWindow } from "./components/ScheduleWindow/ScheduleWindow";
 import { Popup } from "./components/Popup/Popup";
-import { ConfigProvider, theme } from "antd";
+
+import { LocaleProvider } from "@douyinfe/semi-ui";
+import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 
 Chart.register(
   CategoryScale,
@@ -31,18 +33,7 @@ Chart.register(
 
 function App() {
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorBgElevated: "#343434",
-          colorPrimary: "#fafafa",
-          controlOutline: "transparent",
-          colorPrimaryBg: "#4d4d4d",
-        },
-        components: { TreeSelect: { indentSize: 14, switcherSize: 15 } },
-      }}
-    >
+    <LocaleProvider locale={en_US}>
       <div className="app">
         <Popup />
 
@@ -58,7 +49,7 @@ function App() {
 
         <ScheduleWindow />
       </div>
-    </ConfigProvider>
+    </LocaleProvider>
   );
 }
 

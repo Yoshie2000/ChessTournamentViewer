@@ -4,6 +4,7 @@ import { useEventStore, type ProviderKey } from "../../context/EventContext";
 import { LuSettings } from "react-icons/lu";
 import { EventList } from "./EventList";
 import { usePopup } from "../../context/PopupContext";
+import { Button, SplitButtonGroup } from "@douyinfe/semi-ui";
 
 export const EventListWindow = memo(() => {
   const activeEvent = useEventStore((state) => state.activeEvent);
@@ -33,24 +34,28 @@ export const EventListWindow = memo(() => {
       <div className="settingsRow">
         <EventList />
         <div className="providerTabs">
-          <button
-            disabled={activeProvider === "tcec"}
-            onClick={() => handleProviderClick("tcec")}
-            title="TCEC Live"
-          >
-            TCEC
-          </button>
-          <button
-            disabled={activeProvider === "ccc"}
-            onClick={() => handleProviderClick("ccc")}
-            title="CCC Live"
-          >
-            CCC
-          </button>
+          <SplitButtonGroup>
+            <Button
+              disabled={activeProvider === "tcec"}
+              className={activeProvider === "tcec" ? "active" : undefined}
+              onClick={() => handleProviderClick("tcec")}
+              title="TCEC Live"
+            >
+              TCEC
+            </Button>
+            <Button
+              disabled={activeProvider === "ccc"}
+              className={activeProvider === "ccc" ? "active" : undefined}
+              onClick={() => handleProviderClick("ccc")}
+              title="CCC Live"
+            >
+              CCC
+            </Button>
+          </SplitButtonGroup>
         </div>
-        <button onClick={() => setPopupState("settings")} title="Settings">
+        <Button onClick={() => setPopupState("settings")} title="Settings">
           <LuSettings />
-        </button>
+        </Button>
       </div>
     </header>
   );

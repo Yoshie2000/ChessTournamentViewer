@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@douyinfe/semi-ui": "^2.102.0",
     "@lichess-org/chessground": "^10.0.2",
-    "antd": "^6.3.3",
     "chart.js": "^4.5.1",
     "immer": "^11.1.4",
     "labut": "github:anematode/labut#v0.5.0",

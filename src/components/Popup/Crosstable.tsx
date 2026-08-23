@@ -5,6 +5,7 @@ import { useEventStore } from "../../context/EventContext";
 import { memo } from "react";
 import { usePopup } from "../../context/PopupContext";
 import { EngineLogo } from "../EngineWindow/EngineLogo";
+import { Button } from "@douyinfe/semi-ui";
 
 type GameResult = "win" | "loss" | "draw" | "tbd";
 type GameScore = -1 | 0 | 1;
@@ -252,13 +253,13 @@ export const Crosstable = memo(() => {
       <tbody>
         <tr>
           <td>
-            <button
+            <Button
               className="closeButton"
               onClick={() => setPopupState("none")}
               title="Close"
             >
               <MdOutlineClose />
-            </button>
+            </Button>
           </td>
           {engines.map((engine, i) => (
             <td key={engine.id}>
