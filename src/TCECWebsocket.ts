@@ -22,7 +22,10 @@ import z from "zod";
 import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
 import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
 import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
-import { socketPgnSchema } from "./schemas/tcec/socketPgnSchema";
+import {
+  socketPgnSchema,
+  type EngineMoveEntry,
+} from "./schemas/tcec/socketPgnSchema";
 import { eventListSchema } from "./schemas/tcec/eventListSchema";
 import { livePGNSchema } from "./schemas/tcec/pgnSchema";
 
@@ -356,9 +359,11 @@ export class TCECWebSocket implements TournamentWebSocket {
 
         if (!move) break;
 
-        // Update clock
-        if (this.game.turn() === "w") wtime = moveData.tl;
-        else btime = moveData.tl;
+        if (!moveData.book) {
+          // Update clock
+          if (this.game.turn() === "w") wtime = moveData.tl;
+          else btime = moveData.tl;
+        }
 
         this.game.move(move.san, { strict: false });
 
@@ -368,15 +373,17 @@ export class TCECWebSocket implements TournamentWebSocket {
           times: { w: 1, b: 1 },
         });
 
-        const commentString = createTCECCommentString(moveData);
+        if (!moveData.book) {
+          const commentString = createTCECCommentString(moveData);
 
-        const liveInfo = extractLiveInfoFromTCECComment(
-          commentString,
-          fenBeforeMove
-        );
+          const liveInfo = extractLiveInfoFromTCECComment(
+            commentString,
+            fenBeforeMove
+          );
 
-        if (liveInfo && this.callback) {
-          this.callback(liveInfo);
+          if (liveInfo && this.callback) {
+            this.callback(liveInfo);
+          }
         }
       }
 
@@ -1013,12 +1020,9 @@ function validateEssentials({
   } as const;
 }
 
-type MoveData = z.infer<typeof socketPgnSchema>["Moves"][number];
-type MoveDataKeys = Array<keyof MoveData>;
-
-function createTCECCommentString(moveData: MoveData): string {
+function createTCECCommentString(moveData: EngineMoveEntry): string {
   const keys = Object.keys(moveData) as (keyof typeof moveData)[];
-  const skipKeys: MoveDataKeys = ["adjudication", "material"];
+  const skipKeys: Array<keyof EngineMoveEntry> = ["adjudication", "material"];
   const result: string[] = [];
 
   keys.forEach((key) => {
