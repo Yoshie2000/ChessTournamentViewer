@@ -264,16 +264,10 @@ const MoveList = memo(
               </Button>
             </div>
             <div className="moveButtons moveButtonsSmall">
-              <Button
-                onClick={copyFen}
-                title="Copy FEN to clipboard"
-              >
+              <Button onClick={copyFen} title="Copy FEN to clipboard">
                 <LuClipboard />
               </Button>
-              <Button
-                onClick={copyPgn}
-                title="Copy PGN to clipboard"
-              >
+              <Button onClick={copyPgn} title="Copy PGN to clipboard">
                 <LuClipboardList />
               </Button>
               <a href={chessdbURL} target="_blank">
