@@ -263,17 +263,15 @@ const MoveList = memo(
                 <MdKeyboardDoubleArrowRight />
               </Button>
             </div>
-            <div className="moveButtons">
+            <div className="moveButtons moveButtonsSmall">
               <Button
                 onClick={copyFen}
-                style={{ fontSize: "1rem" }}
                 title="Copy FEN to clipboard"
               >
                 <LuClipboard />
               </Button>
               <Button
                 onClick={copyPgn}
-                style={{ fontSize: "1rem" }}
                 title="Copy PGN to clipboard"
               >
                 <LuClipboardList />
