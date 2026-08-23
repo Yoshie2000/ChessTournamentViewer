@@ -6,6 +6,7 @@ import { Spinner } from "../Loading";
 import { StandingsTable } from "./StandingsTable";
 
 import { usePopup } from "../../context/PopupContext";
+import { Button } from "@douyinfe/semi-ui";
 
 export const StandingsWindow = memo(() => {
   const activeEvent = useEventStore((state) => state.activeEvent);
@@ -18,12 +19,12 @@ export const StandingsWindow = memo(() => {
       <h4>Standings</h4>
       {activeEvent && activeGame ? (
         <>
-          <button
+          <Button
             onClick={() => setPopupState("crosstable")}
             title="View head-to-head results between all engines"
           >
             Show Crosstable
-          </button>
+          </Button>
           <StandingsTable />
         </>
       ) : (

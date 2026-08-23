@@ -6,7 +6,7 @@ import "./EngineMinimal.css";
 import { SkeletonBlock, SkeletonText } from "../Loading";
 import { useInterval } from "../../hooks/useInterval";
 import { MdInfoOutline } from "react-icons/md";
-import { Tooltip } from "antd";
+import { Tooltip } from "@douyinfe/semi-ui";
 import { formatTime } from "@/utils";
 
 type EngineCardProps = { color: EngineColor; className?: string };

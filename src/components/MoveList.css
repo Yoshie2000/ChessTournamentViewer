@@ -90,25 +90,31 @@
   display: flex;
   flex-direction: column;
   margin-top: auto;
-  gap: 0.5rem;
+  gap: 0.25rem;
   width: 100%;
 }
 
 .moveButtons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
-.moveButtons button,
+.moveButtons .semi-button,
 .moveButtons a {
-  flex-grow: 1;
-  font-size: 1.5rem;
-  padding: 0.25rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 100%;
+  flex-grow: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  font-size: 1.4rem !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 28px !important;
+  aspect-ratio: 1;
+}
+
+.moveButtons.moveButtonsSmall .semi-button {
+  font-size: 1rem !important;
 }
 
 @media (max-width: 775px) {
