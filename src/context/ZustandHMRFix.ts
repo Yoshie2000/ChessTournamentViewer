@@ -25,8 +25,7 @@ export const zustandHmrFix = <S extends HmrFixStore<Record<string, unknown>>>(
     import.meta.hot!.accept((newModule) => {
       if (newModule) {
         const savedState = import.meta.hot!.data[name] as
-          | Partial<T>
-          | undefined;
+          Partial<T> | undefined;
         if (savedState) {
           useStore.setState(savedState);
         }
