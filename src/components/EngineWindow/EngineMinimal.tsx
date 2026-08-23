@@ -46,11 +46,10 @@ const EngineMinimal = memo(({ color, className }: EngineCardProps) => {
         <div className="engineDetailsRow">
           <div className="engineName">{name}</div>
           <Tooltip
-            color={"#212121"}
-            title={
+            content={
               <div className="engineOptionsTooltip">
                 {optionNames.map((option) => (
-                  <div>
+                  <div key={option}>
                     {option}: {engine.config.options[option]}
                   </div>
                 ))}

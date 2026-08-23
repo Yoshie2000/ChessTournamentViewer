@@ -11,6 +11,8 @@ body {
   --semi-blue-6: 45, 100, 195 !important;
   --semi-blue-7: 35, 82, 165 !important;
 
+  --semi-grey-7: 50, 50, 50 !important;
+
   --semi-color-fill-0: #434343 !important;
   --semi-color-primary-light-default: #4d4d4d !important;
 }
@@ -127,11 +129,29 @@ pre {
   display: none !important;
 }
 
-.semi-tooltip-content {
+.semi-tooltip-content:has(.semi-popover) {
   background: #323232;
   border: 1px solid #232323 !important;
   border-radius: 4px !important;
   overflow: hidden;
+}
+
+.semi-tooltip-wrapper:not(:has(.semi-popover)) {
+  border: 1px solid #232323 !important;
+}
+
+.semi-tooltip-icon-arrow {
+  color: #323232 !important;
+
+  path {
+    color: inherit;
+  }
+}
+
+.semi-tooltip-icon-arrow {
+  overflow: visible;
+  filter: drop-shadow(0 1px 0 #232323) drop-shadow(1px 0 0 #232323)
+    drop-shadow(-1px 0 0 #232323);
 }
 
 .semi-select-option-list-wrapper {
