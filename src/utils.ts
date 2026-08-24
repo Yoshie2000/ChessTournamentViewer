@@ -135,3 +135,20 @@ export function formatTime(value: string | number) {
   const minutes = String(Math.floor(time / (1000 * 60))).padStart(2, "0");
   return `${minutes}:${seconds}.${hundreds}`;
 }
+
+export function toTitleCaseTCEC(input: string): string {
+  // we sometimes receive already malformed string
+  // that is joined with "_"
+  const splitChar = input.includes("_") ? "_" : " ";
+
+  return input
+    .split(splitChar)
+    .map((word, inx) => {
+      const isEmptyOrTCECStr = word.length === 0 || inx === 0;
+      if (isEmptyOrTCECStr) {
+        return word;
+      }
+      return word[0].toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join("_");
+}

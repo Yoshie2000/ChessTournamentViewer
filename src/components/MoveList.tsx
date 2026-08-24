@@ -11,16 +11,14 @@ import {
   LuClipboard,
   LuClipboardList,
   LuDatabase,
-  LuDownload,
 } from "react-icons/lu";
 import { Button } from "@douyinfe/semi-ui";
-import { useEventStore } from "@/context/EventContext";
 import { useLiveInfo } from "@/context/LiveInfoContext";
+import LogDownloadButton from "./BoardWindow/LogDownloadButton";
 
 type MoveListProps = {
   startFen: string;
   moves: string[];
-  downloadURL?: string;
   currentMoveNumber: number;
   moveNumberOffset?: number;
   bookMoves?: number;
@@ -67,7 +65,6 @@ const MoveList = memo(
     moves,
     currentMoveNumber,
     setCurrentMoveNumber,
-    downloadURL,
     controllers,
     disagreementMoveIndex,
     moveNumberOffset = 0,
@@ -281,13 +278,7 @@ const MoveList = memo(
                   <LuDatabase />
                 </Button>
               </a>
-              {downloadURL && (
-                <a href={downloadURL} target="_blank">
-                  <Button title="Download logs">
-                    <LuDownload />
-                  </Button>
-                </a>
-              )}
+              <LogDownloadButton/>
             </div>
           </div>
         )}

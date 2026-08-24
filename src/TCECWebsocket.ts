@@ -28,6 +28,7 @@ import {
 } from "./schemas/tcec/socketPgnSchema";
 import { eventListSchema } from "./schemas/tcec/eventListSchema";
 import { livePGNSchema } from "./schemas/tcec/pgnSchema";
+import { toTitleCaseTCEC } from "./utils";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -905,23 +906,6 @@ export class TCECWebSocket implements TournamentWebSocket {
     this.socket?.close();
     this.connected = false;
   }
-}
-
-function toTitleCaseTCEC(input: string): string {
-  // we sometimes receive already malformed string
-  // that is joined with "_"
-  const splitChar = input.includes("_") ? "_" : " ";
-
-  return input
-    .split(splitChar)
-    .map((word, inx) => {
-      const isEmptyOrTCECStr = word.length === 0 || inx === 0;
-      if (isEmptyOrTCECStr) {
-        return word;
-      }
-      return word[0].toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join("_");
 }
 
 async function handleIfFulfilled(
