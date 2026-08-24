@@ -119,6 +119,11 @@ export default function LogDownloadButton() {
             const res = await fetch(
               `https://ctv.yoshie2000.de/tcec/loglive/archive/${toTitleCaseTCEC(useEventStore.getState().activeEvent?.tournamentDetails.tNr ?? "")}.log.xz`
             );
+            if (!res.ok) {
+              alert(`Error ${res.status}`);
+              setLoading(false);
+            }
+
             const reader = new XzReadableStream(res.body!).getReader();
             const decoder = new TextDecoder();
             let tail = "";
