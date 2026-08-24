@@ -7,13 +7,23 @@ import {
 } from "react-icons/md";
 import "./MoveList.css";
 import { Chess960 } from "../chess.js/chess";
-import { LuClipboard, LuClipboardList, LuDatabase } from "react-icons/lu";
+import {
+  LuClipboard,
+  LuClipboardList,
+  LuDatabase,
+  LuHourglass,
+  LuScale,
+  LuTimer,
+} from "react-icons/lu";
 import { Button } from "@douyinfe/semi-ui";
 import { useLiveInfo } from "@/context/LiveInfoContext";
 import LogDownloadButton from "./BoardWindow/LogDownloadButton";
 import { getTimeControl } from "@/LiveInfo";
 import { useShallow } from "zustand/shallow";
 import Piece from "./Piece";
+
+const PIECE_VALUES: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+const PIECE_ORDER = ["q", "r", "b", "n", "p"];
 
 type MoveListProps = {
   startFen: string;
@@ -224,43 +234,87 @@ const MoveList = memo(
       return result;
     }
 
+    function formatTcPart(seconds: number) {
+      const formattedSeconds = formatToNonzeroDigit(seconds);
+      if (!formattedSeconds.includes(".") && formattedSeconds.length > 2) {
+        return `${formatToNonzeroDigit(seconds / 60)}'`;
+      }
+      return `${formattedSeconds}"`;
+    }
+
     // TC
     const asymmetricTC =
       JSON.stringify(timeControl.tcW) !== JSON.stringify(timeControl.tcB);
-    const tcWhiteString = `${formatToNonzeroDigit(timeControl.tcW.tcBase / 1000)}+${formatToNonzeroDigit(timeControl.tcW.tcIncrement / 1000)}`;
-    const tcBlackString = `${formatToNonzeroDigit(timeControl.tcB.tcBase / 1000)}+${formatToNonzeroDigit(timeControl.tcB.tcIncrement / 1000)}`;
+    const tcWhiteString = `${formatTcPart(timeControl.tcW.tcBase / 1000)}+${formatTcPart(timeControl.tcW.tcIncrement / 1000)}`;
+    const tcBlackString = `${formatTcPart(timeControl.tcB.tcBase / 1000)}+${formatTcPart(timeControl.tcB.tcIncrement / 1000)}`;
+
+    // Material
+    const materialDelta = Object.entries(materialBalance).reduce(
+      (sum, [piece, count]) => sum + (PIECE_VALUES[piece] ?? 0) * count,
+      0
+    );
+    const materialDeltaString =
+      materialDelta === 0
+        ? "="
+        : materialDelta > 0
+          ? `+${materialDelta}`
+          : `-${-materialDelta}`;
 
     return (
       <div className="movesWindow">
         {controllers && (
           <>
             <div className="gameInformation">
-              <div className="timeControl">
-                {asymmetricTC ? (
-                  <span>
-                    {tcWhiteString} / {tcBlackString}
+              <div className="gameInfoStats">
+                <div className="gameInfoStat">
+                  <LuTimer />
+                  <span className="statValue">
+                    {asymmetricTC
+                      ? `${tcWhiteString}/${tcBlackString}`
+                      : tcBlackString}
                   </span>
-                ) : (
-                  <span>{tcBlackString}</span>
-                )}
+                </div>
+
+                <div className={`gameInfoStat fiftyMoveRule`}>
+                  <LuHourglass />
+                  <span className="statValue">{halfMoves}</span>
+                </div>
               </div>
 
-              <div className="fiftyMoveRule">{halfMoves}</div>
-
-              <div className="pieceDelta">
-                {Object.keys(materialBalance)
-                  .map((piece) => {
-                    const value = materialBalance[piece];
-                    const count = Math.abs(value);
-                    const color = value > 0 ? "b" : "w";
-
-                    return Array.from({ length: count }, (_, i) => (
-                      <Piece key={i} type={piece} color={color} />
-                    ));
-                  })
-                  .flat()}
+              <div className="gameInfoStat materialBalance">
+                <LuScale />
+                <div className="pieceDelta">
+                  {PIECE_ORDER.filter((piece) => !!materialBalance[piece]).map(
+                    (piece) => (
+                      <span className="materialGroup" key={piece}>
+                        {Array.from(
+                          { length: Math.abs(materialBalance[piece]) },
+                          (_, i) => (
+                            <Piece
+                              key={i}
+                              type={piece}
+                              color={materialBalance[piece] > 0 ? "b" : "w"}
+                            />
+                          )
+                        )}
+                      </span>
+                    )
+                  )}
+                  {Object.keys(materialBalance).length === 0 && (
+                    <span className="materialGroup">=</span>
+                  )}
+                </div>
+                <span
+                  className={
+                    "statValue materialDelta" +
+                    (materialDelta === 0 ? " balanced" : "")
+                  }
+                >
+                  {materialDeltaString}
+                </span>
               </div>
             </div>
+
             <hr />
           </>
         )}

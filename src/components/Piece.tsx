@@ -4,7 +4,7 @@ type PieceProps = { type: string; color: "w" | "b" };
 
 export default function Piece({ type, color }: PieceProps) {
   const chessgroundType =
-    { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "knight" }[
+    { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king" }[
       type
     ] ?? type;
   const chessgroundColor = { w: "white", b: "black" }[color] ?? color;
