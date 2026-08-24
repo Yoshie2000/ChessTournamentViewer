@@ -14,6 +14,8 @@ import {
   LuDownload,
 } from "react-icons/lu";
 import { Button } from "@douyinfe/semi-ui";
+import { useEventStore } from "@/context/EventContext";
+import { useLiveInfo } from "@/context/LiveInfoContext";
 
 type MoveListProps = {
   startFen: string;
@@ -160,9 +162,13 @@ const MoveList = memo(
       );
     }
     function copyPgn() {
-      copyToClipboard(
-        getGameAtMoveNumber(startFen, moves, currentMoveNumber).pgn()
-      );
+      const game = getGameAtMoveNumber(startFen, moves, currentMoveNumber);
+      const currentHeaders = useLiveInfo.getState().game.getHeaders();
+      for (const header of Object.keys(currentHeaders)) {
+        game.setHeader(header, currentHeaders[header]);
+      }
+
+      copyToClipboard(game.pgn());
     }
     const chessdbURL = controllers
       ? "https://www.chessdb.cn/queryc_en/?" +
