@@ -6,7 +6,6 @@ import { shallow } from "zustand/shallow";
 import { useInterval } from "../../hooks/useInterval";
 
 const LiveMoveList = memo(() => {
-
   const game = useLiveInfo((state) => state.game);
 
   const [moves, setMoves] = useState<string[]>([]);

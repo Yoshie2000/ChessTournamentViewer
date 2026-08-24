@@ -7,11 +7,7 @@ import {
 } from "react-icons/md";
 import "./MoveList.css";
 import { Chess960 } from "../chess.js/chess";
-import {
-  LuClipboard,
-  LuClipboardList,
-  LuDatabase,
-} from "react-icons/lu";
+import { LuClipboard, LuClipboardList, LuDatabase } from "react-icons/lu";
 import { Button } from "@douyinfe/semi-ui";
 import { useLiveInfo } from "@/context/LiveInfoContext";
 import LogDownloadButton from "./BoardWindow/LogDownloadButton";
@@ -278,7 +274,7 @@ const MoveList = memo(
                   <LuDatabase />
                 </Button>
               </a>
-              <LogDownloadButton/>
+              <LogDownloadButton />
             </div>
           </div>
         )}
