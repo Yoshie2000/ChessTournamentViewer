@@ -4,6 +4,21 @@ import { toTitleCaseTCEC } from "@/utils";
 import { Button, Spin } from "@douyinfe/semi-ui";
 import { useState } from "react";
 import { LuDownload } from "react-icons/lu";
+import { XzReadableStream } from "xz-decompress";
+
+function downloadLogLines(lines: string[], gameIndex: number) {
+  // Auto-download as blob URL
+  const uciLog = lines.join("\n");
+  const blob = new Blob([uciLog], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${useEventStore.getState().activeEvent?.tournamentDetails.tNr}_${gameIndex}.log`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 
 export default function LogDownloadButton() {
   const [loading, setLoading] = useState(false);
@@ -54,10 +69,10 @@ export default function LogDownloadButton() {
 
                 // Find starting and ending window (not exact)
                 let startIndex = lines.findIndex((line) =>
-                  line.includes(`Started game ${gameIndex}`)
+                  line.includes(`Started game ${gameIndex} `)
                 );
                 let endIndex = lines.findIndex((line) =>
-                  line.includes(`Started game ${gameIndex + 1}`)
+                  line.includes(`Started game ${gameIndex + 1} `)
                 );
                 if (endIndex === -1) endIndex = lines.length;
 
@@ -83,20 +98,7 @@ export default function LogDownloadButton() {
                 }
                 if (!found) endIndex = lines.length;
 
-                // Auto-download as blob URL
-                const uciLog = lines.slice(startIndex, endIndex).join("\n");
-                const blob = new Blob([uciLog], {
-                  type: "text/plain;charset=utf-8",
-                });
-                const url = URL.createObjectURL(blob);
-
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${useEventStore.getState().activeEvent?.tournamentDetails.tNr}_${gameIndex}.log`;
-                a.click();
-
-                URL.revokeObjectURL(url);
-
+                downloadLogLines(lines.slice(startIndex, endIndex), gameIndex);
                 setLoading(false);
               });
           }}
@@ -108,14 +110,60 @@ export default function LogDownloadButton() {
     // For past events, link to the compressed archive
     else {
       return (
-        <a
-          href={`https://tcec-chess.com/loglive/archive/${toTitleCaseTCEC(useEventStore.getState().activeEvent?.tournamentDetails.tNr ?? "")}.log.xz`}
-          target="_blank"
+        <Button
+          title="Download UCI logs"
+          onClick={async () => {
+            setLoading(true);
+            const gameIndex = Number(activeGame?.gameDetails.gameNr);
+
+            const res = await fetch(
+              `https://ctv.yoshie2000.de/tcec/loglive/archive/${toTitleCaseTCEC(useEventStore.getState().activeEvent?.tournamentDetails.tNr ?? "")}.log.xz`
+            );
+            const reader = new XzReadableStream(res.body!).getReader();
+            const decoder = new TextDecoder();
+            let tail = "";
+
+            const buffer: string[] = [];
+            let isCurrentGame = false;
+            let finished = false;
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = tail + decoder.decode(value, { stream: true });
+              const lines = chunk.split("\n");
+              tail = lines.pop()!; // Last element is a partial line, prepend it next turn
+
+              for (const line of lines) {
+                if (line.startsWith(`Started game ${gameIndex} `))
+                  isCurrentGame = true;
+
+                // Keep one game in the buffer at a time
+                buffer.push(line);
+                if (line.startsWith(`Finished`)) {
+                  if (isCurrentGame) {
+                    finished = true;
+                    break;
+                  }
+
+                  buffer.length = 0;
+                }
+              }
+
+              if (finished) {
+                // Abort the rest of the request
+                await reader.cancel();
+                break;
+              }
+            }
+
+            downloadLogLines(buffer, gameIndex);
+            setLoading(false);
+          }}
         >
-          <Button title="Download UCI logs">
-            <LuDownload />
-          </Button>
-        </a>
+          {loading ? <Spin /> : <LuDownload />}
+        </Button>
       );
     }
   }
