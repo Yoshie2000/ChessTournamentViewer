@@ -15,11 +15,35 @@
   background: #343434;
   overflow: hidden;
   container-type: inline-size;
+
+  hr {
+    background: #434343;
+    border: none;
+    height: 1px;
+    width: calc(100% + 1rem);
+    transform: translateX(-0.5rem);
+    margin: 0;
+    flex-shrink: 0;
+  }
 }
 
 .boardWindow .movesWindow {
   border: 1px solid #1a1a1a;
   border-left: none;
+}
+
+.movesWindow .gameInformation {
+  width: 100%;
+
+  .pieceDelta {
+    height: 24px;
+    display: flex;
+  }
+
+  .cg-wrap {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .moveList {

@@ -1420,6 +1420,10 @@ export class Chess {
     return this._halfMoves >= 100 // 50 moves per side = 100 half moves
   }
 
+  getHalfMoves(): number {
+    return this._halfMoves;
+  }
+
   isDraw(): boolean {
     return (
       this.isDrawByFiftyMoves() ||

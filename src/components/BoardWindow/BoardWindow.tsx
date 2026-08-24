@@ -88,6 +88,18 @@ export const BoardWindow = memo(() => {
 
         case "gameUpdate": {
           game.loadPgn(msg.gameDetails.pgn);
+          
+          // Overwrite TC with event data if not present
+          const headers = game.getHeaders();
+          if (
+            !headers["TimeControl"] &&
+            !(headers["WhiteTimeControl"] && headers["BlackTimeControl"])
+          ) {
+            const eventTC = eventState.activeEvent?.tournamentDetails.tc;
+            if (eventTC)
+              game.setHeader("TimeControl", `${eventTC.init}+${eventTC.incr}`);
+          }
+
           liveInfoState.setCurrentMoveNumber(() => -1);
 
           // Reset kibitzer live infos
