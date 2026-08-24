@@ -7,18 +7,14 @@ import {
 } from "react-icons/md";
 import "./MoveList.css";
 import { Chess960 } from "../chess.js/chess";
-import {
-  LuClipboard,
-  LuClipboardList,
-  LuDatabase,
-  LuDownload,
-} from "react-icons/lu";
+import { LuClipboard, LuClipboardList, LuDatabase } from "react-icons/lu";
 import { Button } from "@douyinfe/semi-ui";
+import { useLiveInfo } from "@/context/LiveInfoContext";
+import LogDownloadButton from "./BoardWindow/LogDownloadButton";
 
 type MoveListProps = {
   startFen: string;
   moves: string[];
-  downloadURL?: string;
   currentMoveNumber: number;
   moveNumberOffset?: number;
   bookMoves?: number;
@@ -65,7 +61,6 @@ const MoveList = memo(
     moves,
     currentMoveNumber,
     setCurrentMoveNumber,
-    downloadURL,
     controllers,
     disagreementMoveIndex,
     moveNumberOffset = 0,
@@ -160,9 +155,13 @@ const MoveList = memo(
       );
     }
     function copyPgn() {
-      copyToClipboard(
-        getGameAtMoveNumber(startFen, moves, currentMoveNumber).pgn()
-      );
+      const game = getGameAtMoveNumber(startFen, moves, currentMoveNumber);
+      const currentHeaders = useLiveInfo.getState().game.getHeaders();
+      for (const header of Object.keys(currentHeaders)) {
+        game.setHeader(header, currentHeaders[header]);
+      }
+
+      copyToClipboard(game.pgn());
     }
     const chessdbURL = controllers
       ? "https://www.chessdb.cn/queryc_en/?" +
@@ -275,13 +274,7 @@ const MoveList = memo(
                   <LuDatabase />
                 </Button>
               </a>
-              {downloadURL && (
-                <a href={downloadURL} target="_blank">
-                  <Button title="Download logs">
-                    <LuDownload />
-                  </Button>
-                </a>
-              )}
+              <LogDownloadButton />
             </div>
           </div>
         )}

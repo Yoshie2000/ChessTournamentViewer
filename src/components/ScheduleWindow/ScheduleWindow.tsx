@@ -3,6 +3,8 @@ import { Schedule } from "./Schedule";
 import { TwitchChat } from "./TwitchChat";
 import { useEventStore } from "@/context/EventContext";
 import { Select, Button } from "@douyinfe/semi-ui";
+import { LuDownload } from "react-icons/lu";
+import { toTitleCaseTCEC } from "@/utils";
 
 const TABS = ["Schedule", "Chat"] as const;
 type Tab = (typeof TABS)[number];
@@ -12,6 +14,18 @@ export const ScheduleWindow = () => {
 
   const engines = useEventStore((state) => state.engines);
   const activeEvent = useEventStore((state) => state.activeEvent);
+
+  const isEventRunning = useEventStore(
+    (state) => state.activeEvent?.tournamentDetails.schedule.present
+  );
+  const activeProvider = useEventStore((state) => state.activeProvider);
+
+  const eventDownloadUrl =
+    activeProvider === "ccc"
+      ? `https://ccc-api.gcp-prod.chess.com/public/download/pgn/event/${activeEvent?.tournamentDetails.tNr}`
+      : isEventRunning
+        ? undefined
+        : `https://ctv.yoshie2000.de/tcec/loglive/archive/${toTitleCaseTCEC(activeEvent?.tournamentDetails.tNr ?? "")}.log.xz`;
 
   const [selectedEngineId, setSelectedEngineId] = useState<string>("");
 
@@ -48,6 +62,14 @@ export const ScheduleWindow = () => {
             })),
           ]}
         />
+
+        {eventDownloadUrl && (
+          <a target="_blank" href={eventDownloadUrl}>
+            <Button title="Download Event Log">
+              <LuDownload />
+            </Button>
+          </a>
+        )}
       </div>
 
       <div
