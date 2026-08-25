@@ -169,7 +169,7 @@
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  margin-top: auto;
+  margin-top: 0;
   gap: 0.25rem;
   width: 100%;
 }

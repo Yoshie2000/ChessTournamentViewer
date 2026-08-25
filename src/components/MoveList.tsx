@@ -379,7 +379,7 @@ const MoveList = memo(
 
         {controllers && (
           <>
-            <hr />
+            <hr style={{ marginTop: "auto" }} />
             <div className="moveButtonsWrapper">
               <div className="moveButtons">
                 <Button
