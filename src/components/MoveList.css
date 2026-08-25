@@ -15,6 +15,86 @@
   background: #343434;
   overflow: hidden;
   container-type: inline-size;
+
+  hr {
+    background: #434343;
+    border: none;
+    height: 1px;
+    width: calc(100% + 1rem);
+    transform: translateX(-0.5rem);
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .gameInformation {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .gameInfoStats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .gameInfoStat {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    line-height: 1;
+
+    > svg {
+      flex-shrink: 0;
+      font-size: 1em;
+      color: #7a7a7a;
+    }
+
+    .statValue {
+      color: #ddd;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    &.materialBalance {
+      min-height: 20px;
+    }
+  }
+
+  .gameInformation {
+    .pieceDelta {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .materialGroup {
+      display: flex;
+      flex-shrink: 0;
+    }
+
+    .materialGroup .cg-wrap:not(:first-child) {
+      margin-left: -8px;
+    }
+  }
+
+  .cg-wrap {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .materialDelta {
+    margin-left: auto;
+    padding-left: 0.25rem;
+  }
 }
 
 .boardWindow .movesWindow {
@@ -89,7 +169,7 @@
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  margin-top: auto;
+  margin-top: 0;
   gap: 0.25rem;
   width: 100%;
 }

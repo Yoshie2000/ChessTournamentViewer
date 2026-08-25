@@ -7,10 +7,23 @@ import {
 } from "react-icons/md";
 import "./MoveList.css";
 import { Chess960 } from "../chess.js/chess";
-import { LuClipboard, LuClipboardList, LuDatabase } from "react-icons/lu";
+import {
+  LuClipboard,
+  LuClipboardList,
+  LuDatabase,
+  LuHourglass,
+  LuScale,
+  LuTimer,
+} from "react-icons/lu";
 import { Button } from "@douyinfe/semi-ui";
 import { useLiveInfo } from "@/context/LiveInfoContext";
 import LogDownloadButton from "./BoardWindow/LogDownloadButton";
+import { getTimeControl } from "@/LiveInfo";
+import { useShallow } from "zustand/shallow";
+import Piece from "./Piece";
+
+const PIECE_VALUES: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+const PIECE_ORDER = ["q", "r", "b", "n", "p"];
 
 type MoveListProps = {
   startFen: string;
@@ -67,6 +80,48 @@ const MoveList = memo(
     bookMoves = -1,
   }: MoveListProps) => {
     const moveListRef = useRef<HTMLDivElement>(null);
+
+    const timeControl = JSON.parse(
+      useLiveInfo((state) => JSON.stringify(getTimeControl(state.game)))
+    ) as ReturnType<typeof getTimeControl>;
+
+    const materialBalance = useLiveInfo(
+      useShallow((state) => {
+        const pieces = new Chess960(state.currentFen)
+          .board()
+          .flat()
+          .filter((x) => !!x);
+
+        const whitePieceAdvantage = new Map<string, number>();
+        for (const piece of pieces) {
+          if (piece.color === "w") {
+            whitePieceAdvantage.set(
+              piece.type,
+              (whitePieceAdvantage.get(piece.type) ?? 0) + 1
+            );
+          } else {
+            whitePieceAdvantage.set(
+              piece.type,
+              (whitePieceAdvantage.get(piece.type) ?? 0) - 1
+            );
+          }
+        }
+
+        const result: Record<string, number> = {};
+        for (const piece of whitePieceAdvantage.keys()) {
+          if (!whitePieceAdvantage.get(piece)) {
+            whitePieceAdvantage.delete(piece);
+          } else {
+            result[piece] = whitePieceAdvantage.get(piece)!;
+          }
+        }
+
+        return result;
+      })
+    );
+    const halfMoves = useLiveInfo((state) =>
+      new Chess960(state.currentFen).getHalfMoves()
+    );
 
     const blackMovesFirst = startFen?.split(" ")[1] === "b";
     const pairStart = blackMovesFirst ? 1 : 0;
@@ -170,8 +225,100 @@ const MoveList = memo(
           .replaceAll(" ", "_")
       : "";
 
+    function formatToNonzeroDigit(number: number, maxDigits: number = 2) {
+      let n = maxDigits;
+      let result = number.toFixed(n);
+      while (result.endsWith("0") && n > 0) {
+        result = number.toFixed(--n);
+      }
+      return result;
+    }
+
+    function formatTcPart(seconds: number) {
+      const formattedSeconds = formatToNonzeroDigit(seconds);
+      if (!formattedSeconds.includes(".") && formattedSeconds.length > 2) {
+        return `${formatToNonzeroDigit(seconds / 60)}'`;
+      }
+      return `${formattedSeconds}"`;
+    }
+
+    // TC
+    const asymmetricTC =
+      JSON.stringify(timeControl.tcW) !== JSON.stringify(timeControl.tcB);
+    const tcWhiteString = `${formatTcPart(timeControl.tcW.tcBase / 1000)}+${formatTcPart(timeControl.tcW.tcIncrement / 1000)}`;
+    const tcBlackString = `${formatTcPart(timeControl.tcB.tcBase / 1000)}+${formatTcPart(timeControl.tcB.tcIncrement / 1000)}`;
+
+    // Material
+    const materialDelta = Object.entries(materialBalance).reduce(
+      (sum, [piece, count]) => sum + (PIECE_VALUES[piece] ?? 0) * count,
+      0
+    );
+    const materialDeltaString =
+      materialDelta === 0
+        ? "="
+        : materialDelta > 0
+          ? `+${materialDelta}`
+          : `-${-materialDelta}`;
+
     return (
       <div className="movesWindow">
+        {controllers && (
+          <>
+            <div className="gameInformation">
+              <div className="gameInfoStats">
+                <div className="gameInfoStat">
+                  <LuTimer />
+                  <span className="statValue">
+                    {asymmetricTC
+                      ? `${tcWhiteString}/${tcBlackString}`
+                      : tcBlackString}
+                  </span>
+                </div>
+
+                <div className={`gameInfoStat fiftyMoveRule`}>
+                  <LuHourglass />
+                  <span className="statValue">{halfMoves}</span>
+                </div>
+              </div>
+
+              <div className="gameInfoStat materialBalance">
+                <LuScale />
+                <div className="pieceDelta">
+                  {PIECE_ORDER.filter((piece) => !!materialBalance[piece]).map(
+                    (piece) => (
+                      <span className="materialGroup" key={piece}>
+                        {Array.from(
+                          { length: Math.abs(materialBalance[piece]) },
+                          (_, i) => (
+                            <Piece
+                              key={i}
+                              type={piece}
+                              color={materialBalance[piece] > 0 ? "b" : "w"}
+                            />
+                          )
+                        )}
+                      </span>
+                    )
+                  )}
+                  {Object.keys(materialBalance).length === 0 && (
+                    <span className="materialGroup">=</span>
+                  )}
+                </div>
+                <span
+                  className={
+                    "statValue materialDelta" +
+                    (materialDelta === 0 ? " balanced" : "")
+                  }
+                >
+                  {materialDeltaString}
+                </span>
+              </div>
+            </div>
+
+            <hr />
+          </>
+        )}
+
         <div className="moveList" ref={moveListRef}>
           {blackMovesFirst && moves.length > 0 && (
             <div className="moveRow subgrid">
@@ -231,52 +378,55 @@ const MoveList = memo(
         </div>
 
         {controllers && (
-          <div className="moveButtonsWrapper">
-            <div className="moveButtons">
-              <Button
-                onClick={undoAllMoves}
-                disabled={currentMoveNumber === 0}
-                title="Go to start (↑)"
-              >
-                <MdKeyboardDoubleArrowLeft />
-              </Button>
-              <Button
-                onClick={undoMove}
-                disabled={currentMoveNumber === 0}
-                title="Previous move (←)"
-              >
-                <MdKeyboardArrowLeft />
-              </Button>
-              <Button
-                onClick={redoMove}
-                disabled={currentMoveNumber === -1}
-                title="Next move (→)"
-              >
-                <MdKeyboardArrowRight />
-              </Button>
-              <Button
-                onClick={redoAllMoves}
-                disabled={currentMoveNumber === -1}
-                title="Go to end (↓)"
-              >
-                <MdKeyboardDoubleArrowRight />
-              </Button>
-            </div>
-            <div className="moveButtons moveButtonsSmall">
-              <Button onClick={copyFen} title="Copy FEN to clipboard">
-                <LuClipboard />
-              </Button>
-              <Button onClick={copyPgn} title="Copy PGN to clipboard">
-                <LuClipboardList />
-              </Button>
-              <a href={chessdbURL} target="_blank">
-                <Button title="Analyse on ChessDB">
-                  <LuDatabase />
+          <>
+            <hr style={{ marginTop: "auto" }} />
+            <div className="moveButtonsWrapper">
+              <div className="moveButtons">
+                <Button
+                  onClick={undoAllMoves}
+                  disabled={currentMoveNumber === 0}
+                  title="Go to start (↑)"
+                >
+                  <MdKeyboardDoubleArrowLeft />
                 </Button>
-              </a>
-              <LogDownloadButton />
+                <Button
+                  onClick={undoMove}
+                  disabled={currentMoveNumber === 0}
+                  title="Previous move (←)"
+                >
+                  <MdKeyboardArrowLeft />
+                </Button>
+                <Button
+                  onClick={redoMove}
+                  disabled={currentMoveNumber === -1}
+                  title="Next move (→)"
+                >
+                  <MdKeyboardArrowRight />
+                </Button>
+                <Button
+                  onClick={redoAllMoves}
+                  disabled={currentMoveNumber === -1}
+                  title="Go to end (↓)"
+                >
+                  <MdKeyboardDoubleArrowRight />
+                </Button>
+              </div>
+              <div className="moveButtons moveButtonsSmall">
+                <Button onClick={copyFen} title="Copy FEN to clipboard">
+                  <LuClipboard />
+                </Button>
+                <Button onClick={copyPgn} title="Copy PGN to clipboard">
+                  <LuClipboardList />
+                </Button>
+                <a href={chessdbURL} target="_blank">
+                  <Button title="Analyse on ChessDB">
+                    <LuDatabase />
+                  </Button>
+                </a>
+                <LogDownloadButton />
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     );
