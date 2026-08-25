@@ -2,7 +2,7 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: "Sora", system-ui, sans-serif !important;
+  font-family: "Noto Sans", system-ui, sans-serif !important;
   box-sizing: border-box;
   background: #212121;
   font-size: var(--font-lg);

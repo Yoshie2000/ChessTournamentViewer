@@ -87,7 +87,7 @@ const MoveList = memo(
 
     const materialBalance = useLiveInfo(
       useShallow((state) => {
-        const pieces = new Chess960(state.currentFen)
+        const pieces = new Chess960(state.game.fenAt(state.currentMoveNumber))
           .board()
           .flat()
           .filter((x) => !!x);
@@ -120,7 +120,7 @@ const MoveList = memo(
       })
     );
     const halfMoves = useLiveInfo((state) =>
-      new Chess960(state.currentFen).getHalfMoves()
+      new Chess960(state.game.fenAt(state.currentMoveNumber)).getHalfMoves()
     );
 
     const blackMovesFirst = startFen?.split(" ")[1] === "b";
@@ -265,20 +265,13 @@ const MoveList = memo(
         {controllers && (
           <>
             <div className="gameInformation">
-              <div className="gameInfoStats">
-                <div className="gameInfoStat">
-                  <LuTimer />
-                  <span className="statValue">
-                    {asymmetricTC
-                      ? `${tcWhiteString}/${tcBlackString}`
-                      : tcBlackString}
-                  </span>
-                </div>
-
-                <div className={`gameInfoStat fiftyMoveRule`}>
-                  <LuHourglass />
-                  <span className="statValue">{halfMoves}</span>
-                </div>
+              <div className="gameInfoStat timeControl">
+                <LuTimer />
+                <span className="statValue">
+                  {asymmetricTC
+                    ? `${tcWhiteString}/${tcBlackString}`
+                    : tcBlackString}
+                </span>
               </div>
 
               <div className="gameInfoStat materialBalance">
@@ -301,7 +294,7 @@ const MoveList = memo(
                     )
                   )}
                   {Object.keys(materialBalance).length === 0 && (
-                    <span className="materialGroup">=</span>
+                    <span className="materialGroup equal">=</span>
                   )}
                 </div>
                 <span
@@ -312,6 +305,11 @@ const MoveList = memo(
                 >
                   {materialDeltaString}
                 </span>
+              </div>
+
+              <div className="gameInfoStat fiftyMoveRule">
+                <LuHourglass />
+                <span className="statValue">{halfMoves}</span>
               </div>
             </div>
 
