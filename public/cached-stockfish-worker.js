@@ -1,5 +1,5 @@
-const WASM_URL = "/stockfish-18-single.wasm";
-const CACHE_NAME = "stockfish-18-single";
+const WASM_URL = "/stockfish-19-single.wasm";
+const CACHE_NAME = "stockfish-19-single";
 
 async function loadWasmBuffer() {
   const cache = await caches.open(CACHE_NAME);
@@ -43,7 +43,7 @@ loadWasmBuffer().then((wasmBuffer) => {
     printErr: (line) => self.postMessage(line),
   };
 
-  importScripts("/stockfish-18-single.js");
+  importScripts("/stockfish-19-single.js");
 
   // Let stockfish.js overtake the event listener, dispatch buffered events
   self.removeEventListener("message", bufferHandler);
