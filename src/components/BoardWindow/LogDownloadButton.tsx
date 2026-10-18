@@ -2,7 +2,7 @@ import { useEventStore } from "@/context/EventContext";
 import { useLiveInfo } from "@/context/LiveInfoContext";
 import { toTitleCaseTCEC } from "@/utils";
 import { Button, Spin } from "@douyinfe/semi-ui";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LuDownload } from "react-icons/lu";
 import { XzReadableStream } from "xz-decompress";
 
@@ -76,6 +76,8 @@ export default function LogDownloadButton() {
 
   const game = useLiveInfo((state) => state.game);
 
+  const abortControllerRef = useRef(new AbortController());
+
   const pgnHeaders = game.getHeaders();
   const termination =
     activeGame?.gameDetails?.termination ??
@@ -94,13 +96,25 @@ export default function LogDownloadButton() {
         </Button>
       </a>
     );
+  } else if (activeProvider === "ccc") {
+    return null;
   }
 
-  if (activeProvider === "tcec") {
-    return (
-      <Button
-        title="Download UCI logs"
-        onClick={async () => {
+  // fallback
+  if (activeProvider !== "tcec") {
+    return null;
+  }
+
+  return (
+    <Button
+      title="Download UCI logs"
+      onClick={async () => {
+        try {
+          if (loading) {
+            // no need for early return; calling .abort() throws an Error
+            abortControllerRef.current.abort();
+          }
+
           setLoading(true);
           const gameIndex = Number(activeGame?.gameDetails.gameNr);
 
@@ -109,22 +123,41 @@ export default function LogDownloadButton() {
               ? // For live events, pull the data from https://tcec-chess.com/live.log
                 "https://ctv.yoshie2000.de/tcec/live.log"
               : // For past events, link to the compressed archive
-                `https://ctv.yoshie2000.de/tcec/loglive/archive/${toTitleCaseTCEC(useEventStore.getState().activeEvent?.tournamentDetails.tNr ?? "")}.log.xz`
+                `https://ctv.yoshie2000.de/tcec/loglive/archive/${toTitleCaseTCEC(useEventStore.getState().activeEvent?.tournamentDetails.tNr ?? "")}.log.xz`,
+            { signal: abortControllerRef.current.signal }
           );
+
           if (!res.ok) {
-            alert(`Error ${res.status}`);
-            setLoading(false);
+            throw new Error(`Error ${res.status}`);
+          }
+
+          if (!res.body) {
+            throw new Error(`Unable to download logs. Response body is null`);
           }
 
           await downloadGameLogs(
-            isEventRunning ? res.body! : new XzReadableStream(res.body!),
+            isEventRunning ? res.body : new XzReadableStream(res.body),
             gameIndex
           );
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            // abort error
+          } else if (error instanceof Error) {
+            console.error(error);
+            alert(`Error downloading logs\n${error.message}`);
+          } else {
+            console.log("Unhandled error");
+            console.log(error);
+          }
+        } finally {
+          if (abortControllerRef.current.signal.aborted) {
+            abortControllerRef.current = new AbortController();
+          }
           setLoading(false);
-        }}
-      >
-        {loading ? <Spin /> : <LuDownload />}
-      </Button>
-    );
-  }
+        }
+      }}
+    >
+      {loading ? <Spin /> : <LuDownload />}
+    </Button>
+  );
 }
