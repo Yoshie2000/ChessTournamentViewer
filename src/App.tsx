@@ -20,6 +20,8 @@ import { Popup } from "./components/Popup/Popup";
 
 import { LocaleProvider } from "@douyinfe/semi-ui";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
+import { useEffect } from "react";
+import { usePopup } from "./context/PopupContext";
 
 Chart.register(
   CategoryScale,
@@ -32,6 +34,41 @@ Chart.register(
 );
 
 function App() {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    window.addEventListener(
+      "keydown",
+      (e) => {
+        const state = usePopup.getState();
+
+        // TODO: cannot test that locally, need a deploy
+        if (e.target instanceof HTMLDivElement) {
+          const isTwitchInputElement = e.target.getAttribute("role");
+
+          if (isTwitchInputElement) {
+            e.stopPropagation();
+            return;
+          }
+        }
+
+        // can add/modify hotkeys there
+        if (e.code === "Escape") {
+          state.setPopupState("none");
+        } else if (e.code === "KeyC") {
+          state.setPopupState("crosstable");
+        } else if (e.code === "KeyS") {
+          state.setPopupState("settings");
+        }
+      },
+      { signal: controller.signal }
+    );
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   return (
     <LocaleProvider locale={en_US}>
       <div className="app">
