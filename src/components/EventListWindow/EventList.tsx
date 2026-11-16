@@ -130,7 +130,13 @@ function tcecCategory(subName: string): TCECCategory {
   if (n.includes("bonus")) return "Bonus";
   if (n.includes("superfinal") || n.includes("elite-match"))
     return "Superfinal";
-  if (n.includes("cup")) return "Cup";
+  if (
+    n.includes("cup") ||
+    n.includes("round") ||
+    n.includes("finals") ||
+    n.includes("bronze")
+  )
+    return "Cup";
   if (n.includes("swiss")) return "Swiss";
   if (
     n.includes("frd") ||

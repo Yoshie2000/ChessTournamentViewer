@@ -48,11 +48,18 @@ export class TCECWebSocket implements TournamentWebSocket {
         eventNr = toTitleCaseTCEC(eventNr);
 
         // This code needs to distinguish a bunch of cases
+        let liveFallback = false;
         const [pgnResponse, crosstableResponse, scheduleResponse] =
           await Promise.allSettled([
             fetch(
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`
-            ),
+            ).then((res) => {
+              if (res.status === 404) {
+                liveFallback = true;
+                return fetch(`https://ctv.yoshie2000.de/tcec/live.pgn`);
+              }
+              return res;
+            }),
             fetch(`https://ctv.yoshie2000.de/tcec/crosstable.json`),
             fetch(
               `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`
@@ -98,8 +105,9 @@ export class TCECWebSocket implements TournamentWebSocket {
         const round = game.getHeaders()["Round"].replace(/0$/, "");
         // The schedule link is different for the ongoing event
         const isLive =
-          crosstable.Event.replaceAll(" ", "_").toLowerCase() ===
-          eventNr.toLowerCase();
+          ("Event" in crosstable ? crosstable.Event : eventNr)
+            .replaceAll(" ", "_")
+            .toLowerCase() === eventNr.toLowerCase();
 
         if (isLive && !gameNr) {
           this.send({
@@ -110,20 +118,35 @@ export class TCECWebSocket implements TournamentWebSocket {
           return;
         }
 
-        this.live = false;
+        const isCup = eventNr.toLowerCase().includes("cup");
+        const lastUnderscoreIdx = eventNr.lastIndexOf("_");
 
-        const scheduleLink = isLive
-          ? "https://ctv.yoshie2000.de/tcec/schedule.json"
-          : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`;
-        const crosstableLink = isLive
-          ? "https://ctv.yoshie2000.de/tcec/crosstable.json"
-          : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`;
+        this.live = isCup && liveFallback;
+
+        const scheduleLink = isCup
+          ? `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`
+          : isLive
+            ? "https://ctv.yoshie2000.de/tcec/schedule.json"
+            : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Schedule.sjson`;
+        const crosstableLink = isCup
+          ? `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.slice(0, lastUnderscoreIdx)}_event_Eventcrosstable.cjson`
+          : isLive
+            ? "https://ctv.yoshie2000.de/tcec/crosstable.json"
+            : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_Crosstable.cjson`;
+        const lc0Url =
+          isCup && this.live
+            ? `https://ctv.yoshie2000.de/tcec/archive/json/liveeval.json`
+            : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval_${round}.json`;
+        const sfUrl =
+          isCup && this.live
+            ? `https://ctv.yoshie2000.de/tcec/archive/json/liveeval1.json`
+            : `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval1_${round}.json`;
         this.openEvent(
           scheduleLink,
           crosstableLink,
           `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr}_${gameNr ?? 1}.pgn`,
-          `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval_${round}.json`,
-          `https://ctv.yoshie2000.de/tcec/archive/json/${eventNr.toLowerCase()}_liveeval1_${round}.json`,
+          lc0Url,
+          sfUrl,
           gameNr
         );
       } else if (gameNr) {
@@ -475,16 +498,21 @@ export class TCECWebSocket implements TournamentWebSocket {
       events: [],
     };
 
-    for (const seasonKey of Object.keys(seasonList).reverse()) {
-      // I don't want to deal with this monstrosity yet
-      if (seasonKey.includes("Cup") || seasonKey.includes("Bonus")) continue;
+    type Event = z.infer<
+      typeof eventListSchema
+    >["Seasons"][string]["sub"][number];
+    const eventSorting = (a: Event, b: Event) =>
+      (b.dno + "").localeCompare(a.dno + "");
 
+    const seasons = Object.keys(seasonList)
+      .reverse()
+      .filter((key) => !key.includes("Cup") && !key.includes("Bonus"));
+
+    for (const seasonKey of [...seasons, "Bonus"]) {
       const _season = seasonList[seasonKey];
       const title = "Season " + seasonKey;
 
-      const subs = _season.sub.sort((a, b) =>
-        (b.dno + "").localeCompare(a.dno + "")
-      );
+      const subs = _season.sub.sort(eventSorting);
 
       for (const sub of subs) {
         if (sub.menu.includes("-=")) continue;
@@ -595,7 +623,11 @@ export class TCECWebSocket implements TournamentWebSocket {
     const responses = await Promise.allSettled([
       fetch(scheduleURL),
       fetch(crosstableURL),
-      fetch(pgnURL),
+      fetch(pgnURL).then((res) => {
+        if (res.status === 404)
+          return fetch(`https://ctv.yoshie2000.de/tcec/live.pgn`);
+        return res;
+      }),
       fetch(lc0URL),
       fetch(sfURL),
     ]);
@@ -639,47 +671,65 @@ export class TCECWebSocket implements TournamentWebSocket {
       return;
     }
 
+    if (crosstableURL.endsWith("/crosstable.json") && "Event" in result.crosstable && result.crosstable.Event.toLowerCase().includes("cup")) {
+      this.send({
+        type: "requestEvent",
+        eventNr: result.crosstable.Event.replaceAll(" ", "_"),
+      });
+      return;
+    }
+
     const { crosstable, pgn, schedule } = result;
 
+    const allEngineNames =
+      "Table" in crosstable
+        ? Object.keys(crosstable.Table)
+        : [
+            ...new Set(
+              Object.keys(crosstable.CrossTable).flatMap(
+                (match) => crosstable.CrossTable[match].Order
+              )
+            ),
+          ];
+    const isCup = !("Table" in crosstable);
+
     const duplicateEngineNames =
-      new Set(
-        Object.keys(crosstable.Table).map(
-          (engineName) => engineName.split(" ")[0]
-        )
-      ).size !== Object.keys(crosstable.Table).length;
+      new Set(allEngineNames.map((engineName) => engineName.split(" ")[0]))
+        .size !== allEngineNames.length;
     function getDisplayName(name: string) {
       if (duplicateEngineNames) return name;
       return name.split(" ")[0];
     }
 
-    const engines: CCCEngine[] = Object.keys(crosstable.Table).map(
-      (engineName) => {
-        const engineData = crosstable.Table[engineName];
+    const engines: CCCEngine[] = allEngineNames.map((engineName) => {
+      const engineData =
+        "Table" in crosstable
+          ? crosstable.Table[engineName]
+          : { Rating: "-", Performance: "-", Score: "" };
 
-        return {
-          authors: "",
-          config: { command: "", options: {}, timemargin: 0 },
-          country: "",
-          elo: String(engineData.Rating),
-          facts: "",
-          flag: "",
-          id: engineName,
-          imageUrl:
-            "https://ctv.yoshie2000.de/tcec/image/engine/" +
-            engineName.split(" ")[0] +
-            ".png",
-          name: getDisplayName(engineName),
-          perf: String(engineData.Performance),
-          playedGames: "",
-          points: String(engineData.Score),
-          rating: String(engineData.Rating),
-          updatedAt: "",
-          version: engineName.split(" ").slice(1).join(" "),
-          website: "",
-          year: "",
-        };
-      }
-    );
+      return {
+        authors: "",
+        config: { command: "", options: {}, timemargin: 0 },
+        country: "",
+        elo: String(engineData.Rating),
+        facts: "",
+        flag: "",
+        id: engineName,
+        imageUrl:
+          "https://ctv.yoshie2000.de/tcec/image/engine/" +
+          engineName.split(" ")[0] +
+          ".png",
+        name: getDisplayName(engineName),
+        perf: String(engineData.Performance),
+        playedGames: "",
+        points: String(engineData.Score),
+        rating: String(engineData.Rating),
+        updatedAt: "",
+        version: engineName.split(" ").slice(1).join(" "),
+        website: "",
+        year: "",
+      };
+    });
 
     const cccGameSchedule: CCCGame[] = schedule
       .map((game, index) => {
@@ -725,6 +775,31 @@ export class TCECWebSocket implements TournamentWebSocket {
         };
       })
       .filter((el) => !!el);
+
+    if (isCup && this.live) {
+      // The live game (from the pgn) is probably not in the schedule, add it manually
+      const game = new Chess960();
+      game.loadPgn(pgn);
+      const headers = game.getHeaders();
+
+      cccGameSchedule.push({
+        blackId: headers["Black"],
+        blackName: getDisplayName(headers["Black"]),
+        estimatedStartTime: "",
+        gameNr: String(cccGameSchedule.length + 1),
+        matchNr: "",
+        opening: "",
+        openingType: "",
+        roundNr: "unknown",
+        timeControl: "",
+        variant: "",
+        whiteId: headers["White"],
+        whiteName: getDisplayName(headers["White"]),
+        outcome: undefined,
+        timeEnd: undefined,
+        timeStart: headers["GameStartTime"],
+      })
+    }
 
     const present =
       cccGameSchedule.find((game) => !!game.timeStart && !game.timeEnd) ??
@@ -778,11 +853,21 @@ export class TCECWebSocket implements TournamentWebSocket {
       (engine) => opponentsPerEngine[engine.id].size === engines.length - 1
     );
 
+    const eventId =
+      "Event" in crosstable
+        ? crosstable.Event
+        : scheduleURL
+            .slice(
+              scheduleURL.lastIndexOf("/") + 1,
+              scheduleURL.lastIndexOf("_")
+            )
+            .replaceAll("_", " ");
+
     const event: CCCEventUpdate = {
       type: "eventUpdate",
       tournamentDetails: {
-        name: crosstable.Event,
-        tNr: crosstable.Event.replaceAll(" ", "_"),
+        name: eventId,
+        tNr: eventId.replaceAll(" ", "_"),
         tc: { incr: 0, init: 0 },
         engines,
         schedule: { past, future, present },

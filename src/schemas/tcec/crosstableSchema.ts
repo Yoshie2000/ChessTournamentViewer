@@ -53,9 +53,19 @@ const formattingGauntlet = z
   .object({ LossesAsBlack: z.number(), LossesAsWhite: z.number() })
   .and(tableEntryBase);
 
-export const crosstableSchema = z.object({
+const normalCrosstableSchema = z.object({
   Event: z.string(),
   Type: z.string().optional(),
   Order: z.array(z.string()),
   Table: z.record(z.string(), z.union([formattingH2h, formattingGauntlet])),
 });
+
+const cupCrosstableSchema = z.object({
+  CrossTable: z.record(z.string(), normalCrosstableSchema),
+  // EventTable: z.record(z.string(), z.object()),
+  // matchresults: z.array(z.object()),
+  // results: z.array(z.object()),
+  // teams: z.array(z.object()),
+});
+
+export const crosstableSchema = z.union([normalCrosstableSchema, cupCrosstableSchema]);
