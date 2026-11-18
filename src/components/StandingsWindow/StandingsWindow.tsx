@@ -13,18 +13,28 @@ export const StandingsWindow = memo(() => {
   const activeGame = useEventStore((state) => state.activeGame);
 
   const setPopupState = usePopup((state) => state.setPopupState);
+  const isCup = !!activeEvent?.tournamentDetails.cupMatches;
 
   return (
     <div className="standingsWindow">
       <h4>Standings</h4>
       {activeEvent && activeGame ? (
         <>
-          <Button
-            onClick={() => setPopupState("crosstable")}
-            title="View head-to-head results between all engines"
-          >
-            Show Crosstable
-          </Button>
+          {!isCup ? (
+            <Button
+              onClick={() => setPopupState("crosstable")}
+              title="View head-to-head results between all engines"
+            >
+              Show Crosstable
+            </Button>
+          ) : (
+            <Button
+              onClick={() => setPopupState("cupBrackets")}
+              title="View cup brackets"
+            >
+              Show Brackets
+            </Button>
+          )}
           <StandingsTable />
         </>
       ) : (

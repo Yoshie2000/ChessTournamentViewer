@@ -60,12 +60,20 @@ const normalCrosstableSchema = z.object({
   Table: z.record(z.string(), z.union([formattingH2h, formattingGauntlet])),
 });
 
-const cupCrosstableSchema = z.object({
-  CrossTable: z.record(z.string(), normalCrosstableSchema),
-  // EventTable: z.record(z.string(), z.object()),
-  // matchresults: z.array(z.object()),
-  // results: z.array(z.object()),
-  // teams: z.array(z.object()),
+export const cupMatchResult = z.object({
+  lead: z.number(),
+  manual: z.number(),
+  name: z.string(),
+  origscore: z.number(),
+  score: z.number(),
 });
 
-export const crosstableSchema = z.union([normalCrosstableSchema, cupCrosstableSchema]);
+const cupCrosstableSchema = z.object({
+  CrossTable: z.record(z.string(), normalCrosstableSchema),
+  matchresults: z.array(z.tuple([cupMatchResult, cupMatchResult])),
+});
+
+export const crosstableSchema = z.union([
+  normalCrosstableSchema,
+  cupCrosstableSchema,
+]);

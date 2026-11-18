@@ -48,6 +48,22 @@ export const CCCGameSchema = z.object({
   whiteName: z.string().nullish(),
 });
 
+export const CupMatchResult = z.object({
+  engine: CCCEngineSchema.optional(),
+  points: z.number().optional(),
+  live: z.boolean(),
+});
+
+export const CupMatch = z.object({
+  engine0: CCCEngineSchema.optional(),
+  points0: z.number().optional(),
+  engine1: CCCEngineSchema.optional(),
+  points1: z.number().optional(),
+  live: z.boolean().optional(),
+  final: z.boolean().optional(),
+  matchForThird: z.boolean().optional(),
+});
+
 export const CCCEventUpdateSchema = z.object({
   type: z.literal("eventUpdate"),
   tournamentDetails: z.object({
@@ -63,6 +79,7 @@ export const CCCEventUpdateSchema = z.object({
     // we add these later when parsing messages
     hasGamePairs: z.union([z.boolean(), z.undefined()]).optional(),
     isRoundRobin: z.union([z.boolean(), z.undefined()]).optional(),
+    cupMatches: z.array(z.array(CupMatch)).optional(),
   }),
 });
 

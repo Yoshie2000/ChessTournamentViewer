@@ -20,7 +20,10 @@ import {
 } from "./LiveInfo";
 import z from "zod";
 import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
-import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
+import {
+  crosstableSchema,
+  cupMatchResult,
+} from "./schemas/tcec/crosstableSchema";
 import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
 import {
   socketPgnSchema,
@@ -29,6 +32,11 @@ import {
 import { eventListSchema } from "./schemas/tcec/eventListSchema";
 import { livePGNSchema } from "./schemas/tcec/pgnSchema";
 import { toTitleCaseTCEC } from "./utils";
+import type {
+  CCCEngineSchema,
+  CCCEventUpdateSchema,
+  CupMatch,
+} from "./schemas/ccc/cccMessageSchema";
 
 export class TCECWebSocket implements TournamentWebSocket {
   private socket: SocketIOClient.Socket | null = null;
@@ -671,7 +679,11 @@ export class TCECWebSocket implements TournamentWebSocket {
       return;
     }
 
-    if (crosstableURL.endsWith("/crosstable.json") && "Event" in result.crosstable && result.crosstable.Event.toLowerCase().includes("cup")) {
+    if (
+      crosstableURL.endsWith("/crosstable.json") &&
+      "Event" in result.crosstable &&
+      result.crosstable.Event.toLowerCase().includes("cup")
+    ) {
       this.send({
         type: "requestEvent",
         eventNr: result.crosstable.Event.replaceAll(" ", "_"),
@@ -781,24 +793,30 @@ export class TCECWebSocket implements TournamentWebSocket {
       const game = new Chess960();
       game.loadPgn(pgn);
       const headers = game.getHeaders();
+      const white = headers["White"];
+      const black = headers["Black"];
 
-      cccGameSchedule.push({
-        blackId: headers["Black"],
-        blackName: getDisplayName(headers["Black"]),
-        estimatedStartTime: "",
-        gameNr: String(cccGameSchedule.length + 1),
-        matchNr: "",
-        opening: "",
-        openingType: "",
-        roundNr: "unknown",
-        timeControl: "",
-        variant: "",
-        whiteId: headers["White"],
-        whiteName: getDisplayName(headers["White"]),
-        outcome: undefined,
-        timeEnd: undefined,
-        timeStart: headers["GameStartTime"],
-      })
+      if (
+        white !== cccGameSchedule.at(-1)?.whiteId ||
+        black !== cccGameSchedule.at(-1)?.blackId
+      )
+        cccGameSchedule.push({
+          blackId: black,
+          blackName: getDisplayName(black),
+          estimatedStartTime: "",
+          gameNr: String(cccGameSchedule.length + 1),
+          matchNr: "",
+          opening: "",
+          openingType: "",
+          roundNr: "unknown",
+          timeControl: "",
+          variant: "",
+          whiteId: white,
+          whiteName: getDisplayName(white),
+          outcome: undefined,
+          timeEnd: undefined,
+          timeStart: headers["GameStartTime"],
+        });
     }
 
     const present =
@@ -863,6 +881,82 @@ export class TCECWebSocket implements TournamentWebSocket {
             )
             .replaceAll("_", " ");
 
+    let matchIdx = 0;
+
+    let cupMatches: z.infer<
+      typeof CCCEventUpdateSchema
+    >["tournamentDetails"]["cupMatches"] = undefined;
+
+    const convertEngineResult = (
+      engineResult?: z.infer<typeof cupMatchResult>
+    ): { engine?: z.infer<typeof CCCEngineSchema>; points?: number } => ({
+      engine: engines.find((engine) => engine.id === engineResult?.name),
+      points: engineResult?.origscore,
+    });
+
+    if ("matchresults" in crosstable) {
+      cupMatches = [];
+
+      for (let roundIdx = 0; roundIdx < Math.log2(engines.length); roundIdx++) {
+        const roundMatches = Math.max(
+          2,
+          engines.length / Math.pow(2, roundIdx + 1)
+        );
+
+        const round = Array.from(
+          { length: roundMatches },
+          (_, localMatchIdx): z.infer<typeof CupMatch> => {
+            const match = crosstable.matchresults[matchIdx++];
+
+            if (!match) {
+              const previousRoundMatch0 = cupMatches
+                ?.at(-1)
+                ?.at(2 * localMatchIdx);
+              const previousRoundMatch1 = cupMatches
+                ?.at(-1)
+                ?.at(2 * localMatchIdx + 1);
+
+              const winner = (match: typeof previousRoundMatch0) => {
+                return !match?.points0 || !match?.points1 || match?.live
+                  ? undefined
+                  : match.points0 > match.points1
+                    ? match.engine0
+                    : match.engine1;
+              };
+
+              return {
+                live: false,
+                points0: undefined,
+                points1: undefined,
+                engine0: winner(previousRoundMatch0),
+                engine1: winner(previousRoundMatch1),
+              };
+            }
+
+            const live =
+              (match[0].name === present?.whiteId &&
+                match[1].name === present?.blackId) ||
+              (match[0].name === present?.blackId &&
+                match[1].name === present?.whiteId);
+
+            const { points: points0, engine: engine0 } = convertEngineResult(
+              match[0]
+            );
+            const { points: points1, engine: engine1 } = convertEngineResult(
+              match[1]
+            );
+            return { live, engine0, engine1, points0, points1 };
+          }
+        );
+
+        cupMatches.push(round);
+      }
+
+      if (cupMatches.at(-1)?.at(0)) cupMatches.at(-1)!.at(0)!.final = true;
+      if (cupMatches.at(-1)?.at(1))
+        cupMatches.at(-1)!.at(1)!.matchForThird = true;
+    }
+
     const event: CCCEventUpdate = {
       type: "eventUpdate",
       tournamentDetails: {
@@ -873,6 +967,7 @@ export class TCECWebSocket implements TournamentWebSocket {
         schedule: { past, future, present },
         hasGamePairs,
         isRoundRobin,
+        cupMatches,
       },
     };
     this.callback?.(event);

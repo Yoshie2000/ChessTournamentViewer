@@ -1,0 +1,59 @@
+.popup .cupBracketsContainer {
+  width: 100%;
+  height: 100%;
+
+  .closeButton {
+    position: fixed;
+    right: 1rem;
+    top: 1rem;
+  }
+}
+
+.cupBrackets {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  overflow: auto;
+  gap: 3rem;
+  padding: 1rem;
+
+  .cupColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* width: min(40vw, 250px); */
+  }
+
+  .cupMatch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0 0.5rem;
+    height: 54px;
+    border: 1px solid #232323;
+    padding: calc(0.25 * var(--gap)) calc(0.5 * var(--gap));
+    cursor: default;
+    background: #343434;
+    position: relative;
+
+    * {
+      color: #a1a1a1;
+    }
+    .winner {
+      color: #43a047;
+    }
+    .loser {
+      color: #e53935;
+    }
+
+    .cupEngine0Points,
+    .cupEngine1Points {
+      text-align: right;
+    }
+
+    &.live {
+      background: #434343;
+      outline: 1px solid #5a7080;
+    }
+  }
+}

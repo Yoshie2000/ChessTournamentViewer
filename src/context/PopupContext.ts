@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { zustandHmrFix } from "./ZustandHMRFix";
 
-type PopupStateValues = "crosstable" | "settings" | "none";
+type PopupStateValues = "crosstable" | "cupBrackets" | "settings" | "none";
 
 type PopupContext = {
   popupState: PopupStateValues;
