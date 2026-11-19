@@ -124,9 +124,16 @@ export function EngineWindow() {
 export function KibitzerTableHeader({ color }: { color: EngineColor }) {
   const engineInfo = useLiveInfo((state) => state.liveInfos[color].engineInfo);
 
+  const [score, setScore] = useState<string>();
+
+  useInterval((state) => {
+    setScore(state.liveInfos[color].liveInfo?.info.score);
+  });
+
   return (
     <span className="engineHeader">
-      <EngineLogo engine={engineInfo} key={color} />
+      <EngineLogo engine={engineInfo} key={color} size={18} />
+      <span className="engineScore">{score ?? ""}</span>
       <span className="engineName" title={engineInfo.name}>
         {engineInfo.name}
       </span>

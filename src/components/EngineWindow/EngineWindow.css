@@ -64,6 +64,17 @@
   width: 100%;
 }
 
+.kibitzerWindow .engineHeader .engineScore {
+  display: block;
+  min-height: calc(var(--font-xl) * 1.2);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: bold;
+  font-size: var(--font-xl);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .kibitzerWindow td:has(.enginePV) {
   vertical-align: top;
 }

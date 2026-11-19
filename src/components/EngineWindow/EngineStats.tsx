@@ -126,27 +126,13 @@ export function EngineStats({ colors }: EngineStatsProps) {
         ))}
       </tr>
 
-      <tr className="borderBottom">
+      <tr>
         <td className="engineFieldKey">Hashfull</td>
         {colors.map((color) => (
           <td key={color} className="engineFieldValue">
             <SingleStat
               color={color}
               property="hashfull"
-              transform={identity}
-              loading={loadingByColor[color]}
-            />
-          </td>
-        ))}
-      </tr>
-
-      <tr>
-        <td className="engineFieldKey"></td>
-        {colors.map((color) => (
-          <td key={color} className="engineEvaluation">
-            <SingleStat
-              color={color}
-              property="score"
               transform={identity}
               loading={loadingByColor[color]}
             />

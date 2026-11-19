@@ -6,14 +6,6 @@
   padding-top: 0.5rem;
 }
 
-.engineStats .borderBottom {
-  border-bottom: 1px solid #434343;
-}
-
-.engineStats .borderBottom .engineFieldKey {
-  padding-bottom: 0.5rem;
-}
-
 .engineStats .engineFieldKey {
   color: #a1a1a1;
   font-size: var(--font-sm);
@@ -25,9 +17,4 @@
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   font-size: var(--font-sm);
-}
-
-.engineStats .engineEvaluation {
-  font-weight: bold;
-  font-size: var(--font-xl);
 }
