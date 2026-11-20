@@ -82,6 +82,10 @@
     --kibitzer-movelist-height: calc(
       var(--engine-kibitzer-height) - var(--kibitzer-board-size) - 45px - 45px
     );
+    
+    .movesWindow {
+      --kibitzer-board-size: 150px;
+    }
   }
 
   .kibitzerWindow .engineLogo {
@@ -89,14 +93,9 @@
   }
 }
 
-@container (height < 250px) {
-  .kibitzerWindow .enginePV {
-    --kibitzer-movelist-height: calc(
-      var(--engine-kibitzer-height) - 45px - 45px
-    );
-  }
-  .kibitzerWindow .enginePV .board {
-    display: none;
+@media (max-height: 975px) {
+  :root {
+    --engine-kibitzer-height: 16rem;
   }
 }
 
