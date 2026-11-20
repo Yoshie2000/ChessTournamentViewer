@@ -50,15 +50,17 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           return;
 
         const fen = game.fenAt(currentMoveNumber);
-        const turn = game.turnAt(currentMoveNumber);
         const lastMove = game.moveAt(currentMoveNumber);
 
         const arrows: DrawShape[] = [];
+        const legalMoves = new Chess960(fen).moves();
 
         let moveWhite: string | null = null;
         if (liveInfos?.white.liveInfo) {
           const pv = liveInfos.white.liveInfo.info.pv.split(" ");
-          const nextMove = turn === "w" ? pv[0] : pv[1];
+          const pvSan = liveInfos.white.liveInfo.info.pvSan?.split(" ") ?? [];
+
+          const nextMove = pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
           if (nextMove && nextMove.length >= 4) {
             moveWhite = nextMove;
             arrows.push({
@@ -71,7 +73,9 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
 
         if (liveInfos?.black.liveInfo) {
           const pv = liveInfos.black.liveInfo.info.pv.split(" ");
-          const nextMove = turn === "b" ? pv[0] : pv[1];
+          const pvSan = liveInfos.black.liveInfo.info.pvSan?.split(" ") ?? [];
+
+          const nextMove = pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
           if (nextMove && nextMove === moveWhite) {
             arrows[0].brush = "agree";
           } else if (nextMove && nextMove.length >= 4) {
@@ -83,13 +87,13 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           }
         }
 
-        const legalMoves = new Chess960(fen).moves();
         for (const color of ["green", "red", "blue"] as const) {
           if (liveInfos?.[color].liveInfo) {
             const liveInfo = liveInfos[color].liveInfo.info;
             const pv = liveInfo.pv.split(" ");
             const pvSan = liveInfo?.pvSan?.split(" ") ?? [];
-            const nextMove = legalMoves.includes(pvSan[0]) ? pv[0] : pv[1];
+            
+            const nextMove = pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
             if (nextMove && nextMove.length >= 4) {
               arrows.push({
                 orig: (nextMove.slice(0, 2) as Square) || "a1",

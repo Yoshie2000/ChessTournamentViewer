@@ -20,10 +20,7 @@ import {
 } from "./LiveInfo";
 import z from "zod";
 import { htmlReadSchema, scheduleSchema } from "./schemas/tcec/scheduleSchema";
-import {
-  crosstableSchema,
-  cupMatchResult,
-} from "./schemas/tcec/crosstableSchema";
+import { crosstableSchema } from "./schemas/tcec/crosstableSchema";
 import { kibitzerSchema } from "./schemas/tcec/kibitzerSchema";
 import {
   socketPgnSchema,
@@ -33,7 +30,6 @@ import { eventListSchema } from "./schemas/tcec/eventListSchema";
 import { livePGNSchema } from "./schemas/tcec/pgnSchema";
 import { toTitleCaseTCEC } from "./utils";
 import type {
-  CCCEngineSchema,
   CCCEventUpdateSchema,
   CupMatch,
 } from "./schemas/ccc/cccMessageSchema";
@@ -887,13 +883,6 @@ export class TCECWebSocket implements TournamentWebSocket {
       typeof CCCEventUpdateSchema
     >["tournamentDetails"]["cupMatches"] = undefined;
 
-    const convertEngineResult = (
-      engineResult?: z.infer<typeof cupMatchResult>
-    ): { engine?: z.infer<typeof CCCEngineSchema>; points?: number } => ({
-      engine: engines.find((engine) => engine.id === engineResult?.name),
-      points: engineResult?.origscore,
-    });
-
     if ("matchresults" in crosstable) {
       cupMatches = [];
 
@@ -906,46 +895,48 @@ export class TCECWebSocket implements TournamentWebSocket {
         const round = Array.from(
           { length: roundMatches },
           (_, localMatchIdx): z.infer<typeof CupMatch> => {
-            const match = crosstable.matchresults[matchIdx++];
+            const match = crosstable.matchresults.at(matchIdx++);
 
-            if (!match) {
-              const previousRoundMatch0 = cupMatches
-                ?.at(-1)
-                ?.at(2 * localMatchIdx);
-              const previousRoundMatch1 = cupMatches
-                ?.at(-1)
-                ?.at(2 * localMatchIdx + 1);
+            const previousRoundMatch0 = cupMatches
+              ?.at(-1)
+              ?.at(2 * localMatchIdx);
+            const previousRoundMatch1 = cupMatches
+              ?.at(-1)
+              ?.at(2 * localMatchIdx + 1);
 
-              const winner = (match: typeof previousRoundMatch0) => {
-                return !match?.points0 || !match?.points1 || match?.live
-                  ? undefined
-                  : match.points0 > match.points1
-                    ? match.engine0
-                    : match.engine1;
-              };
-
-              return {
-                live: false,
-                points0: undefined,
-                points1: undefined,
-                engine0: winner(previousRoundMatch0),
-                engine1: winner(previousRoundMatch1),
-              };
-            }
+            const winner = (match: typeof previousRoundMatch0) => {
+              return match?.points0 === undefined ||
+                match?.points1 === undefined ||
+                match?.live
+                ? undefined
+                : match.points0 > match.points1
+                  ? match.engine0
+                  : match.engine1;
+            };
 
             const live =
-              (match[0].name === present?.whiteId &&
-                match[1].name === present?.blackId) ||
-              (match[0].name === present?.blackId &&
-                match[1].name === present?.whiteId);
+              (match?.at(0)?.name === present?.whiteId &&
+                match?.at(1)?.name === present?.blackId) ||
+              (match?.at(0)?.name === present?.blackId &&
+                match?.at(1)?.name === present?.whiteId);
 
-            const { points: points0, engine: engine0 } = convertEngineResult(
-              match[0]
-            );
-            const { points: points1, engine: engine1 } = convertEngineResult(
-              match[1]
-            );
-            return { live, engine0, engine1, points0, points1 };
+            const engine0 =
+              winner(previousRoundMatch0) ??
+              engines.find((engine) => engine.id === match?.at(0)?.name);
+            const engine1 =
+              winner(previousRoundMatch1) ??
+              engines.find((engine) => engine.id === match?.at(1)?.name);
+
+            const points0 =
+              match?.at(0)?.name === engine0?.id
+                ? match?.at(0)?.origscore
+                : match?.at(1)?.origscore;
+            const points1 =
+              match?.at(1)?.name === engine1?.id
+                ? match?.at(1)?.origscore
+                : match?.at(0)?.origscore;
+
+            return { live, points0, points1, engine0, engine1 };
           }
         );
 
