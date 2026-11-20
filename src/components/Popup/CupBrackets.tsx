@@ -3,6 +3,7 @@ import "./CupBrackets.css";
 import { MdOutlineClose } from "react-icons/md";
 import { Button } from "@douyinfe/semi-ui";
 import { usePopup } from "@/context/PopupContext";
+import { EngineLogo } from "../EngineWindow/EngineLogo";
 
 const margin = (layer: number) => ((Math.pow(2, layer) - 1) * (54 + 16)) / 2;
 const marginForThird = (layer: number) =>
@@ -44,15 +45,31 @@ export default function CupBrackets() {
                   ? `${marginForThird(idx)}px 0 0 0`
                   : `${margin(idx)}px 0`;
 
+              const roundLabel =
+                idx === cupMatches.length - 1
+                  ? matchIdx === 0
+                    ? "Finals"
+                    : "Bronze"
+                  : idx === cupMatches.length - 2
+                    ? "Semifinals"
+                    : idx === cupMatches.length - 3
+                      ? "Quarterfinals"
+                      : `Round of ${Math.pow(2, cupMatches.length - idx)}`;
+
               return (
                 <div
                   className={`cupMatch ${cupMatch.live ? "live" : ""}`}
                   style={{ margin: marginString }}
                   key={matchIdx}
                 >
+                  {(idx === cupMatches.length - 1 || matchIdx === 0) && (
+                    <div className="roundLabel">{roundLabel}</div>
+                  )}
+
                   <div
                     className={`cupEngine0Name ${winner === 0 ? "winner" : winner === 1 ? "loser" : ""}`}
                   >
+                    <EngineLogo engine={cupMatch.engine0} size={15} />
                     {cupMatch.engine0?.name ?? "TBD"}
                   </div>
                   <div
@@ -63,6 +80,7 @@ export default function CupBrackets() {
                   <div
                     className={`cupEngine1Name ${winner === 0 ? "loser" : winner === 1 ? "winner" : ""}`}
                   >
+                    <EngineLogo engine={cupMatch.engine1} size={15} />
                     {cupMatch.engine1?.name ?? "TBD"}
                   </div>
                   <div

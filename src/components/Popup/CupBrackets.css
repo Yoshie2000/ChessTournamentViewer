@@ -35,6 +35,11 @@
     cursor: default;
     background: #343434;
     position: relative;
+    border-radius: 4px;
+
+    .engineLogo {
+      margin: 0 !important;
+    }
 
     * {
       color: #a1a1a1;
@@ -46,9 +51,23 @@
       color: #e53935;
     }
 
+    .cupEngine0Name,
+    .cupEngine1Name {
+      display: flex;
+      align-items: center;
+      gap: calc(0.5 * var(--gap));
+    }
+
     .cupEngine0Points,
     .cupEngine1Points {
       text-align: right;
+    }
+
+    .roundLabel {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, calc(-100% - var(--gap)));
     }
 
     &.live {
