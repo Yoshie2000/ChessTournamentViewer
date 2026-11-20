@@ -82,7 +82,7 @@
     --kibitzer-movelist-height: calc(
       var(--engine-kibitzer-height) - var(--kibitzer-board-size) - 45px - 45px
     );
-    
+
     .movesWindow {
       --kibitzer-board-size: 150px;
     }
