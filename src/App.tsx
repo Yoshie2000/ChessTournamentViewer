@@ -22,6 +22,7 @@ import { LocaleProvider } from "@douyinfe/semi-ui";
 import en_US from "@douyinfe/semi-ui/lib/es/locale/source/en_US";
 import { useEffect } from "react";
 import { usePopup } from "./context/PopupContext";
+import { useEventStore } from "./context/EventContext";
 
 Chart.register(
   CategoryScale,
@@ -56,7 +57,8 @@ function App() {
         if (e.code === "Escape") {
           state.setPopupState("none");
         } else if (e.code === "KeyC") {
-          state.setPopupState("crosstable");
+          const isCup = !!useEventStore.getState().activeEvent?.tournamentDetails.cupMatches;
+          state.setPopupState(isCup ? "cupBrackets" : "crosstable");
         } else if (e.code === "KeyS") {
           state.setPopupState("settings");
         }
