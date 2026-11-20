@@ -14,7 +14,7 @@ const resultsSchema = z.record(
       z.object({
         Game: z.number(),
         Result: z.union([z.literal(0), z.literal(0.5), z.literal(1)]),
-        Winner: z.enum(["None", "Black", "White"]),
+        Winner: z.enum(["None", "Black", "White"]).optional(),
       })
     ),
   })
@@ -46,11 +46,11 @@ const tableEntryBase = z.object({
 });
 
 const formattingH2h = z
-  .object({ LossAsBlack: z.number(), LossAsWhite: z.number() })
+  .object({ LossAsBlack: z.number().optional(), LossAsWhite: z.number().optional() })
   .and(tableEntryBase);
 
 const formattingGauntlet = z
-  .object({ LossesAsBlack: z.number(), LossesAsWhite: z.number() })
+  .object({ LossesAsBlack: z.number().optional(), LossesAsWhite: z.number().optional() })
   .and(tableEntryBase);
 
 const normalCrosstableSchema = z.object({
