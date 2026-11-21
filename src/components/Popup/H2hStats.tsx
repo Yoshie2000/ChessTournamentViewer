@@ -264,32 +264,29 @@ export default function H2hStats({ allGames, engine, engine2 }: H2hStatsProps) {
 
           if (!gamePair[1]) {
             return (
-              <span
-              key={gamePair[0].gameNr}
-              className={"gamePair"}
-            >
-              <span
-                className={result1}
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  requestEvent(gamePair[0].gameNr);
-                  setPopupState("none");
-                }}
-              >
-                {textFromResult(result1)}
+              <span key={gamePair[0].gameNr} className={"gamePair"}>
+                <span
+                  className={result1}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    requestEvent(gamePair[0].gameNr);
+                    setPopupState("none");
+                  }}
+                >
+                  {textFromResult(result1)}
+                </span>
+                <span
+                  className={"tbd"}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    requestEvent(gamePair[1].gameNr);
+                    setPopupState("none");
+                  }}
+                >
+                  {textFromResult("tbd")}
+                </span>
               </span>
-              <span
-                className={"tbd"}
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  requestEvent(gamePair[1].gameNr);
-                  setPopupState("none");
-                }}
-              >
-                {textFromResult("tbd")}
-              </span>
-            </span>
-            )
+            );
           }
 
           const result2 = getResultForGame(gamePair[1], engine.id);

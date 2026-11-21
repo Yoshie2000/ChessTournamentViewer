@@ -46,11 +46,17 @@ const tableEntryBase = z.object({
 });
 
 const formattingH2h = z
-  .object({ LossAsBlack: z.number().optional(), LossAsWhite: z.number().optional() })
+  .object({
+    LossAsBlack: z.number().optional(),
+    LossAsWhite: z.number().optional(),
+  })
   .and(tableEntryBase);
 
 const formattingGauntlet = z
-  .object({ LossesAsBlack: z.number().optional(), LossesAsWhite: z.number().optional() })
+  .object({
+    LossesAsBlack: z.number().optional(),
+    LossesAsWhite: z.number().optional(),
+  })
   .and(tableEntryBase);
 
 const normalCrosstableSchema = z.object({

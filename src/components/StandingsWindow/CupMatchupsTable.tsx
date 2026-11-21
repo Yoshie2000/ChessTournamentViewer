@@ -52,11 +52,28 @@ export default function CupMatchupsTable() {
             ? cupMatch.points1
             : cupMatch.points0;
 
-        const engine0Class = !cupMatch.live && cupMatch.points0 !== undefined && cupMatch.points1 !== undefined ? (cupMatch.points0 > cupMatch.points1 ? "winner" : cupMatch.points1 > cupMatch.points0 ? "loser" : "") : "";
-        const engine1Class = engine0Class === "winner" ? "loser" : engine0Class === "loser" ? "winner" : "";
+        const engine0Class =
+          !cupMatch.live &&
+          cupMatch.points0 !== undefined &&
+          cupMatch.points1 !== undefined
+            ? cupMatch.points0 > cupMatch.points1
+              ? "winner"
+              : cupMatch.points1 > cupMatch.points0
+                ? "loser"
+                : ""
+            : "";
+        const engine1Class =
+          engine0Class === "winner"
+            ? "loser"
+            : engine0Class === "loser"
+              ? "winner"
+              : "";
 
         return (
-          <div className={`matchup ${cupMatch.live ? "live" : ""}`} key={engine0Id + engine1Id}>
+          <div
+            className={`matchup ${cupMatch.live ? "live" : ""}`}
+            key={engine0Id + engine1Id}
+          >
             <div className="scoreLine">
               <div className="matchNr">#{matchIdx + 1}</div>
               <EngineLogo engine={engine0} size={28} />

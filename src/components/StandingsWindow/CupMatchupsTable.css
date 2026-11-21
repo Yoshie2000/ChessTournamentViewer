@@ -3,7 +3,6 @@
   border: 1px solid #232323;
 
   .matchup {
-
     &.live {
       outline: 1px solid #5a7080;
       outline-offset: -1px;

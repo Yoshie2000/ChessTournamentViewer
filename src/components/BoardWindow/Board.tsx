@@ -60,7 +60,8 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           const pv = liveInfos.white.liveInfo.info.pv.split(" ");
           const pvSan = liveInfos.white.liveInfo.info.pvSan?.split(" ") ?? [];
 
-          const nextMove = pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
+          const nextMove =
+            pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
           if (nextMove && nextMove.length >= 4) {
             moveWhite = nextMove;
             arrows.push({
@@ -75,7 +76,8 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
           const pv = liveInfos.black.liveInfo.info.pv.split(" ");
           const pvSan = liveInfos.black.liveInfo.info.pvSan?.split(" ") ?? [];
 
-          const nextMove = pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
+          const nextMove =
+            pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
           if (nextMove && nextMove === moveWhite) {
             arrows[0].brush = "agree";
           } else if (nextMove && nextMove.length >= 4) {
@@ -92,8 +94,9 @@ export const Board = forwardRef<BoardHandle, BoardProps>((props, ref) => {
             const liveInfo = liveInfos[color].liveInfo.info;
             const pv = liveInfo.pv.split(" ");
             const pvSan = liveInfo?.pvSan?.split(" ") ?? [];
-            
-            const nextMove = pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
+
+            const nextMove =
+              pv[pvSan.findIndex((sanMove) => legalMoves.includes(sanMove))];
             if (nextMove && nextMove.length >= 4) {
               arrows.push({
                 orig: (nextMove.slice(0, 2) as Square) || "a1",

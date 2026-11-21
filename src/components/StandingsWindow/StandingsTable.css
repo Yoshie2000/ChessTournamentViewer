@@ -52,8 +52,6 @@
   right: var(--gap);
 }
 
-
-
 @media ((min-width: 1401px) and (max-width: 1550px)) or (max-width: 450px) {
   .standingsEntry {
     grid-template-columns: 40px auto 1fr 100px 60px;
