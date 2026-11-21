@@ -342,3 +342,17 @@
     height: 300px;
   }
 }
+
+.githubPlug {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+
+  &,
+  a {
+    color: #a1a1a1;
+    font-size: var(--font-xs);
+    margin: calc(-0.5 * var(--gap)) 0 0 0 !important;
+  }
+}

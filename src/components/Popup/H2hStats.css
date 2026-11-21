@@ -1,0 +1,81 @@
+.h2hCell .h2h {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+}
+
+.h2hCell .gamePair {
+  width: 2.25rem;
+  margin-right: 0.125rem;
+  display: flex;
+  justify-content: space-evenly;
+}
+
+.h2hCell .h2hStats {
+  margin-bottom: 0.4rem;
+  font-size: var(--font-md);
+  line-height: 1.2;
+  color: #a1a1a1;
+}
+
+.h2hCell .h2hStats span {
+  display: block;
+  white-space: nowrap;
+}
+
+.h2hCell .h2hStats .pentaStat {
+  font-family: monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.h2hCell .h2hStats .pentaStat,
+.h2hCell .h2hStats .elo {
+  font-size: 14px;
+}
+
+.h2hCell .h2hStats .elo.win {
+  color: #43a047;
+}
+
+.h2hCell .h2hStats .elo.loss {
+  color: #e53935;
+}
+
+.h2hCell .h2hStats .elo.draw,
+.h2hCell .h2hStats .elo.tbd {
+  color: #a1a1a1;
+}
+
+.h2hCell .gamePair.win {
+  background: #43a04733;
+}
+
+.h2hCell .gamePair.loss {
+  background: #e5393533;
+}
+
+.h2hCell .gamePair.doubleWin {
+  background: #43a0478c;
+}
+
+.h2hCell .gamePair.doubleLoss {
+  background: #e539358c;
+}
+
+.h2hCell .h2h span.win {
+  color: #43a047;
+}
+
+.h2hCell .h2h span.loss {
+  color: #e53935;
+}
+
+.h2hCell .gamePair.doubleWin span,
+.h2hCell .gamePair.doubleLoss span {
+  color: #ffffffa8;
+}
+
+.h2hCell .h2h span.draw,
+.h2hCell .h2h span.tbd {
+  color: #a1a1a1;
+}

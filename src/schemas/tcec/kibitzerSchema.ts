@@ -13,7 +13,7 @@ const evalSchema = z.object({
 export const kibitzerSchema = z.object({
   desc: z.string().nullish(),
   engine: z.string().nullish(),
-  gameno: z.number().nullish(),
-  round: z.number().nullish(),
+  gameno: z.string().nullish(),
+  round: z.string().nullish(),
   moves: z.array(evalSchema),
 });

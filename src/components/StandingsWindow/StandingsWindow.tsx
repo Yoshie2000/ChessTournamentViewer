@@ -7,6 +7,7 @@ import { StandingsTable } from "./StandingsTable";
 
 import { usePopup } from "../../context/PopupContext";
 import { Button } from "@douyinfe/semi-ui";
+import CupMatchupsTable from "./CupMatchupsTable";
 
 export const StandingsWindow = memo(() => {
   const activeEvent = useEventStore((state) => state.activeEvent);
@@ -17,41 +18,34 @@ export const StandingsWindow = memo(() => {
 
   return (
     <div className="standingsWindow">
-      <h4>Standings</h4>
+      <h4>{isCup ? "Matchups" : "Standings"}</h4>
       {activeEvent && activeGame ? (
-        <>
-          {!isCup ? (
+        !isCup ? (
+          <>
             <Button
               onClick={() => setPopupState("crosstable")}
               title="View head-to-head results between all engines"
             >
               Show Crosstable
             </Button>
-          ) : (
+            <StandingsTable />
+          </>
+        ) : (
+          <>
             <Button
               onClick={() => setPopupState("cupBrackets")}
               title="View cup brackets"
             >
               Show Brackets
             </Button>
-          )}
-          <StandingsTable />
-        </>
+            <CupMatchupsTable />
+          </>
+        )
       ) : (
         <div className="sectionSpinner">
           <Spinner />
         </div>
       )}
-
-      <p className="githubPlug">
-        Contribute or report issues on{" "}
-        <a
-          href="https://github.com/Yoshie2000/ChessTournamentViewer"
-          target="_blank"
-        >
-          GitHub
-        </a>
-      </p>
     </div>
   );
 });

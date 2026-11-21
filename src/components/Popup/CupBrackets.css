@@ -73,6 +73,7 @@
     &.live {
       background: #434343;
       outline: 1px solid #5a7080;
+      outline-offset: -1px;
     }
   }
 }

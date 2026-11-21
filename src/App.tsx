@@ -57,7 +57,9 @@ function App() {
         if (e.code === "Escape") {
           state.setPopupState("none");
         } else if (e.code === "KeyC") {
-          const isCup = !!useEventStore.getState().activeEvent?.tournamentDetails.cupMatches;
+          const isCup =
+            !!useEventStore.getState().activeEvent?.tournamentDetails
+              .cupMatches;
           state.setPopupState(isCup ? "cupBrackets" : "crosstable");
         } else if (e.code === "KeyS") {
           state.setPopupState("settings");
@@ -87,6 +89,16 @@ function App() {
         <GraphWindow />
 
         <ScheduleWindow />
+
+        <p className="githubPlug">
+          Contribute or report issues on{" "}
+          <a
+            href="https://github.com/Yoshie2000/ChessTournamentViewer"
+            target="_blank"
+          >
+            GitHub
+          </a>
+        </p>
       </div>
     </LocaleProvider>
   );
