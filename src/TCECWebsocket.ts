@@ -896,6 +896,10 @@ export class TCECWebSocket implements TournamentWebSocket {
           { length: roundMatches },
           (_, localMatchIdx): z.infer<typeof CupMatch> => {
             const match = crosstable.matchresults.at(matchIdx++);
+            const bronzeMatch =
+              roundIdx === Math.log2(engines.length) - 1 && localMatchIdx === 1;
+
+            if (bronzeMatch) localMatchIdx = 0;
 
             const previousRoundMatch0 = cupMatches
               ?.at(-1)
@@ -909,7 +913,11 @@ export class TCECWebSocket implements TournamentWebSocket {
                 match?.points1 === undefined ||
                 match?.live
                 ? undefined
-                : match.points0 > match.points1
+                : (
+                      !bronzeMatch
+                        ? match.points0 > match.points1
+                        : match.points0 < match.points1
+                    )
                   ? match.engine0
                   : match.engine1;
             };
@@ -935,6 +943,8 @@ export class TCECWebSocket implements TournamentWebSocket {
               match?.at(1)?.name === engine1?.id
                 ? match?.at(1)?.origscore
                 : match?.at(0)?.origscore;
+
+            console.log({ live, points0, points1, engine0, engine1 });
 
             return { live, points0, points1, engine0, engine1 };
           }
