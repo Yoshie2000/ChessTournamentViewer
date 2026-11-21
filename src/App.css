@@ -276,6 +276,7 @@
 
     width: 100vw;
     gap: 0.5rem;
+    padding-bottom: 1rem;
   }
 
   .engineWindow,
@@ -345,14 +346,16 @@
 
 .githubPlug {
   position: absolute;
-  bottom: 0;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
 
   &,
   a {
     color: #a1a1a1;
-    font-size: var(--font-xs);
+    font-size: 0.7rem;
     margin: calc(-0.5 * var(--gap)) 0 0 0 !important;
   }
 }

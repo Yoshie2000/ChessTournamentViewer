@@ -37,8 +37,14 @@
         text-align: center;
       }
 
-      .engineName:nth-of-type(4) {
-        text-align: end;
+      .engineName {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+
+        &:nth-of-type(4) {
+          text-align: end;
+        }
       }
     }
 
@@ -50,5 +56,16 @@
       padding-bottom: calc(0.5 * var(--gap));
       text-align: center;
     }
+  }
+}
+
+@media (max-width: 775px) {
+  .cupMatchups .scoreLine {
+    grid-template-columns: 35px auto 1fr 5rem 1fr auto !important;
+  }
+
+  .cupMatchups .scoreLine *,
+  .cupMatchups .h2hCell * {
+    font-size: 0.8rem !important;
   }
 }
